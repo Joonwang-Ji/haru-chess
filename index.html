@@ -4169,6 +4169,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v3 · email-login</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
