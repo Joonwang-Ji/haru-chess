@@ -1,5 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#e3f1ff"><meta name="color-scheme" content="light dark"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="하루체스"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-180.png"><link rel="manifest" href="manifest.webmanifest"><title>하루체스 · Daily Chess</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap"><style>
 :root{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}body{margin:0}
+@media (display-mode: standalone){:root{padding-top:calc(env(safe-area-inset-top) + 14px)}}
 /* Layout idea: one chunky, rounded "toy" screen at a time. Lion coach (Leo) lives beside every board. */
 :root {
   --bg: #e3f1ff; --bg2: #cfe6fb; --surface: #ffffff; --surface2: #f2f7fd;
@@ -360,6 +361,13 @@ svg.pc, svg.ic { overflow: visible; }
 .modal { will-change: transform; }
 .menu ~ .card { margin-top: 10px !important; padding: 8px 14px; }
 .menu ~ .card h3 { margin-bottom: 4px; }
+/* home hero keeps one fixed height so buttons never jump when the quote changes */
+.home-hero { height: 136px; align-items: stretch; padding: 0 0 8px; }
+.home-hero .lion { align-self: center; width: 84px; }
+.home-hero .bubble { align-self: stretch; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; font-size: .93rem; line-height: 1.35; padding: 8px 12px; }
+.home-hero .bubble .en { font-size: .8rem; }
+.home-hero .bubble small.en { font-size: .78rem; }
+.home-hero .bubble::before { top: 50%; margin-top: -8px; }
 
 </style></head><body><div id="app"><div id="topbar" class="topbar"></div><div id="view" class="view"></div></div><div id="layer"></div>
 <script id="src-engine">
@@ -4340,7 +4348,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v5 · parent-mode</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v6 · layout</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4374,7 +4382,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v5 · parent-mode</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v6 · layout</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4628,7 +4636,7 @@ Views.home = (root) => {
   ];
   const g = S.game && !S.game.over ? S.game : null;
   root.innerHTML = `<div class="scroll"><div class="wrap">
-    <div class="hero">${Art.lion('happy')}<div class="bubble">${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div>
+    <div class="hero home-hero">${Art.lion('happy')}<div class="bubble">${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div>
     <div class="menu">
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
       <button class="btn tile mint" data-go="setup" data-mode="cpu"><span class="ico">${Art.lion('wink')}</span>${tx(T('컴퓨터와 대국', 'Play Computer'))}</button>
