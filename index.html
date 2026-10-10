@@ -337,6 +337,30 @@ svg.pc, svg.ic { overflow: visible; }
 .codebox .btn { white-space: nowrap; flex: none; }
 .btn.sm { white-space: nowrap; }
 
+/* ---- v5: home fit, who chip, quotes, swipe ---- */
+.scroll { overscroll-behavior-y: contain; }
+.menu { gap: 12px; }
+.tile { min-height: 108px; padding: 10px 8px; font-size: 1.08rem; position: relative; }
+.tile .ico { width: 46px; height: 46px; }
+.tile.wide { grid-column: 1 / -1; flex-direction: row; min-height: 64px; gap: 12px; }
+.tile.wide .ico { width: 34px; height: 34px; display: grid; place-items: center; }
+.tile .ico.two svg { width: 40px; height: 40px; }
+.hero { padding: 2px 0 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hero .lion { width: 92px; }
+.hero .lion.hop { animation: hop .5s ease-out, bob 3.2s ease-in-out .5s infinite; }
+@keyframes hop { 30% { transform: translateY(-14px) rotate(-4deg); } 60% { transform: translateY(0) rotate(3deg); } }
+.hero .bubble.pop { animation: popin .25s ease-out; }
+@keyframes popin { from { transform: scale(.94); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+.qby { margin-top: 4px; font-size: .82rem; color: var(--ink2); }
+.who { display: inline-flex; align-items: center; gap: 6px; max-width: 46vw; padding: 4px 10px 4px 5px; min-height: 40px; }
+.who .wn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who .pill { padding: 1px 8px; font-size: .75rem; box-shadow: none; }
+.card.wiz { outline: 3px solid var(--sun); }
+.swipehint { position: fixed; left: 0; top: 50%; width: 44px; height: 44px; margin-top: -22px; border-radius: 50%; background: var(--surface); color: var(--ink); box-shadow: var(--shadow); display: grid; place-items: center; z-index: 80; pointer-events: none; opacity: 0; transform: translateX(-50px); }
+.modal { will-change: transform; }
+.menu ~ .card { margin-top: 10px !important; padding: 8px 14px; }
+.menu ~ .card h3 { margin-bottom: 4px; }
+
 </style></head><body><div id="app"><div id="topbar" class="topbar"></div><div id="view" class="view"></div></div><div id="layer"></div>
 <script id="src-engine">
 /* Chess rules engine: board, legal moves, make/unmake, FEN, SAN, game status. */
@@ -1614,7 +1638,40 @@ svg.pc, svg.ic { overflow: visible; }
       '<b>Check</b> king attacked · <b>Checkmate</b> check that cannot be escaped · <b>Stalemate</b> no legal move but not in check (draw) · <b>Castling</b> king and rook move together · <b>En passant</b> a special pawn capture · <b>Promotion</b> a pawn transforms on the last row · <b>Fork</b> attack two at once · <b>Pin</b> a piece cannot move because of the valuable piece behind it · <b>Skewer</b> the front piece moves and the back one falls · <b>Open file</b> a column with no pawns') },
   ];
 
-  const api = { basic, pro, GUIDE, T };
+  /* Short sayings shown when the lion is tapped. Named ones are well-known attributions; the rest are Leo's own tips. */
+  const QUOTES = [
+    { t: T('폰은 체스의 영혼이에요.', 'Pawns are the soul of chess.'), by: 'François-André Philidor' },
+    { t: T('모든 체스 고수도 한때는 초보였어요.', 'Every chess master was once a beginner.'), by: 'Irving Chernev' },
+    { t: T('좋은 수가 보여도, 더 좋은 수가 없는지 한 번 더 찾아봐요.', 'When you see a good move, look for a better one.'), by: 'Emanuel Lasker' },
+    { t: T('체스는 사랑이나 음악처럼 사람을 행복하게 해요.', 'Chess, like love and music, can make people happy.'), by: 'Siegbert Tarrasch' },
+    { t: T('킹은 싸우는 말이에요. 끝나기 전에는 숨기만 하지 말아요!', 'The king is a fighting piece.'), by: 'Wilhelm Steinitz' },
+    { t: T('좋은 선수에게는 운도 따라와요.', 'A good player is always lucky.'), by: 'José Raúl Capablanca' },
+    { t: T('체스는 작은 인생이에요. 생각하고, 고르고, 책임지는 놀이예요.', 'Chess is life in miniature.'), by: 'Garry Kasparov' },
+    { t: T('마지막에서 두 번째 실수를 한 사람이 이겨요. 끝까지 집중!', 'The winner is the one who makes the next-to-last mistake.'), by: 'Savielly Tartakower' },
+    { t: T('수를 두기 전에 꼭 물어봐요. "상대는 뭘 하고 싶을까?"', 'Before you move, ask: "What does my friend want to do?"') },
+    { t: T('말이 잡힐 것 같으면 먼저 지켜 주세요. 다음에 공격해도 늦지 않아요!', 'Protect your piece first. You can attack next turn!') },
+    { t: T('체크! 하기 전에, 내 킹이 안전한지 먼저 봐요.', 'Before you say check, make sure your own king is safe.') },
+    { t: T('실수해도 괜찮아요. 실수에서 제일 많이 배워요!', 'Mistakes are okay. We learn the most from them!') },
+    { t: T('이기는 것보다 생각하는 게 더 재밌어요.', 'Thinking is even more fun than winning.') },
+    { t: T('나이트는 말을 뛰어넘는 유일한 말이에요. 점프!', 'The knight is the only piece that can jump!') },
+    { t: T('가운데 칸 e4, d4, e5, d5는 인기 많은 자리예요.', 'The center squares e4, d4, e5, d5 are very popular spots.') },
+    { t: T('나이트와 비숍을 먼저 꺼내요. 룩과 퀸은 조금 이따가요.', 'Bring out knights and bishops first. Rooks and queens can wait.') },
+    { t: T('캐슬링으로 킹을 안전한 곳에 숨겨요.', 'Castle to tuck your king away safely.') },
+    { t: T('퀸을 너무 일찍 내보내면 쫓겨 다니게 돼요.', 'If the queen goes out too early, she gets chased around.') },
+    { t: T('이기고 있어도 마지막까지 방심하지 말아요.', 'Even when you are winning, stay careful until the end.') },
+    { t: T('지고 있어도 포기하지 말아요. 뒤집기가 생겨요!', 'Even when you are losing, do not give up. Comebacks happen!') },
+    { t: T('대국이 끝나면 악수! "수고했어요" 한마디가 멋져요.', 'Shake hands after the game. A kind "good game" is cool.') },
+    { t: T('한 수 두기 전에 숨을 크게 한 번 쉬어요.', 'Take one deep breath before every move.') },
+    { t: T('내 말이 안전한지, 상대 말이 공짜인지 매번 살펴봐요.', 'Check every move: Is my piece safe? Is theirs free?') },
+    { t: T('폰은 느리지만, 끝까지 가면 퀸으로 변신해요!', 'Pawns are slow, but at the end they become queens!') },
+    { t: T('룩 두 개가 한 줄에 나란히 서면 아주 강해요.', 'Two rooks side by side on one line are very strong.') },
+    { t: T('체스판은 64칸, 이야기는 끝이 없어요.', 'Sixty-four squares, endless stories.') },
+    { t: T('오늘 한 판이 내일의 실력이 돼요.', 'Today\'s game becomes tomorrow\'s skill.') },
+    { t: T('친구와 두면 이겨도 져도 좋은 하루예요.', 'Playing with a friend makes it a good day, win or lose.') },
+    { t: T('천천히 생각해도 괜찮아요. 서두르면 실수가 늘어요.', 'It is okay to think slowly. Rushing brings mistakes.') },
+    { t: T('막힐 땐 "힌트"를 눌러 봐요. 이유도 같이 알려 줄게요!', 'Stuck? Tap "Hint". I will tell you why, too!') },
+  ];
+  const api = { basic, pro, GUIDE, T, QUOTES };
   root.ChessContent = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
@@ -1643,7 +1700,7 @@ const DEFAULTS = {
   setup: { mode: 'cpu', color: 'w', level: 2, clock: 'off', custom: { min: 10, inc: 5 }, hint: true, safety: true, undo: true, f2f: true },
   lock: { on: false, limit: 15, pin: '', rec: '', usage: { date: '', sec: 0 }, bonus: { date: '', min: 0 } },
   game: null,
-  cloud: { pid: '', saved: {}, done: [] },
+  cloud: { pid: '', saved: {}, done: [], use: {}, ur: {}, rs: {}, kid: false, dev: '' },
 };
 function merge(base, extra) {
   if (!extra || typeof extra !== 'object') return base;
@@ -1772,12 +1829,25 @@ function newRecovery() {
 /* ---------- daily play-time limit ---------- */
 const Lock = {
   locked: false, parentOpen: false, lastTouch: Date.now(),
+  prof() { return typeof Net !== 'undefined' ? Net.me() : null; },
   enabled() { return !!(S.lock.on && S.lock.pin); },
   active() { return this.enabled() && !(typeof Net !== 'undefined' && Net.meParent()); },
-  used() { const u = S.lock.usage; return u.date === ymd() ? u.sec : 0; },
-  limit() { const b = S.lock.bonus; return (S.lock.limit + (b.date === ymd() ? b.min : 0)) * 60; },
-  remaining() { return this.limit() - this.used(); },
-  add(sec) { const u = S.lock.usage; if (u.date !== ymd()) { u.date = ymd(); u.sec = 0; } u.sec += sec; },
+  slot() { // today's local seconds for the current profile (per profile, per device)
+    const pid = S.cloud.pid; let u = pid ? S.cloud.use[pid] : S.lock.usage;
+    if (!u) u = S.cloud.use[pid] = { date: '', sec: 0 };
+    if (u.date !== ymd()) { u.date = ymd(); u.sec = 0; }
+    return u;
+  },
+  used() { const o = (typeof Net !== 'undefined' && S.cloud.pid) ? Net.otherUsage() : 0; return this.slot().sec + o; },
+  limitMin() { const p = this.prof(); return (p && p.limit) ? p.limit : S.lock.limit; },
+  limit() {
+    const b = S.lock.bonus, p = this.prof(), pb = p && p.bonus && p.bonus.date === ymd() ? p.bonus.min : 0;
+    return (this.limitMin() + (b.date === ymd() ? b.min : 0) + pb) * 60;
+  },
+  forced() { const p = this.prof(); return !!(p && p.lockedDate === ymd()); },
+  remaining() { return this.forced() ? 0 : this.limit() - this.used(); },
+  add(sec) { this.slot().sec += sec; },
+  resetUsage() { this.slot().sec = 0; save(); },
   bonus(min) { const b = S.lock.bonus; if (b.date !== ymd()) { b.date = ymd(); b.min = 0; } b.min += min; save(); },
   fmt(sec) { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); },
 };
@@ -2139,6 +2209,7 @@ function showLock() {
   const ov = h(`<div class="overlay lockscreen" id="lockscreen"><div class="modal">${Art.lion('sleep')}<h2>${tx(T('오늘 놀이 시간이 끝났어요!', 'Play time is over for today!'))}</h2><p>${rich(T('내일 또 만나요. 푹 쉬어요!<br>부모님은 비밀번호를 눌러 주세요.', 'See you tomorrow. Have a good rest!<br>Parents, please enter the password.'))}</p><button class="btn lav" id="lk-go">${ic('lock', 20)} ${tx(T('부모님 비밀번호', 'Parent password'), true)}</button></div></div>`);
   Layer.appendChild(ov);
   const unlock = async () => {
+    if (!S.lock.pin) { Lock.release(); return; }
     const r = await pinPrompt({ title: T('부모님 비밀번호', 'Parent password'), sub: T('시간을 더 줄 수 있어요', 'You can give more time'), verify: (v) => pinOk(v), forgot: forgotPin });
     if (r == null) return;
     const k = await ask({ lion: 'happy', title: T('얼마나 더 놀까요?', 'How much more time?'), top: true, buttons: [
@@ -2146,23 +2217,77 @@ function showLock() {
       { k: 'day', label: T('오늘은 제한 없이', 'No limit today'), cls: 'lav' }, { k: 'no', label: T('아직 쉬기', 'Keep resting'), cls: 'ghost' }] });
     if (k === 'no') return;
     Lock.bonus(k === 'day' ? 24 * 60 : +k);
-    ov.remove(); Lock.locked = false; updateLockPill();
-    Hooks.resume.forEach((f) => f());
+    if (typeof Net !== 'undefined') Net.clearForce();
+    Lock.release();
   };
   $('#lk-go', ov).onclick = unlock;
 }
+Lock.release = function () {
+  const ov = document.getElementById('lockscreen'); if (ov) ov.remove();
+  if (!Lock.locked) return;
+  Lock.locked = false; updateLockPill(); Hooks.resume.forEach((f) => f());
+};
 function lockTick() {
   if (!Lock.active()) { updateLockPill(); return; }
   if (document.visibilityState !== 'visible' || Lock.locked || Lock.parentOpen) return;
   if (Date.now() - Lock.lastTouch > 120000) return;
+  if (Lock.forced()) { saveNow(); showLock(); return; }
   Lock.add(1);
   const rem = Lock.remaining();
   updateLockPill();
-  if (Lock.used() % 15 === 0) save();
+  if (Lock.slot().sec % 15 === 0) save();
+  if (Lock.slot().sec % 30 === 0 && typeof Net !== 'undefined') Net.pushUsage();
   if (rem === 300) toast(T('오늘 놀이 시간이 5분 남았어요!', '5 minutes of play time left today!'), 3500);
   if (rem === 60) toast(T('1분 남았어요! 정리하고 마무리해요.', '1 minute left! Time to wrap up.'), 3500);
   if (rem <= 0) { saveNow(); showLock(); }
 }
+
+/* ---------- gestures: swipe from the left edge = back, swipe a dialog down = close ---------- */
+(function () {
+  let g = null, hint = null;
+  const DISMISS = ['cancel', 'c', 'x', 'n', 'no', 'close', 'cont'];
+  addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { g = null; return; }
+    const t = e.touches[0], tgt = e.target;
+    const modal = tgt.closest && tgt.closest('.modal');
+    if (modal) {
+      const ov = modal.closest('.overlay');
+      if (ov.classList.contains('lockscreen') || modal.classList.contains('flipped')) { g = null; return; }
+      g = { k: 'modal', x: t.clientX, y: t.clientY, modal, ov, dy: 0, ok: modal.scrollTop <= 0 };
+    } else if (t.clientX < 22 && !Layer.querySelector('.overlay') && !(tgt.closest && tgt.closest('.sq'))) {
+      g = { k: 'back', x: t.clientX, y: t.clientY, dx: 0 };
+    } else g = null;
+  }, { passive: true });
+  addEventListener('touchmove', (e) => {
+    if (!g) return; const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (g.k === 'modal') {
+      if (!g.ok || dy < 0 || Math.abs(dx) > dy) { if (g.dy) { g.modal.style.transform = ''; g.dy = 0; } return; }
+      g.dy = dy; g.modal.style.transition = 'none'; g.modal.style.transform = `translateY(${Math.round(dy * 0.8)}px)`;
+    } else {
+      if (Math.abs(dy) > Math.abs(dx) * 0.8 && dx < 30) { if (hint) { hint.remove(); hint = null; } if (Math.abs(dy) > 40) g = null; return; }
+      g.dx = dx;
+      if (dx > 8 && $('#tb-back')) {
+        if (!hint) { hint = h(`<div class="swipehint">${ic('back')}</div>`); document.body.appendChild(hint); }
+        const p = Math.min(1, dx / 90); hint.style.opacity = p; hint.style.transform = `translateX(${Math.round(-50 + 60 * p)}px)`;
+      }
+    }
+  }, { passive: true });
+  const end = () => {
+    if (!g) return; const k = g;
+    if (hint) { hint.remove(); hint = null; }
+    g = null;
+    if (k.k === 'modal') {
+      if (k.dy > 90) {
+        const b = DISMISS.map((d) => k.modal.querySelector(`button[data-k="${d}"]`)).find(Boolean);
+        if (b) { k.modal.style.transition = 'transform .15s'; k.modal.style.transform = 'translateY(120%)'; setTimeout(() => b.click(), 120); return; }
+        if (k.ov.isConnected && !k.modal.querySelector('.keypad') && !k.modal.querySelector('button[data-k]')) { k.ov.remove(); return; }
+      }
+      k.modal.style.transition = 'transform .18s'; k.modal.style.transform = '';
+    } else if (k.dx > 80) { const b = $('#tb-back'); if (b) { sfx('tap'); b.click(); } }
+  };
+  addEventListener('touchend', end, { passive: true });
+  addEventListener('touchcancel', () => { if (g && g.k === 'modal') { g.modal.style.transform = ''; } if (hint) { hint.remove(); hint = null; } g = null; }, { passive: true });
+})();
 
 </script>
 <script>
@@ -3956,7 +4081,7 @@ const Net = {
         Object.assign(S.lock, { on: !!d.lock.on, limit: d.lock.limit, pin: d.lock.pin, rec: d.lock.rec });
         this.lockSig = this.lockSigNow(); saveNow();
       } else if (S.lock.pin) { this.lockSig = ''; }
-      this.parentOk = true; this.push();
+      this.parentOk = true; this.push(); this.emit();
     } catch (e) { /* offline: try later */ }
   },
 
@@ -3964,8 +4089,48 @@ const Net = {
   afterProfiles() {
     if (S.cloud.pid && !this.profs.find((p) => p.id === S.cloud.pid) && this.profs.length) { this.selectLocal(this.profs[0].id); }
     if (!S.cloud.pid && this.profs.length === 1) this.selectLocal(this.profs[0].id);
+    if (S.cloud.kid && this.meParent()) { const k = this.profs.find((x) => !x.parent); if (k) this.selectLocal(k.id); }
     const me = this.me();
     if (me && !this.merged[me.id]) { this.mergeFromCloud(me); this.merged[me.id] = true; this.push(); }
+    this.applyRemote();
+  },
+  devId() { if (!S.cloud.dev) { S.cloud.dev = rid(8); } return S.cloud.dev; },
+  otherUsage() {
+    const me = this.me(); if (!me || !me.usageBy) return 0; const d = ymd(), my = this.devId();
+    return Object.keys(me.usageBy).reduce((a, k) => a + (k !== my && me.usageBy[k] && me.usageBy[k].d === d ? (me.usageBy[k].s || 0) : 0), 0);
+  },
+  usedToday(p) { const d = ymd(); return Object.keys(p.usageBy || {}).reduce((a, k) => a + (p.usageBy[k] && p.usageBy[k].d === d ? (p.usageBy[k].s || 0) : 0), 0); },
+  pushUsage() {
+    const me = this.me(); if (!me || me.parent || !Lock.active()) return;
+    const u = Lock.slot(); Cloud.set('profiles/' + me.id, { usageBy: { [this.devId()]: { d: u.date, s: u.sec } } }, true).catch(() => {});
+  },
+  clearForce() { const me = this.me(); if (me && me.lockedDate) Cloud.update('profiles/' + me.id, { lockedDate: '' }).catch(() => {}); },
+  wipeLocal() { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; },
+  async eraseCloud(p) {
+    const now = Date.now();
+    await withTimeout(Cloud.update('profiles/' + p.id, { progress: {}, stars: 0, done: 0, stats: clone(DEFAULTS.stats), streak: clone(DEFAULTS.streak), resetAt: now, eraseReq: null }));
+    S.cloud.rs[p.id] = now;
+  },
+  async eraseNow() { // wipe the current profile everywhere
+    const me = this.me(); this.wipeLocal(); saveNow();
+    if (me) { try { await this.eraseCloud(me); } catch (e) { /* offline: resetAt will sync later */ } }
+  },
+  async requestErase() {
+    const me = this.me(); if (!me) throw new Error('noprofile');
+    if (me.eraseReq && me.eraseReq.status === 'pending') throw new Error('erasepending');
+    await withTimeout(Cloud.update('profiles/' + me.id, { eraseReq: { status: 'pending', at: Date.now() } }));
+  },
+  reqCount() { return this.meParent() ? this.profs.filter((p) => !p.parent && p.eraseReq && p.eraseReq.status === 'pending').length : 0; },
+  applyRemote() {
+    const me = this.me(); if (!me) return;
+    if ((me.resetAt || 0) > (S.cloud.rs[me.id] || 0)) { S.cloud.rs[me.id] = me.resetAt; this.wipeLocal(); saveNow(); if (V.name === 'home' || V.name === 'settings') rerender(); }
+    if ((me.usageResetAt || 0) > (S.cloud.ur[me.id] || 0)) { S.cloud.ur[me.id] = me.usageResetAt; Lock.slot().sec = 0; saveNow(); }
+    const r = me.eraseReq;
+    if (r && r.status === 'ok') { this.eraseNow().then(() => { toast(T('부모님이 허락해서 기록을 지웠어요', 'A parent said yes. Progress erased.'), 3500); if (V.name === 'home' || V.name === 'settings') rerender(); }); }
+    else if (r && r.status === 'no') { Cloud.update('profiles/' + me.id, { eraseReq: null }).catch(() => {}); toast(T('부모님이 지금은 안 된대요', 'A parent said not now.'), 3500); }
+    if (Lock.locked && Lock.active() && Lock.remaining() > 0) Lock.release();
+    else if (!Lock.locked && Lock.active() && Lock.forced()) showLock();
+    updateLockPill();
   },
   selectLocal(pid) {
     const cur = S.cloud.pid || '_';
@@ -3980,6 +4145,7 @@ const Net = {
   },
   async select(pid) { this.selectLocal(pid); const me = this.me(); if (me && !this.merged[me.id]) { this.mergeFromCloud(me); this.merged[me.id] = true; } saveNow(); this.emit(); },
   mergeFromCloud(p) {
+    if ((p.resetAt || 0) > (S.cloud.rs[p.id] || 0)) { this.wipeLocal(); S.cloud.rs[p.id] = p.resetAt; }
     const pr = p.progress || {};
     for (const k of Object.keys(pr)) { const a = (S.progress[k] || {}).stars || 0; if (pr[k] > a) S.progress[k] = { stars: pr[k] }; }
     const cs = p.stats || {};
@@ -3993,7 +4159,7 @@ const Net = {
   async createProfile(nick, avatar, parent) {
     const u = this.user; if (!u) throw new Error('auth');
     const id = 'p' + rid(14), code = rid(8, CODE_AL);
-    const data = { ownerUid: u.uid, nick, avatar, parent: !!parent, code, readers: [], progress: {}, stars: 0, done: 0, stats: { games: 0, wins: {}, losses: {}, draws: {}, net: { w: 0, l: 0, d: 0 } }, streak: { last: '', n: 0 }, createdAt: Date.now(), lastActive: Date.now() };
+    const data = { ownerUid: u.uid, nick, avatar, parent: !!parent, limit: 15, code, readers: [], progress: {}, stars: 0, done: 0, stats: { games: 0, wins: {}, losses: {}, draws: {}, net: { w: 0, l: 0, d: 0 } }, streak: { last: '', n: 0 }, createdAt: Date.now(), lastActive: Date.now() };
     await withTimeout(Cloud.set('profiles/' + id, data));
     await withTimeout(Cloud.set('codes/' + code, { pid: id, ownerUid: u.uid, nick, avatar }));
     return id;
@@ -4101,7 +4267,7 @@ const Net = {
   pendingCount() {
     const me = this.me(); if (!me) return 0;
     const inv = this.myGames(me.id).filter((g) => g.status === 'invite' && g.from !== (g.white.pid === me.id ? 0 : 1)).length;
-    return this.incoming(me.id).length + inv;
+    return this.incoming(me.id).length + inv + this.reqCount();
   },
 };
 onSaved = () => Net.push();
@@ -4114,6 +4280,8 @@ const errText = (e) => {
     badcode: T('코드가 너무 짧아요.', 'The code is too short.'),
     already: T('이미 친구예요!', 'You are already friends!'),
     pending: T('이미 요청을 보냈어요. 친구의 수락을 기다려요.', 'Request already sent. Waiting for your friend.'),
+    erasepending: T('이미 요청을 보냈어요. 부모님의 답을 기다려요.', 'Already requested. Waiting for a parent.'),
+    noprofile: T('먼저 프로필을 골라 주세요.', 'Please pick a profile first.'),
     timeout: T('연결이 느려요. 인터넷을 확인하고 다시 해 주세요.', 'Connection is slow. Check the internet and try again.'),
   };
   const c = (e && e.code) || '';
@@ -4132,13 +4300,13 @@ const errText = (e) => {
 };
 
 /* ================= Views ================= */
-function profileForm(p) {
+function profileForm(p, preset) {
   return new Promise((res) => {
     let av = p ? p.avatar : AVATARS[Math.floor(Math.random() * 6)];
     const ov = openModal(`<h2>${tx(p ? T('프로필 고치기', 'Edit profile') : T('새 프로필', 'New profile'))}</h2>
       <p>${tx(T('별명과 그림만 정해요. 진짜 이름은 쓰지 않아요!', 'Pick a nickname and a picture. Do not use a real name!'))}</p>
       <input class="input" id="pf-nick" maxlength="8" autocomplete="off" placeholder="${shortL(T('별명 (8자까지)', 'Nickname (max 8)'))}" value="${esc(p ? p.nick : '')}">
-      <label style="display:flex;gap:8px;align-items:center;margin:6px 0;font-size:.95rem"><input type="checkbox" id="pf-par" ${p && p.parent ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('부모님 프로필 (시간 제한 없음 · 고르려면 비밀번호 필요)', 'Parent profile (no time limit · password to switch)'))}</span></label>
+      <label style="display:flex;gap:8px;align-items:center;margin:6px 0;font-size:.95rem"><input type="checkbox" id="pf-par" ${(p ? p.parent : preset && preset.parent) ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('부모님 프로필 (시간 제한 없음 · 고르려면 비밀번호 필요)', 'Parent profile (no time limit · password to switch)'))}</span></label>
       <div class="avgrid" id="pf-av"></div><div class="msg" id="pf-msg" style="min-height:1.3em;color:var(--bad)"></div>
       <div class="row"><button class="btn ghost sm" data-k="c">${tx(T('취소', 'Cancel'))}</button><button class="btn" data-k="o">${tx(T('저장', 'Save'))}</button></div>`, { dismiss: false, top: true });
     const draw = () => { $('#pf-av', ov).innerHTML = AVATARS.map((a) => `<button class="avb" data-av="${a}" aria-pressed="${a === av}">${avHtml(a, 52)}</button>`).join(''); };
@@ -4172,7 +4340,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v4 · family</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v5 · parent-mode</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4183,22 +4351,55 @@ Views.account = (root) => {
       return;
     }
     const cur = S.cloud.pid;
+    const kidDev = S.cloud.kid && !Net.parentMenu;
+    const hasParent = Net.profs.some((p) => p.parent), hasKid = Net.profs.some((p) => !p.parent);
+    let wiz = '';
+    if (!Net.parentOk) wiz = `<div class="card"><h3>${tx(T('계정을 확인하고 있어요…', 'Checking your account…'), true)}</h3><button class="btn ghost sm" id="w-retry">${tx(T('다시 확인', 'Check again'))}</button></div>`;
+    else {
+      const st = !S.lock.pin ? 1 : !hasParent ? 2 : !hasKid ? 3 : 0;
+      const txt = { 1: [T('1단계 · 부모님 비밀번호 만들기', 'Step 1 · Create a parent password'), T('아이가 모르는 숫자 4자리를 정해요. 친구 수락, 시간 설정, 부모 프로필에 필요해요.', 'Pick 4+ digits your child does not know. It protects friends, time settings and the parent profile.'), T('비밀번호 만들기', 'Create password')],
+        2: [T('2단계 · 부모님 프로필 만들기', 'Step 2 · Create the parent profile'), T('부모님이 직접 쓰는 프로필이에요. 시간 제한이 없어요.', 'Your own profile. No time limit.'), T('부모님 프로필 만들기', 'Create parent profile')],
+        3: [T('3단계 · 아이 프로필 만들기', 'Step 3 · Create a kid profile'), T('별명과 그림만 정해요. 아이마다 하나씩 만들어요.', 'Just a nickname and a picture. One per child.'), T('아이 프로필 만들기', 'Create kid profile')] }[st];
+      if (st) wiz = `<div class="card wiz"><h3>${tx(txt[0], true)}</h3><p style="margin:0 0 10px;font-size:.95rem">${tx(txt[1])}</p><button class="btn tile-go" id="w-go" data-st="${st}">${tx(txt[2], true)}</button></div>`;
+    }
+    const list = Net.profs.filter((p) => !(kidDev && p.parent));
     root.innerHTML = `<div class="scroll"><div class="wrap">
-      <div class="card"><h3>${tx(T('부모님 계정', 'Parent account'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${esc(Net.user.name || '')} · ${tx(T('로그인됨', 'Signed in'))}</p><button class="btn pink sm" id="a-out">${tx(T('로그아웃', 'Sign out'))}</button></div>
-      <div class="sec">${tx(T('우리 아이 프로필', 'Kid profiles'), true)}</div>
-      <div class="profs">${Net.profs.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${p.parent ? ` <span class="pill">${tx(T('부모', 'Parent'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
-        ${p.id === cur ? `<span class="pill warn">${tx(T('사용 중', 'In use'))}</span>` : `<button class="btn mint sm" data-sel="${p.id}">${tx(T('선택', 'Use'))}</button>`}<button class="btn ghost sm" data-ed="${p.id}">${tx(T('고치기', 'Edit'))}</button></div>`).join('')}</div>
-      ${Net.profs.length < 6 ? `<div class="row center" style="margin-top:12px"><button class="btn lav" id="a-add">＋ ${tx(T('프로필 추가', 'Add profile'), true)}</button></div>` : ''}
-      ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : `<p style="text-align:center;color:var(--ink2)">${tx(T('먼저 프로필을 만들어 주세요.', 'Please create a profile first.'))}</p>`}
+      ${wiz}
+      ${kidDev ? '' : `<div class="card" style="margin-top:12px"><h3>${tx(T('부모님 계정', 'Parent account'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${esc(Net.user.name || '')} · ${tx(T('로그인됨', 'Signed in'))}</p><div class="row"><button class="btn pink sm" id="a-out">${tx(T('로그아웃', 'Sign out'))}</button>${hasKid && S.lock.pin ? `<button class="btn lav sm" id="a-mg">${ic('clock', 18)} ${tx(T('자녀 관리', 'Manage kids'), true)}</button>` : ''}</div>
+        ${hasKid ? `<label style="display:flex;gap:10px;align-items:center;margin-top:12px;font-size:.95rem"><input type="checkbox" id="a-kid" ${S.cloud.kid ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('이 기기는 아이 전용 (부모 프로필·설정 숨김)', 'Kid-only device (hides parent profile & settings)'))}</span></label>` : ''}</div>`}
+      <div class="sec">${tx(T('프로필', 'Profiles'), true)}</div>
+      <div class="profs">${list.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${p.parent ? ` <span class="pill">${tx(T('부모', 'Parent'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
+        ${p.id === cur ? `<span class="pill warn">${tx(T('사용 중', 'In use'))}</span>` : `<button class="btn mint sm" data-sel="${p.id}">${tx(T('선택', 'Use'))}</button>`}${kidDev ? '' : `<button class="btn ghost sm" data-ed="${p.id}">${tx(T('고치기', 'Edit'))}</button>`}</div>`).join('')}</div>
+      ${!kidDev && Net.profs.length < 6 && !wiz.includes('w-go') ? `<div class="row center" style="margin-top:12px"><button class="btn lav" id="a-add">＋ ${tx(T('프로필 추가', 'Add profile'), true)}</button></div>` : ''}
+      ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
+      ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v5 · parent-mode</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
-  Net.ui.add(refresh); V.cleanup = () => Net.ui.delete(refresh);
+  Net.ui.add(refresh); V.cleanup = () => { Net.ui.delete(refresh); Net.parentMenu = false; };
+  root.addEventListener('change', async (e) => {
+    if (e.target.id !== 'a-kid') return;
+    if (e.target.checked) {
+      const k = Net.profs.find((x) => !x.parent); if (!k) { e.target.checked = false; return; }
+      S.cloud.kid = true; if (Net.meParent()) await Net.select(k.id); saveNow(); Net.parentMenu = false; toast(T('이 기기를 아이 전용으로 바꿨어요', 'This device is now kid-only'), 3000);
+    } else { S.cloud.kid = false; saveNow(); }
+    draw();
+  });
   root.addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return; sfx('tap');
     try {
-      if (t.id === 'a-out') { if (!(await verifyParent())) return; await Cloud.signOut(); }
+      if (t.id === 'w-retry') { await Net.syncParent(); draw(); }
+      else if (t.id === 'w-go') {
+        const st = +t.dataset.st;
+        if (st === 1) { if (await createPin()) { S.lock.on = true; saveNow(); Net.pushNow(); toast(T('비밀번호를 만들었어요', 'Password created')); } }
+        else { const r = await profileForm(null, { parent: st === 2 }); if (!r) return; const id = await Net.createProfile(r.nick, r.avatar, st === 2 ? true : r.parent); if (st === 2) await Net.select(id); toast(T('프로필을 만들었어요!', 'Profile created!')); }
+        draw();
+      }
+      else if (t.id === 'a-pm') { if (await verifyParent(T('부모님 메뉴', 'Parent menu'))) { Net.parentMenu = true; draw(); } }
+      else if (t.id === 'a-mg') { if (await verifyParent()) go('manage'); }
+      else if (t.id === 'a-out') { if (!(await verifyParent())) return; await Cloud.signOut(); }
       else if (t.id === 'a-add') {
         if (!(await verifyParent())) return;
         const r = await profileForm(null); if (!r) return;
@@ -4220,7 +4421,7 @@ Views.account = (root) => {
 };
 
 Views.online = (root) => {
-  if (!Cloud.available || !Net.user || !Net.me()) { go('account'); return; }
+  if (!Cloud.available || !Net.user || !Net.me() || !S.lock.pin) { go('account'); return; }
   setTop({ back: 'home', title: T('친구·온라인', 'Friends & Online'), right: `<button class="btn ghost sm" id="tb-acc">${tx(T('계정', 'Account'))}</button>` });
   $('#tb-acc').onclick = () => go('account');
   let unwatchF = () => {}; let watchKey = ''; let waiting = null;
@@ -4235,7 +4436,7 @@ Views.online = (root) => {
     const invOut = gs.filter((g) => g.status === 'invite' && g.from === myColorIn(g, me.id));
     const act = gs.filter((g) => g.status === 'active');
     const oppOf = (g) => (g.white.pid === me.id ? g.black : g.white);
-    const turnOf = (g) => ((g.moves.length % 2 === 0 ? 0 : 1) === myColorIn(g, me.id) ? T('내 차례', 'Your turn') : T('친구 차례', 'Their turn'));
+    const turnOf = (g) => ((g.moves.length % 2 === 0 ? 0 : 1) === myColorIn(g, me.id) ? T('네 차례', 'Your turn') : T('친구 차례', 'Their turn'));
     const key = frs.map((f) => f.pid).join(',');
     if (key !== watchKey) { unwatchF(); watchKey = key; unwatchF = Net.watchProfiles(frs.map((f) => f.pid), () => { if (V.name === 'online') draw(); }); }
     const net = (S.stats.net || { w: 0, l: 0, d: 0 });
@@ -4333,6 +4534,56 @@ async function friendInfo(f) {
   }
 }
 
+
+/* ---------------- Parent: manage kids remotely ---------------- */
+Views.manage = (root) => {
+  if (!Cloud.available || !Net.user) { go('account'); return; }
+  setTop({ back: 'account', title: T('자녀 관리', 'Manage kids') });
+  Lock.parentOpen = true;
+  const upd = (p, patch) => withTimeout(Cloud.update('profiles/' + p.id, patch));
+  const draw = () => {
+    const keep = $('.scroll', root) ? $('.scroll', root).scrollTop : 0;
+    const kids = Net.profs.filter((p) => !p.parent), d = ymd();
+    root.innerHTML = `<div class="scroll"><div class="wrap">
+      <div class="card"><h3>${ic('clock', 20)} ${tx(T('하루 시간 제한', 'Daily time limit'), true)}</h3>
+        <p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${tx(S.lock.on ? T('켜져 있어요. 아이 프로필마다 시간을 정해요. 부모 프로필은 제한이 없어요.', 'On. Each kid has their own time. Parent profiles have no limit.') : T('꺼져 있어요. 켜야 시간 제한이 적용돼요.', 'Off. Turn it on to apply the limits.'))}</p>
+        <button class="btn ${S.lock.on ? 'ghost' : 'mint'} sm" id="m-on">${tx(S.lock.on ? T('시간 제한 끄기', 'Turn off') : T('시간 제한 켜기', 'Turn on'))}</button></div>
+      <div class="sec">${tx(T('아이들', 'Kids'), true)}</div>
+      ${kids.length ? kids.map((p) => {
+        const used = Net.usedToday(p), bon = p.bonus && p.bonus.date === d ? p.bonus.min : 0, lim = (p.limit || 15) + bon, forced = p.lockedDate === d;
+        const pct = Math.min(100, Math.round(100 * used / Math.max(1, lim * 60)));
+        const rq = p.eraseReq && p.eraseReq.status === 'pending';
+        return `<div class="card" style="margin-bottom:12px"><div class="row" style="flex-wrap:nowrap">${avHtml(p.avatar, 48)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${forced ? ` <span class="pill warn">${ic('lock', 14)} ${tx(T('잠김', 'Locked'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">${tx(T('오늘', 'Today'))} ${Math.round(used / 60)}${tx(T('분', 'm'), true)} / ${lim}${tx(T('분', 'm'), true)}${p.lastActive ? ` · ${tx(ago(p.lastActive))}` : ''}</div></div></div>
+          <div style="height:10px;border-radius:99px;background:var(--surface2);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct >= 100 ? 'var(--bad)' : 'var(--brand)'}"></div></div>
+          <div class="row"><button class="btn mint sm" data-m="plus" data-id="${p.id}">${tx(T('+10분', '+10 min'))}</button>${forced ? `<button class="btn lav sm" data-m="unlock" data-id="${p.id}">${tx(T('잠금 풀기', 'Unlock'))}</button>` : `<button class="btn pink sm" data-m="lock" data-id="${p.id}">${tx(T('지금 잠그기', 'Lock now'))}</button>`}<button class="btn ghost sm" data-m="zero" data-id="${p.id}">${tx(T('사용시간 지우기', 'Reset today'))}</button></div>
+          <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="minus">−</button><b>${p.limit || 15}${tx(T('분', 'm'), true)}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="plus">＋</button></div></div>
+          ${rq ? `<div class="bubble" style="margin:10px 0 0">${rich(T(`<b>${esc(p.nick)}</b>이(가) 기록 지우기를 요청했어요.`, `<b>${esc(p.nick)}</b> asked to erase progress.`))}<div class="row" style="margin-top:8px"><button class="btn pink sm" data-m="eok" data-id="${p.id}">${tx(T('허락 (지워요)', 'Allow (erase)'))}</button><button class="btn ghost sm" data-m="eno" data-id="${p.id}">${tx(T('거절', 'Decline'))}</button></div></div>` : ''}
+        </div>`;
+      }).join('') : `<p style="text-align:center;color:var(--ink2)">${tx(T('아이 프로필이 아직 없어요.', 'No kid profiles yet.'))}</p>`}
+      <p style="text-align:center;color:var(--ink2);font-size:.8rem">${tx(T('아이 폰이 인터넷에 연결되어 있으면 바로 반영돼요.', 'Applies right away when the kid\'s phone is online.'))}</p>
+    </div></div>`;
+    $('.scroll', root).scrollTop = keep;
+  };
+  draw();
+  const refresh = () => { if (V.name === 'manage') draw(); };
+  Net.ui.add(refresh); V.cleanup = () => { Net.ui.delete(refresh); Lock.parentOpen = false; };
+  root.addEventListener('click', async (e) => {
+    const t = e.target.closest('button'); if (!t) return; sfx('tap');
+    try {
+      if (t.id === 'm-on') { S.lock.on = !S.lock.on; Lock.lastTouch = Date.now(); saveNow(); Net.pushNow(); draw(); return; }
+      const p = Net.profs.find((x) => x.id === t.dataset.id); if (!p) return; const m = t.dataset.m, d = ymd();
+      if (m === 'plus') { await upd(p, { bonus: { date: d, min: (p.bonus && p.bonus.date === d ? p.bonus.min : 0) + 10 } }); toast(T('10분을 더했어요', 'Added 10 minutes')); }
+      else if (m === 'lock') await upd(p, { lockedDate: d });
+      else if (m === 'unlock') await upd(p, { lockedDate: '' });
+      else if (m === 'zero') await upd(p, { usageBy: {}, usageResetAt: Date.now() });
+      else if (m === 'minus') await upd(p, { limit: Math.max(5, (p.limit || 15) - 5) });
+      else if (m === 'add') await upd(p, { limit: Math.min(180, (p.limit || 15) + 5) });
+      else if (m === 'eok') { await upd(p, { eraseReq: { status: 'ok', at: Date.now() } }); toast(T('허락했어요. 아이 폰이 켜지면 지워져요.', 'Allowed. It will erase when the kid\'s phone is online.'), 3500); }
+      else if (m === 'eno') await upd(p, { eraseReq: { status: 'no', at: Date.now() } });
+    } catch (err) { toast(errText(err), 3500); }
+  });
+};
+
 </script>
 <script>
 /* Screens: home, learn map, guide, settings, parent area, play setup. */
@@ -4364,9 +4615,10 @@ function applyPrefs() {
   if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.dataset.theme = S.theme;
 }
 
+const esc2 = (x) => String(x).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 /* ---------------- Home ---------------- */
 Views.home = (root) => {
-  setTop({ title: T('하루체스', 'Daily Chess'), settings: true });
+  setTop({ title: T('하루체스', 'Daily Chess'), settings: true, right: Cloud.available ? '<button class="btn ghost sm who" id="tb-who"></button>' : '' });
   const all = Content.basic.concat(Content.pro);
   const totalStars = all.reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0);
   const greets = [
@@ -4381,8 +4633,8 @@ Views.home = (root) => {
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
       <button class="btn tile mint" data-go="setup" data-mode="cpu"><span class="ico">${Art.lion('wink')}</span>${tx(T('컴퓨터와 대국', 'Play Computer'))}</button>
       <button class="btn tile pink" data-go="setup" data-mode="2p"><span class="ico two"><svg viewBox="0 0 100 100"><use href="#wK"/></svg><svg viewBox="0 0 100 100"><use href="#bK"/></svg></span>${tx(T('둘이서 대국', '2 Players'))}</button>
-      ${Cloud.available ? `<button class="btn tile sun" data-go="online" id="h-online"><span class="ico">${ic('users', 48)}</span>${tx(T('친구·온라인', 'Friends & Online'))}<span class="nbadge" id="h-badge" hidden></span></button>` : ''}
-      <button class="btn tile lav" data-go="guide"><span class="ico">${ic('clock', 48)}</span>${tx(T('규칙·시계 안내', 'Rules & Clocks'))}</button>
+      ${Cloud.available ? `<button class="btn tile sun" data-go="online" id="h-online"><span class="ico">${ic('users', 44)}</span>${tx(T('친구·온라인', 'Friends & Online'))}<span class="nbadge" id="h-badge" hidden></span></button>` : ''}
+      <button class="btn tile lav wide" data-go="guide"><span class="ico">${ic('clock', 34)}</span>${tx(T('규칙·시계 안내', 'Rules & Clocks'))}</button>
     </div>
     ${g ? `<div class="card" style="margin-top:16px"><h3>${tx(T('하던 대국이 있어요', 'A game is waiting'))}</h3><button class="btn mint" id="resume">${ic('play', 20)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
     <div class="card" style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-around">
@@ -4391,9 +4643,25 @@ Views.home = (root) => {
       <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.stats.games}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('한 대국', 'Games'))}</div></div>
     </div></div></div>`;
   if (Cloud.available) {
-    const bd = () => { const el = $('#h-badge'); if (!el) return; const n = Net.pendingCount(); el.hidden = !n; el.textContent = n; };
+    const bd = () => {
+      const el = $('#h-badge'); if (el) { const n = Net.pendingCount(); el.hidden = !n; el.textContent = n; }
+      const w = $('#tb-who'); if (!w) return; const me = Net.me();
+      if (!Net.ready) w.innerHTML = '';
+      else if (!Net.user) w.innerHTML = tx(T('로그인', 'Sign in'));
+      else if (me) w.innerHTML = `${avHtml(me.avatar, 26)}<span class="wn">${esc(me.nick)}</span>${me.parent ? ' <span class="pill">' + tx(T('부모', 'Parent')) + '</span>' : ''}`;
+      else w.innerHTML = tx(T('프로필 만들기', 'Add profile'));
+    };
     bd(); Net.ui.add(bd); V.cleanup = () => Net.ui.delete(bd);
+    const wb = $('#tb-who'); if (wb) wb.onclick = () => { sfx('tap'); go(Net.user && Net.me() && S.lock.pin ? 'online' : 'account'); };
   }
+  let lastQ = -1;
+  $('.hero', root).addEventListener('click', () => {
+    let i; do { i = Math.floor(Math.random() * Content.QUOTES.length); } while (i === lastQ && Content.QUOTES.length > 1); lastQ = i;
+    const q = Content.QUOTES[i]; const bub = $('.hero .bubble', root); sfx('tap');
+    bub.innerHTML = rich(q.t) + (q.by ? `<div class="qby">— ${esc2(q.by)}</div>` : `<div class="qby">— ${tx(T('레오의 한마디', 'Leo says'))}</div>`);
+    bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop');
+    const l = $('.hero .lion', root); if (l) { l.classList.remove('hop'); void l.offsetWidth; l.classList.add('hop'); }
+  });
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]'); if (b) { sfx('tap'); go(b.dataset.go, { mode: b.dataset.mode }); }
     if (e.target.closest('#resume')) { sfx('tap'); go('game', { resume: true }); }
@@ -4473,9 +4741,17 @@ Views.settings = (root) => {
     if (tg) { sfx('tap'); if (tg.id === 'sw-sound') S.sound = !S.sound; if (tg.id === 'sw-coords') S.coords = !S.coords; save(); tg.setAttribute('aria-checked', tg.id === 'sw-sound' ? S.sound : S.coords); return; }
     if (e.target.closest('#btn-parent')) { sfx('tap'); if (await verifyParent()) go('parent'); return; }
     if (e.target.closest('#btn-reset')) {
+      const me = Net.me(), kidCloud = !!(me && !me.parent && Net.user);
+      const wipe = async () => { if (me) await Net.eraseNow(); else { Net.wipeLocal(); saveNow(); } toast(T('기록을 지웠어요', 'Progress erased')); rerender(); };
+      const sure = () => ask({ lion: 'oops', title: T('정말 지울까요?', 'Erase everything?'), text: T('별과 대국 기록이 모두 사라져요.', 'All stars and game records will be lost.'), buttons: [{ k: 'y', label: T('지우기', 'Erase'), cls: 'pink' }, { k: 'n', label: T('아니요', 'No'), cls: 'ghost' }] });
+      if (kidCloud) {
+        const k = await ask({ lion: 'oops', title: T('기록을 지울까요?', 'Erase progress?'), text: T('별과 대국 기록이 모두 사라져요. <b>부모님의 허락</b>이 필요해요.', 'All stars and game records will be lost. A <b>parent must allow</b> it.'), buttons: [{ k: 'req', label: T('부모님께 요청 보내기', 'Ask a parent'), cls: 'mint' }, { k: 'pin', label: T('부모님이 지금 여기서 허락', 'Parent allows here (password)'), cls: 'pink' }, { k: 'n', label: T('취소', 'Cancel'), cls: 'ghost' }] });
+        if (k === 'req') { try { await Net.requestErase(); toast(T('부모님께 요청을 보냈어요. 기다려 주세요!', 'Request sent. Please wait for a parent!'), 3500); } catch (err) { toast(errText(err), 3000); } }
+        else if (k === 'pin') { if (!(await verifyParent(T('기록을 지우려면 필요해요', 'Needed to erase progress')))) return; if ((await sure()) === 'y') await wipe(); }
+        return;
+      }
       if (!(await verifyParent(T('기록을 지우려면 필요해요', 'Needed to erase progress')))) return;
-      const k = await ask({ lion: 'oops', title: T('정말 지울까요?', 'Erase everything?'), text: T('별과 대국 기록이 모두 사라져요.', 'All stars and game records will be lost.'), buttons: [{ k: 'y', label: T('지우기', 'Erase'), cls: 'pink' }, { k: 'n', label: T('아니요', 'No'), cls: 'ghost' }] });
-      if (k === 'y') { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; saveNow(); toast(T('기록을 지웠어요', 'Progress erased')); rerender(); }
+      if ((await sure()) === 'y') await wipe();
     }
   });
 };
@@ -4502,7 +4778,7 @@ Views.parent = (root) => {
   root.addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return; sfx('tap');
     if (t.id === 'p-plus') { Lock.bonus(10); toast(T('오늘 10분을 더했어요', 'Added 10 minutes for today')); rr(); }
-    if (t.id === 'p-reset') { S.lock.usage = { date: ymd(), sec: 0 }; save(); rr(); }
+    if (t.id === 'p-reset') { Lock.resetUsage(); rr(); }
     if (t.id === 'p-minus') { L.limit = Math.max(5, L.limit - 5); save(); rr(); }
     if (t.id === 'p-add') { L.limit = Math.min(180, L.limit + 5); save(); rr(); }
     if (t.id === 'p-pin') { Lock.parentOpen = true; if (await createPin()) toast(T('비밀번호를 저장했어요', 'Password saved')); rr(); }
@@ -5010,10 +5286,10 @@ Views.game = (root, params) => {
     const g = G.g, c = g.turn, chk = g.inCheck();
     if (cfg.mode === 'net') {
       if (G.doc && G.doc.status === 'invite') setMsg(c, T('친구가 받을 때까지 기다려요…', 'Waiting for your friend…'), 'think');
-      else if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('내 차례예요!', 'Your turn!'), chk ? 'oops' : 'happy');
+      else if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('네 차례예요!', 'Your turn!'), chk ? 'oops' : 'happy');
       else setMsg(c, T('친구가 생각하고 있어요…', 'Your friend is thinking…'), 'think');
     } else if (cfg.mode === 'cpu') {
-      if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('내 차례예요. 말을 눌러 움직여 봐요!', 'Your turn! Tap a piece to move.'), chk ? 'oops' : 'happy');
+      if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('네 차례예요. 말을 눌러 움직여 봐요!', 'Your turn! Tap a piece to move.'), chk ? 'oops' : 'happy');
       else setMsg(c, T('레오가 생각하고 있어요…', 'Leo is thinking…'), 'think');
     } else {
       const nm = c === 0 ? T('흰색', 'White') : T('검은색', 'Black');
@@ -5091,7 +5367,7 @@ Views.game = (root, params) => {
     if (G.over || G.hintBusy) return;
     const g = G.g;
     if (cfg.mode === 'cpu' && g.turn !== cfg.me) { toast(T('레오 차례예요', 'It is Leo\'s turn')); return; }
-    if (cfg.mode === '2p' && color !== '' && +color !== g.turn) { toast(T('내 차례에 눌러 주세요', 'Tap it on your own turn')); return; }
+    if (cfg.mode === '2p' && color !== '' && +color !== g.turn) { toast(T('자기 차례에 눌러 주세요', 'Tap it on your own turn')); return; }
     G.hintBusy = true;
     const n = G.moves.length, who = g.turn;
     setMsg(who, T('레오가 좋은 수를 찾고 있어요…', 'Leo is looking for a good move…'), 'think');
@@ -5354,7 +5630,7 @@ Views.game = (root, params) => {
     });
   } else {
     if (cfg.mode === 'cpu') {
-      setMsg(0, cfg.me === 0 ? T('흰색이 먼저 둬요. 내 차례예요! \'잘 부탁드립니다\'', 'White moves first, and that is you! Say \'good luck\'.') : T('레오가 흰색이에요. 레오가 먼저 둬요.', 'Leo plays White and moves first.'), 'cheer');
+      setMsg(0, cfg.me === 0 ? T('흰색이 먼저 둬요. 네 차례예요! \'잘 부탁드립니다\'', 'White moves first, and that is you! Say \'good luck\'.') : T('레오가 흰색이에요. 레오가 먼저 둬요.', 'Leo plays White and moves first.'), 'cheer');
       if (cfg.me === 1) setTimeout(() => { if (!G.dead && !G.over) aiTurn(); }, 700);
     } else turnMsg();
   }
