@@ -1772,7 +1772,8 @@ function newRecovery() {
 /* ---------- daily play-time limit ---------- */
 const Lock = {
   locked: false, parentOpen: false, lastTouch: Date.now(),
-  active() { return !!(S.lock.on && S.lock.pin); },
+  enabled() { return !!(S.lock.on && S.lock.pin); },
+  active() { return this.enabled() && !(typeof Net !== 'undefined' && Net.meParent()); },
   used() { const u = S.lock.usage; return u.date === ymd() ? u.sec : 0; },
   limit() { const b = S.lock.bonus; return (S.lock.limit + (b.date === ymd() ? b.min : 0)) * 60; },
   remaining() { return this.limit() - this.used(); },
@@ -3929,6 +3930,7 @@ const Net = {
   enabled() { return Cloud.available; },
   emit() { this.ui.forEach((f) => { try { f(); } catch (e) { /* ignore */ } }); },
   me() { return this.profs.find((p) => p.id === S.cloud.pid) || null; },
+  meParent() { const m = this.me(); return !!(m && m.parent); },
   start() {
     if (!Cloud.available) return;
     Cloud.init();
@@ -3988,10 +3990,10 @@ const Net = {
     if (Object.keys(S.progress).length >= Content.basic.length && Content.basic.every((c) => chapDone(c.id))) S.proOpen = true;
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
   },
-  async createProfile(nick, avatar) {
+  async createProfile(nick, avatar, parent) {
     const u = this.user; if (!u) throw new Error('auth');
     const id = 'p' + rid(14), code = rid(8, CODE_AL);
-    const data = { ownerUid: u.uid, nick, avatar, code, readers: [], progress: {}, stars: 0, done: 0, stats: { games: 0, wins: {}, losses: {}, draws: {}, net: { w: 0, l: 0, d: 0 } }, streak: { last: '', n: 0 }, createdAt: Date.now(), lastActive: Date.now() };
+    const data = { ownerUid: u.uid, nick, avatar, parent: !!parent, code, readers: [], progress: {}, stars: 0, done: 0, stats: { games: 0, wins: {}, losses: {}, draws: {}, net: { w: 0, l: 0, d: 0 } }, streak: { last: '', n: 0 }, createdAt: Date.now(), lastActive: Date.now() };
     await withTimeout(Cloud.set('profiles/' + id, data));
     await withTimeout(Cloud.set('codes/' + code, { pid: id, ownerUid: u.uid, nick, avatar }));
     return id;
@@ -4002,8 +4004,8 @@ const Net = {
     await withTimeout(Cloud.del('profiles/' + p.id));
     if (S.cloud.pid === p.id) { S.cloud.pid = ''; saveNow(); }
   },
-  async editProfile(p, nick, avatar) {
-    await withTimeout(Cloud.set('profiles/' + p.id, { nick, avatar }, true));
+  async editProfile(p, nick, avatar, parent) {
+    await withTimeout(Cloud.set('profiles/' + p.id, { nick, avatar, parent: !!parent }, true));
     await withTimeout(Cloud.set('codes/' + p.code, { pid: p.id, ownerUid: p.ownerUid, nick, avatar }));
   },
 
@@ -4136,6 +4138,7 @@ function profileForm(p) {
     const ov = openModal(`<h2>${tx(p ? T('프로필 고치기', 'Edit profile') : T('새 프로필', 'New profile'))}</h2>
       <p>${tx(T('별명과 그림만 정해요. 진짜 이름은 쓰지 않아요!', 'Pick a nickname and a picture. Do not use a real name!'))}</p>
       <input class="input" id="pf-nick" maxlength="8" autocomplete="off" placeholder="${shortL(T('별명 (8자까지)', 'Nickname (max 8)'))}" value="${esc(p ? p.nick : '')}">
+      <label style="display:flex;gap:8px;align-items:center;margin:6px 0;font-size:.95rem"><input type="checkbox" id="pf-par" ${p && p.parent ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('부모님 프로필 (시간 제한 없음 · 고르려면 비밀번호 필요)', 'Parent profile (no time limit · password to switch)'))}</span></label>
       <div class="avgrid" id="pf-av"></div><div class="msg" id="pf-msg" style="min-height:1.3em;color:var(--bad)"></div>
       <div class="row"><button class="btn ghost sm" data-k="c">${tx(T('취소', 'Cancel'))}</button><button class="btn" data-k="o">${tx(T('저장', 'Save'))}</button></div>`, { dismiss: false, top: true });
     const draw = () => { $('#pf-av', ov).innerHTML = AVATARS.map((a) => `<button class="avb" data-av="${a}" aria-pressed="${a === av}">${avHtml(a, 52)}</button>`).join(''); };
@@ -4146,7 +4149,7 @@ function profileForm(p) {
       if (b.dataset.k === 'c') { ov.remove(); res(null); return; }
       const nick = cleanNick($('#pf-nick', ov).value);
       if (!nick) { $('#pf-msg', ov).innerHTML = tx(T('별명을 입력해 주세요', 'Please enter a nickname')); return; }
-      ov.remove(); res({ nick, avatar: av });
+      const par = !!$('#pf-par', ov).checked; ov.remove(); res({ nick, avatar: av, parent: par });
     });
   });
 }
@@ -4169,7 +4172,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v3 · email-login</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v4 · family</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4183,7 +4186,7 @@ Views.account = (root) => {
     root.innerHTML = `<div class="scroll"><div class="wrap">
       <div class="card"><h3>${tx(T('부모님 계정', 'Parent account'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${esc(Net.user.name || '')} · ${tx(T('로그인됨', 'Signed in'))}</p><button class="btn pink sm" id="a-out">${tx(T('로그아웃', 'Sign out'))}</button></div>
       <div class="sec">${tx(T('우리 아이 프로필', 'Kid profiles'), true)}</div>
-      <div class="profs">${Net.profs.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b><div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
+      <div class="profs">${Net.profs.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${p.parent ? ` <span class="pill">${tx(T('부모', 'Parent'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
         ${p.id === cur ? `<span class="pill warn">${tx(T('사용 중', 'In use'))}</span>` : `<button class="btn mint sm" data-sel="${p.id}">${tx(T('선택', 'Use'))}</button>`}<button class="btn ghost sm" data-ed="${p.id}">${tx(T('고치기', 'Edit'))}</button></div>`).join('')}</div>
       ${Net.profs.length < 6 ? `<div class="row center" style="margin-top:12px"><button class="btn lav" id="a-add">＋ ${tx(T('프로필 추가', 'Add profile'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : `<p style="text-align:center;color:var(--ink2)">${tx(T('먼저 프로필을 만들어 주세요.', 'Please create a profile first.'))}</p>`}
@@ -4199,14 +4202,14 @@ Views.account = (root) => {
       else if (t.id === 'a-add') {
         if (!(await verifyParent())) return;
         const r = await profileForm(null); if (!r) return;
-        const id = await Net.createProfile(r.nick, r.avatar);
+        const id = await Net.createProfile(r.nick, r.avatar, r.parent);
         await Net.select(id); toast(T('프로필을 만들었어요!', 'Profile created!'));
-      } else if (t.dataset.sel) { await Net.select(t.dataset.sel); toast(T('프로필을 바꿨어요', 'Profile changed')); }
+      } else if (t.dataset.sel) { const tp = Net.profs.find((x) => x.id === t.dataset.sel); if (tp && tp.parent && !(await verifyParent(T('부모님 프로필로 바꿔요', 'Switching to the parent profile')))) return; await Net.select(t.dataset.sel); toast(T('프로필을 바꿨어요', 'Profile changed')); }
       else if (t.dataset.ed) {
         if (!(await verifyParent())) return;
         const p = Net.profs.find((x) => x.id === t.dataset.ed);
         const k = await ask({ lion: 'think', title: esc(p.nick), buttons: [{ k: 'edit', label: T('별명·그림 고치기', 'Edit nickname & picture'), cls: 'lav' }, { k: 'del', label: T('프로필 지우기', 'Delete profile'), cls: 'pink' }, { k: 'x', label: T('닫기', 'Close'), cls: 'ghost' }], top: true });
-        if (k === 'edit') { const r = await profileForm(p); if (r) await Net.editProfile(p, r.nick, r.avatar); }
+        if (k === 'edit') { const r = await profileForm(p); if (r) await Net.editProfile(p, r.nick, r.avatar, r.parent); }
         else if (k === 'del') {
           const y = await ask({ lion: 'oops', title: T('정말 지울까요?', 'Delete it?'), text: T('이 프로필의 별과 친구 목록이 사라져요.', 'Its stars and friends will be removed.'), buttons: [{ k: 'y', label: T('지우기', 'Delete'), cls: 'pink' }, { k: 'n', label: T('아니요', 'No'), cls: 'ghost' }], top: true });
           if (y === 'y') await Net.deleteProfile(p);
@@ -4456,7 +4459,7 @@ Views.settings = (root) => {
     </div>
     <div class="card"><h3>${ic('lock', 20)} ${tx(T('부모님 설정', 'For parents'), true)}</h3>
       <p style="margin:0 0 10px">${rich(T('하루 놀이 시간을 정하고 비밀번호로 잠글 수 있어요.', 'Set a daily play-time limit and lock the app with a password.'))}</p>
-      <p style="margin:0 0 10px;color:var(--ink2);font-size:.92rem">${tx(Lock.active() ? T(`하루 ${S.lock.limit}분 제한이 켜져 있어요.`, `A ${S.lock.limit}-minute daily limit is on.`) : T('지금은 꺼져 있어요.', 'Currently off.'))}</p>
+      <p style="margin:0 0 10px;color:var(--ink2);font-size:.92rem">${tx(Lock.enabled() ? T(`하루 ${S.lock.limit}분 제한이 켜져 있어요.`, `A ${S.lock.limit}-minute daily limit is on.`) : T('지금은 꺼져 있어요.', 'Currently off.'))}</p>
       <button class="btn lav" id="btn-parent">${ic('lock', 20)} ${tx(T('부모님 설정 열기', 'Open parent settings'), true)}</button></div>
     <div class="card"><h3>${tx(T('내 기록', 'My record'), true)}</h3>
       <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${Content.basic.concat(Content.pro).reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0)}`, `${st.games} games · ${wins} wins · ★ ${Content.basic.concat(Content.pro).reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0)} stars`))}</p>
@@ -4510,7 +4513,7 @@ Views.parent = (root) => {
       } else { L.on = false; toast(T('시간 제한을 껐어요', 'Time limit is off')); }
       saveNow(); rr();
     }
-    if (t.id === 'p-lock') { if (!Lock.active()) { toast(T('먼저 시간 제한을 켜 주세요', 'Turn the time limit on first')); return; } Lock.parentOpen = false; showLock(); }
+    if (t.id === 'p-lock') { if (!Lock.enabled()) { toast(T('먼저 시간 제한을 켜 주세요', 'Turn the time limit on first')); return; } Lock.parentOpen = false; showLock(); }
   });
 };
 
