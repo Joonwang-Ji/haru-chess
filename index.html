@@ -369,6 +369,14 @@ svg.pc, svg.ic { overflow: visible; }
 .home-hero .bubble small.en { font-size: .78rem; }
 .home-hero .bubble::before { top: 50%; margin-top: -8px; }
 
+/* ---- v7: interactive swipe-back + home bottom spacing ---- */
+#app.dragging { background: var(--bg); will-change: transform; }
+.view.enter-back { animation: enterBack .3s cubic-bezier(.2,.8,.3,1); }
+@keyframes enterBack { from { transform: translateX(-22%); opacity: .55; } to { transform: none; opacity: 1; } }
+.home-wrap { display: flex; flex-direction: column; min-height: 100%; }
+.home-wrap > .card:last-child { margin-top: auto !important; }
+.home-wrap > .menu { margin-bottom: 14px; }
+
 </style></head><body><div id="app"><div id="topbar" class="topbar"></div><div id="view" class="view"></div></div><div id="layer"></div>
 <script id="src-engine">
 /* Chess rules engine: board, legal moves, make/unmake, FEN, SAN, game status. */
@@ -2120,11 +2128,14 @@ function toast(o, ms) {
 const Views = {};
 const V = { name: null, params: null, cleanup: null, back: null };
 const Hooks = { pause: [], resume: [] };
+let navN = 0;
 function go(name, params) {
+  navN++;
   if (V.cleanup) { try { V.cleanup(); } catch (e) { /* ignore */ } V.cleanup = null; }
   closeAllModals();
   V.name = name; V.params = params || {}; V.back = null;
   const old = $('#view'); const root = old.cloneNode(false); old.replaceWith(root); // fresh node = no stale listeners
+  if (V.fromBack) { root.classList.add('enter-back'); V.fromBack = false; setTimeout(() => root.classList.remove('enter-back'), 320); }
   Views[name](root, V.params);
 }
 function rerender() { go(V.name, V.params); }
@@ -2250,51 +2261,69 @@ function lockTick() {
   if (rem <= 0) { saveNow(); showLock(); }
 }
 
-/* ---------- gestures: swipe from the left edge = back, swipe a dialog down = close ---------- */
+/* ---------- gestures: drag from the left edge = back, drag a dialog down = close (follows the finger, iOS style) ---------- */
 (function () {
-  let g = null, hint = null;
+  let g = null;
   const DISMISS = ['cancel', 'c', 'x', 'n', 'no', 'close', 'cont'];
+  const app = () => document.getElementById('app');
+  const reset = (el, tr) => { el.style.transition = tr || ''; el.style.transform = ''; };
   addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) { g = null; return; }
-    const t = e.touches[0], tgt = e.target;
+    const t = e.touches[0], tgt = e.target, now = performance.now();
     const modal = tgt.closest && tgt.closest('.modal');
     if (modal) {
       const ov = modal.closest('.overlay');
       if (ov.classList.contains('lockscreen') || modal.classList.contains('flipped')) { g = null; return; }
-      g = { k: 'modal', x: t.clientX, y: t.clientY, modal, ov, dy: 0, ok: modal.scrollTop <= 0 };
-    } else if (t.clientX < 22 && !Layer.querySelector('.overlay') && !(tgt.closest && tgt.closest('.sq'))) {
-      g = { k: 'back', x: t.clientX, y: t.clientY, dx: 0 };
+      g = { k: 'modal', x: t.clientX, y: t.clientY, modal, ov, dy: 0, ok: modal.scrollTop <= 0, lx: 0, ly: t.clientY, lt: now, v: 0 };
+    } else if (t.clientX < 22 && !Layer.querySelector('.overlay') && $('#tb-back') && !(tgt.closest && tgt.closest('.sq'))) {
+      g = { k: 'back', x: t.clientX, y: t.clientY, dx: 0, lx: t.clientX, lt: now, v: 0, lock: false };
     } else g = null;
   }, { passive: true });
   addEventListener('touchmove', (e) => {
-    if (!g) return; const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y;
+    if (!g) return; const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y, now = performance.now();
     if (g.k === 'modal') {
-      if (!g.ok || dy < 0 || Math.abs(dx) > dy) { if (g.dy) { g.modal.style.transform = ''; g.dy = 0; } return; }
-      g.dy = dy; g.modal.style.transition = 'none'; g.modal.style.transform = `translateY(${Math.round(dy * 0.8)}px)`;
+      if (!g.ok || dy < 0 || Math.abs(dx) > dy) { if (g.dy) { g.dy = 0; reset(g.modal); g.ov.style.background = ''; } return; }
+      g.v = (t.clientY - g.ly) / Math.max(1, now - g.lt); g.ly = t.clientY; g.lt = now;
+      g.dy = dy; g.modal.style.transition = 'none'; g.modal.style.transform = `translateY(${Math.round(dy)}px)`;
+      g.ov.style.background = `rgba(28,24,60,${Math.max(0, .55 * (1 - dy / 500)).toFixed(3)})`;
     } else {
-      if (Math.abs(dy) > Math.abs(dx) * 0.8 && dx < 30) { if (hint) { hint.remove(); hint = null; } if (Math.abs(dy) > 40) g = null; return; }
-      g.dx = dx;
-      if (dx > 8 && $('#tb-back')) {
-        if (!hint) { hint = h(`<div class="swipehint">${ic('back')}</div>`); document.body.appendChild(hint); }
-        const p = Math.min(1, dx / 90); hint.style.opacity = p; hint.style.transform = `translateX(${Math.round(-50 + 60 * p)}px)`;
-      }
+      if (!g.lock) { if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) { g = null; return; } if (dx > 6) g.lock = true; else return; }
+      g.v = (t.clientX - g.lx) / Math.max(1, now - g.lt); g.lx = t.clientX; g.lt = now;
+      g.dx = Math.max(0, dx); const a = app(); a.classList.add('dragging');
+      a.style.transition = 'none'; a.style.transform = `translateX(${g.dx}px)`;
+      a.style.boxShadow = `-8px 0 24px rgba(30,30,70,${(.22 * (1 - Math.min(1, g.dx / innerWidth))).toFixed(3)})`;
     }
   }, { passive: true });
   const end = () => {
-    if (!g) return; const k = g;
-    if (hint) { hint.remove(); hint = null; }
-    g = null;
+    if (!g) return; const k = g; g = null;
     if (k.k === 'modal') {
-      if (k.dy > 90) {
-        const b = DISMISS.map((d) => k.modal.querySelector(`button[data-k="${d}"]`)).find(Boolean);
-        if (b) { k.modal.style.transition = 'transform .15s'; k.modal.style.transform = 'translateY(120%)'; setTimeout(() => b.click(), 120); return; }
-        if (k.ov.isConnected && !k.modal.querySelector('.keypad') && !k.modal.querySelector('button[data-k]')) { k.ov.remove(); return; }
+      const b = DISMISS.map((d) => k.modal.querySelector(`button[data-k="${d}"]`)).find(Boolean);
+      const closable = b || (!k.modal.querySelector('.keypad') && !k.modal.querySelector('button[data-k]'));
+      if (closable && (k.dy > 110 || (k.dy > 30 && k.v > 0.7))) {
+        k.modal.style.transition = 'transform .22s cubic-bezier(.4,0,1,1)'; k.modal.style.transform = 'translateY(105vh)';
+        k.ov.style.transition = 'background .22s'; k.ov.style.background = 'rgba(28,24,60,0)';
+        setTimeout(() => { if (b) b.click(); else k.ov.remove(); }, 200); return;
       }
-      k.modal.style.transition = 'transform .18s'; k.modal.style.transform = '';
-    } else if (k.dx > 80) { const b = $('#tb-back'); if (b) { sfx('tap'); b.click(); } }
+      k.modal.style.transition = 'transform .28s cubic-bezier(.2,.9,.3,1.2)'; k.modal.style.transform = ''; k.ov.style.background = '';
+      setTimeout(() => { k.modal.style.transition = ''; }, 300);
+    } else if (k.lock) {
+      const a = app(), commit = k.dx > innerWidth * 0.35 || (k.v > 0.6 && k.dx > 40), n0 = navN;
+      const done = () => { a.classList.remove('dragging'); a.style.transition = ''; a.style.transform = ''; a.style.boxShadow = ''; };
+      if (commit) {
+        a.style.transition = 'transform .24s cubic-bezier(.25,.8,.3,1)'; a.style.transform = `translateX(${innerWidth}px)`;
+        setTimeout(() => {
+          const b = $('#tb-back'); sfx('tap');
+          V.fromBack = true; if (b) b.click();
+          setTimeout(() => {
+            if (navN === n0) { V.fromBack = false; a.style.transition = 'none'; a.style.transform = `translateX(${innerWidth * 0.3}px)`; void a.offsetWidth; a.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)'; a.style.transform = ''; setTimeout(done, 280); } // back was refused (e.g. a confirm dialog)
+            else done();
+          }, 60);
+        }, 230);
+      } else { a.style.transition = 'transform .26s cubic-bezier(.2,.9,.3,1)'; a.style.transform = ''; setTimeout(done, 280); }
+    }
   };
   addEventListener('touchend', end, { passive: true });
-  addEventListener('touchcancel', () => { if (g && g.k === 'modal') { g.modal.style.transform = ''; } if (hint) { hint.remove(); hint = null; } g = null; }, { passive: true });
+  addEventListener('touchcancel', () => { if (!g) return; const k = g; g = null; if (k.k === 'modal') { reset(k.modal); k.ov.style.background = ''; } else { const a = app(); a.classList.remove('dragging'); reset(a); a.style.boxShadow = ''; } }, { passive: true });
 })();
 
 </script>
@@ -4348,7 +4377,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v6 · layout</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v7 · swipe</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4382,7 +4411,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v6 · layout</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v7 · swipe</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4444,7 +4473,7 @@ Views.online = (root) => {
     const invOut = gs.filter((g) => g.status === 'invite' && g.from === myColorIn(g, me.id));
     const act = gs.filter((g) => g.status === 'active');
     const oppOf = (g) => (g.white.pid === me.id ? g.black : g.white);
-    const turnOf = (g) => ((g.moves.length % 2 === 0 ? 0 : 1) === myColorIn(g, me.id) ? T('네 차례', 'Your turn') : T('친구 차례', 'Their turn'));
+    const turnOf = (g) => ((g.moves.length % 2 === 0 ? 0 : 1) === myColorIn(g, me.id) ? T('당신 차례', 'Your turn') : T('친구 차례', 'Their turn'));
     const key = frs.map((f) => f.pid).join(',');
     if (key !== watchKey) { unwatchF(); watchKey = key; unwatchF = Net.watchProfiles(frs.map((f) => f.pid), () => { if (V.name === 'online') draw(); }); }
     const net = (S.stats.net || { w: 0, l: 0, d: 0 });
@@ -4635,7 +4664,7 @@ Views.home = (root) => {
     T('체스는 생각하는 놀이야. 천천히 해도 괜찮아!', 'Chess is a thinking game. Take your time!'),
   ];
   const g = S.game && !S.game.over ? S.game : null;
-  root.innerHTML = `<div class="scroll"><div class="wrap">
+  root.innerHTML = `<div class="scroll"><div class="wrap home-wrap">
     <div class="hero home-hero">${Art.lion('happy')}<div class="bubble">${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div>
     <div class="menu">
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
@@ -5294,10 +5323,10 @@ Views.game = (root, params) => {
     const g = G.g, c = g.turn, chk = g.inCheck();
     if (cfg.mode === 'net') {
       if (G.doc && G.doc.status === 'invite') setMsg(c, T('친구가 받을 때까지 기다려요…', 'Waiting for your friend…'), 'think');
-      else if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('네 차례예요!', 'Your turn!'), chk ? 'oops' : 'happy');
+      else if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('당신 차례예요!', 'Your turn!'), chk ? 'oops' : 'happy');
       else setMsg(c, T('친구가 생각하고 있어요…', 'Your friend is thinking…'), 'think');
     } else if (cfg.mode === 'cpu') {
-      if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('네 차례예요. 말을 눌러 움직여 봐요!', 'Your turn! Tap a piece to move.'), chk ? 'oops' : 'happy');
+      if (c === cfg.me) setMsg(c, chk ? T('체크예요! 킹을 지켜야 해요.', 'Check! Protect your king.') : T('당신 차례예요. 말을 눌러 움직여 봐요!', 'Your turn! Tap a piece to move.'), chk ? 'oops' : 'happy');
       else setMsg(c, T('레오가 생각하고 있어요…', 'Leo is thinking…'), 'think');
     } else {
       const nm = c === 0 ? T('흰색', 'White') : T('검은색', 'Black');
@@ -5638,7 +5667,7 @@ Views.game = (root, params) => {
     });
   } else {
     if (cfg.mode === 'cpu') {
-      setMsg(0, cfg.me === 0 ? T('흰색이 먼저 둬요. 네 차례예요! \'잘 부탁드립니다\'', 'White moves first, and that is you! Say \'good luck\'.') : T('레오가 흰색이에요. 레오가 먼저 둬요.', 'Leo plays White and moves first.'), 'cheer');
+      setMsg(0, cfg.me === 0 ? T('흰색이 먼저 둬요. 당신 차례예요! \'잘 부탁드립니다\'', 'White moves first, and that is you! Say \'good luck\'.') : T('레오가 흰색이에요. 레오가 먼저 둬요.', 'Leo plays White and moves first.'), 'cheer');
       if (cfg.me === 1) setTimeout(() => { if (!G.dead && !G.over) aiTurn(); }, 700);
     } else turnMsg();
   }
