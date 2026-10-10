@@ -408,6 +408,66 @@ svg.pc, svg.ic { overflow: visible; }
 .stat-link { cursor: pointer; }
 .has-resume .tile.half{min-height:52px}
 
+
+/* ---------- rewards: star shop, badges, gifts ---------- */
+.rwhead { display: flex; gap: 14px; align-items: center; }
+.rwleo { width: 112px; flex: none; } .rwleo .lion { width: 100%; animation: bob 3.2s ease-in-out infinite; }
+.rwinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rwlvl { font-family: var(--font-d); font-size: 1.2rem; color: var(--brand-d); }
+.rwbar { height: 12px; border-radius: 99px; background: var(--surface2); overflow: hidden; box-shadow: inset 0 0 0 2px var(--line); }
+.rwbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ffd166, var(--brand)); }
+.rwbar.sm { height: 8px; margin-top: 6px; }
+.rwinfo small, .rwnote { color: var(--ink2); font-size: .85rem; }
+.rwbal { font-family: var(--font-d); font-size: 1.9rem; color: var(--brand-d); line-height: 1.1; margin-top: 2px; }
+.rwbal small { font-family: var(--font-b); font-size: .85rem; }
+.rwnote { margin: 8px 2px; }
+.rwtoday h3 { margin-bottom: 8px; }
+.rwms { display: flex; gap: 8px; }
+.rwms > div { flex: 1; text-align: center; font-size: .82rem; padding: 8px 4px; border-radius: 14px; background: var(--surface2); border: 2px solid var(--line); line-height: 1.25; }
+.rwms > div span { display: block; font-size: 1.5rem; margin-bottom: 2px; }
+.rwms > div.on { background: color-mix(in srgb, var(--good) 18%, var(--surface)); border-color: var(--good); }
+.rwweek { margin-top: 6px; }
+.rwdots { display: flex; gap: 6px; margin-bottom: 4px; }
+.rwdots span { flex: 1; height: 30px; border-radius: 10px; background: var(--surface2); border: 2px solid var(--line); display: grid; place-items: center; font-size: .78rem; color: var(--ink2); }
+.rwdots span.on { background: var(--sun); border-color: var(--brand); color: var(--brand-ink); }
+.rwdots span.today { box-shadow: 0 0 0 2px var(--brand); }
+.rwstreak { margin-top: 6px; font-family: var(--font-d); color: var(--ink2); }
+.rwtabs { margin: 14px 0 10px; }
+.rwtabs .chip { flex: 1; justify-content: center; }
+.rwdot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); display: inline-block; }
+.rwslots { margin-bottom: 4px; gap: 6px; } .rwslots .chip { padding: 6px 10px; min-height: 38px; font-size: .92rem; }
+.rwgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 560px) { .rwgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.rwitem { background: var(--surface); border-radius: 20px; padding: 10px 8px 12px; text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 6px; border: 3px solid transparent; }
+.rwitem.on { border-color: var(--good); }
+.rwitem.lock { opacity: .72; }
+.rwitem b { font-family: var(--font-d); font-weight: 400; font-size: .98rem; line-height: 1.2; }
+.rwneed { color: var(--ink2); font-size: .78rem; }
+.rwprev { height: 92px; display: grid; place-items: center; }
+.ml .lion { width: 100%; display: block; }
+.mb { display: grid; grid-template-columns: repeat(4, 1fr); border-radius: 12px; overflow: hidden; border: 3px solid var(--line); }
+.mp { display: flex; align-items: center; } .mp svg { width: 46px; height: 100%; }
+.rwbadges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rwbdg { background: var(--surface); border-radius: 20px; padding: 12px 10px; text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.rwbdg .ic { font-size: 2.2rem; filter: grayscale(1) opacity(.45); line-height: 1.1; }
+.rwbdg.on .ic { filter: none; }
+.rwbdg b { font-family: var(--font-d); font-weight: 400; font-size: .98rem; } .rwbdg small { color: var(--ink2); font-size: .8rem; line-height: 1.25; }
+.rwbdg .rwbar { width: 80%; }
+.rwbdg.on { border: 3px solid var(--sun); }
+.rwgift { display: flex; align-items: center; gap: 10px; padding: 8px 0; } .rwgift .ic { font-size: 1.5rem; } .rwgift .grow { flex: 1; min-width: 0; } .rwgift b { display: block; font-family: var(--font-d); font-weight: 400; } .rwgift small { color: var(--ink2); }
+.rwgifts .rwgift { background: var(--surface); border-radius: 18px; padding: 10px 12px; box-shadow: var(--shadow); margin-bottom: 10px; }
+.rwreq { border: 3px dashed var(--sun); margin-bottom: 12px; }
+.rwclaim { padding: 6px 4px; border-bottom: 1px solid var(--line); } .rwclaim small { color: var(--ink2); }
+.rwkid { margin-top: 12px; padding-top: 10px; border-top: 2px dashed var(--line); }
+.rwfld { display: block; text-align: left; font-size: .92rem; color: var(--ink2); margin: 8px 0; } .rwfld .input { margin-top: 4px; }
+.rwgain { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 6px 0 10px; padding: 8px 10px; border-radius: 16px; background: color-mix(in srgb, var(--sun) 26%, var(--surface)); }
+.rwgain b { font-family: var(--font-d); font-weight: 400; font-size: 1.7rem; color: var(--brand-d); display: inline-block; }
+.rwgain small { color: var(--ink2); font-size: .85rem; } .rwgain small i { font-style: normal; font-weight: 700; color: var(--brand-d); }
+.rwlv { font-family: var(--font-d); font-size: 3rem; color: var(--brand-d); line-height: 1.1; margin: 4px 0; }
+.rwbd-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; }
+.rwbd { background: var(--surface2); border-radius: 16px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; }
+.rwbd .ic { font-size: 2rem; line-height: 1.1; } .rwbd b { font-family: var(--font-d); font-weight: 400; } .rwbd small { color: var(--ink2); }
+.rwconfirm { display: flex; justify-content: center; margin: 4px 0 6px; }
 </style></head><body><div id="app"><div id="topbar" class="topbar"></div><div id="view" class="view"></div></div><div id="layer"></div>
 <script id="src-engine">
 /* Chess rules engine: board, legal moves, make/unmake, FEN, SAN, game status. */
@@ -1759,6 +1819,7 @@ const DEFAULTS = {
   game: null,
   history: [],
   daily: { done: {}, n: 0, last: '' },
+  rw: { v: 1 },
   cloud: { pid: '', saved: {}, done: [], use: {}, ur: {}, rs: {}, kid: false, dev: '' },
 };
 function merge(base, extra) {
@@ -1867,9 +1928,12 @@ function addHistory(e) { S.history.unshift(e); if (S.history.length > 30) S.hist
 function touchStreak() {
   const t = ymd();
   if (S.streak.last === t) return;
-  const y = new Date(); y.setDate(y.getDate() - 1);
-  S.streak.n = S.streak.last === ymd(y) ? S.streak.n + 1 : 1;
+  const gap = S.streak.last ? dayIndex(t) - dayIndex(S.streak.last) : 99;
+  if (gap === 1) S.streak.n += 1;
+  else if (gap === 2 && typeof RW !== 'undefined' && RW.usePass()) S.streak.n += 1; // one missed day is forgiven by a rest pass
+  else S.streak.n = 1;
   S.streak.last = t; save();
+  if (typeof RW !== 'undefined') RW.onDay();
 }
 
 /* ---------- PIN hashing (light-weight, offline) ---------- */
@@ -4159,6 +4223,7 @@ const Net = {
     const u = this.user; if (!u) return;
     try {
       const d = await Cloud.get('parents/' + u.uid);
+      if (d && Array.isArray(d.menu)) S.cloud.menu = d.menu.slice(0, 40).map((g) => ({ id: String(g.id || ''), ko: String(g.ko || '').slice(0, 40), cost: Math.max(1, Math.min(999, +g.cost || 1)) }));
       if (d && d.lock && d.lock.pin) {
         Object.assign(S.lock, { on: !!d.lock.on, limit: d.lock.limit, pin: d.lock.pin, rec: d.lock.rec });
         this.lockSig = this.lockSigNow(); saveNow();
@@ -4209,12 +4274,14 @@ const Net = {
       Cloud.set('histories/' + me.id, { ownerUid: me.ownerUid, items: S.history.slice(0, 30), updatedAt: Date.now() }).catch(() => {});
     }, 2000);
   },
+  pushMenu() { const u = this.user; if (!u) return Promise.reject(new Error('auth')); return withTimeout(Cloud.set('parents/' + u.uid, { menu: S.cloud.menu || [], updatedAt: Date.now() }, true)); },
+  async refreshMenu() { const u = this.user; if (!u) return; const d = await Cloud.get('parents/' + u.uid); if (d && Array.isArray(d.menu)) { S.cloud.menu = d.menu.slice(0, 40).map((g) => ({ id: String(g.id || ''), ko: String(g.ko || '').slice(0, 40), cost: Math.max(1, Math.min(999, +g.cost || 1)) })); saveNow(); } },
   clearForce() { const me = this.me(); if (me && me.lockedDate) Cloud.update('profiles/' + me.id, { lockedDate: '' }).catch(() => {}); },
-  wipeLocal() { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; S.history = []; S.daily = { done: {}, n: 0, last: '' }; },
+  wipeLocal() { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; S.history = []; S.daily = { done: {}, n: 0, last: '' }; S.rw = clone(DEFAULTS.rw); if (typeof RW !== 'undefined') RW.apply(); },
   async eraseCloud(p) {
     const now = Date.now();
     try { await withTimeout(Cloud.set('histories/' + p.id, { ownerUid: p.ownerUid, items: [], updatedAt: now })); } catch (e) { /* rules not updated yet */ }
-    await withTimeout(Cloud.update('profiles/' + p.id, { progress: {}, stars: 0, done: 0, stats: clone(DEFAULTS.stats), streak: clone(DEFAULTS.streak), resetAt: now, eraseReq: null }));
+    await withTimeout(Cloud.update('profiles/' + p.id, { progress: {}, stars: 0, done: 0, stats: clone(DEFAULTS.stats), streak: clone(DEFAULTS.streak), resetAt: now, eraseReq: null, rw: null, rwReq: null, lv: 0 }));
     S.cloud.rs[p.id] = now;
   },
   async eraseNow() { // wipe the current profile everywhere
@@ -4226,7 +4293,7 @@ const Net = {
     if (me.eraseReq && me.eraseReq.status === 'pending') throw new Error('erasepending');
     await withTimeout(Cloud.update('profiles/' + me.id, { eraseReq: { status: 'pending', at: Date.now() } }));
   },
-  reqCount() { return this.meParent() ? this.profs.filter((p) => !p.parent && p.eraseReq && p.eraseReq.status === 'pending').length : 0; },
+  reqCount() { return this.meParent() ? this.profs.filter((p) => !p.parent && p.eraseReq && p.eraseReq.status === 'pending').length + RW.pendingCount() : 0; },
   applyRemote() {
     const me = this.me(); if (!me) return;
     if ((me.resetAt || 0) > (S.cloud.rs[me.id] || 0)) { S.cloud.rs[me.id] = me.resetAt; this.wipeLocal(); saveNow(); if (V.name === 'home' || V.name === 'settings') rerender(); }
@@ -4234,6 +4301,7 @@ const Net = {
     const r = me.eraseReq;
     if (r && r.status === 'ok') { this.eraseNow().then(() => { toast(T('부모님이 허락해서 기록을 지웠어요', 'A parent said yes. Progress erased.'), 3500); if (V.name === 'home' || V.name === 'settings') rerender(); }); }
     else if (r && r.status === 'no') { Cloud.update('profiles/' + me.id, { eraseReq: null }).catch(() => {}); toast(T('부모님이 지금은 안 된대요', 'A parent said not now.'), 3500); }
+    RW.applyRemote(me);
     if (Lock.locked && Lock.active() && Lock.remaining() > 0) Lock.release();
     else if (!Lock.locked && Lock.active() && Lock.forced()) showLock();
     updateLockPill();
@@ -4241,15 +4309,15 @@ const Net = {
   selectLocal(pid) {
     const cur = S.cloud.pid || '_';
     if (cur === pid) return;
-    S.cloud.saved[cur] = { progress: S.progress, stats: S.stats, streak: S.streak, proOpen: S.proOpen, history: S.history, daily: S.daily };
+    S.cloud.saved[cur] = { progress: S.progress, stats: S.stats, streak: S.streak, proOpen: S.proOpen, history: S.history, daily: S.daily, rw: S.rw };
     const t = S.cloud.saved[pid];
-    if (t) { S.progress = t.progress; S.stats = t.stats; S.streak = t.streak; S.proOpen = t.proOpen; S.history = t.history || []; S.daily = t.daily || { done: {}, n: 0, last: '' }; }
+    if (t) { S.progress = t.progress; S.stats = t.stats; S.streak = t.streak; S.proOpen = t.proOpen; S.history = t.history || []; S.daily = t.daily || { done: {}, n: 0, last: '' }; S.rw = t.rw || clone(DEFAULTS.rw); }
     else if (cur === '_' && Object.keys(S.cloud.saved).length === 1) { /* first profile on this device adopts the local progress */ }
-    else { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.history = []; S.daily = { done: {}, n: 0, last: '' }; }
+    else { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.history = []; S.daily = { done: {}, n: 0, last: '' }; S.rw = clone(DEFAULTS.rw); }
     delete S.cloud.saved[pid]; if (cur === '_') delete S.cloud.saved['_'];
-    S.cloud.pid = pid; saveNow();
+    S.cloud.pid = pid; if (typeof RW !== 'undefined') RW.apply(); saveNow();
   },
-  async select(pid) { this.selectLocal(pid); const me = this.me(); if (me && !this.merged[me.id]) { this.mergeFromCloud(me); this.merged[me.id] = true; this.mergeHistory(me); } saveNow(); this.emit(); },
+  async select(pid) { this.selectLocal(pid); const me = this.me(); if (me && !this.merged[me.id]) { this.mergeFromCloud(me); this.merged[me.id] = true; this.mergeHistory(me); } saveNow(); this.applyRemote(); this.emit(); },
   mergeFromCloud(p) {
     if ((p.resetAt || 0) > (S.cloud.rs[p.id] || 0)) { this.wipeLocal(); S.cloud.rs[p.id] = p.resetAt; }
     const pr = p.progress || {};
@@ -4259,6 +4327,7 @@ const Net = {
     const cn = cs.net || {}; const ln = S.stats.net || (S.stats.net = { w: 0, l: 0, d: 0 });
     ln.w = Math.max(ln.w, cn.w || 0); ln.l = Math.max(ln.l, cn.l || 0); ln.d = Math.max(ln.d, cn.d || 0);
     if (p.streak && p.streak.last && p.streak.last > (S.streak.last || '')) S.streak = clone(p.streak);
+    RW.merge(p.rw);
     if (Object.keys(S.progress).length >= Content.basic.length && Content.basic.every((c) => chapDone(c.id))) S.proOpen = true;
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
   },
@@ -4289,7 +4358,7 @@ const Net = {
     if (me && this.merged[me.id]) {
       const progress = {}; let stars = 0, done = 0;
       for (const k of Object.keys(S.progress)) { const s = (S.progress[k] || {}).stars || 0; if (s) { progress[k] = s; stars += s; done++; } }
-      Cloud.set('profiles/' + me.id, { progress, stars, done, stats: S.stats, streak: S.streak, lastActive: Date.now() }, true).catch(() => {});
+      Cloud.set('profiles/' + me.id, { progress, stars: RW.total(), done, rw: RW.pack(), lv: RW.level(), stats: S.stats, streak: S.streak, lastActive: Date.now() }, true).catch(() => {});
     }
     if (this.parentOk && this.lockSigNow() !== this.lockSig && (S.lock.pin || this.lockSig)) {
       this.lockSig = this.lockSigNow();
@@ -4446,7 +4515,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v10 · sync</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v11 · rewards</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4480,7 +4549,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v10 · sync</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v11 · rewards</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4629,7 +4698,7 @@ async function friendInfo(f) {
   const n = (d.stats && d.stats.net) || { w: 0, l: 0, d: 0 };
   const cpuWins = d.stats ? Object.values(d.stats.wins || {}).reduce((a, b) => a + b, 0) : 0;
   const k = await ask({
-    html: `${avHtml(f.avatar, 72)}<h2 style="margin-top:6px">${esc(f.nick)}</h2>
+    html: `${avHtml(f.avatar, 72)}<h2 style="margin-top:6px">${esc(f.nick)}</h2>${d.lv ? `<div style="color:var(--ink2);font-size:.9rem;margin-top:-2px">Lv ${d.lv} · ${tx(RW.titleOf(d.lv), true)}</div>` : ''}
       <div class="infogrid"><div><b>★ ${d.stars || 0}</b><span>${tx(T('모은 별', 'Stars'))}</span></div><div><b>${done}/${total}</b><span>${tx(T('끝낸 단원', 'Chapters'))}</span></div><div><b>${(d.streak && d.streak.n) || 0}</b><span>${tx(T('연속 일', 'Day streak'))}</span></div><div><b>${(d.stats && d.stats.games) || 0}</b><span>${tx(T('한 대국', 'Games'))}</span></div><div><b>${cpuWins}</b><span>${tx(T('레오를 이김', 'Wins vs Leo'))}</span></div><div><b>${n.w}-${n.l}-${n.d}</b><span>${tx(T('온라인 승-패-무', 'Online W-L-D'))}</span></div></div>
       <p style="font-size:.88rem;color:var(--ink2)">${tx(T('마지막 접속: ', 'Last seen: '))}${tx(ago(d.lastActive))}</p>`,
     buttons: [{ k: 'x', label: T('닫기', 'Close'), cls: 'mint' }, { k: 'rm', label: T('친구 끊기', 'Remove friend'), cls: 'ghost' }], top: true,
@@ -4654,6 +4723,7 @@ Views.manage = (root) => {
       <div class="card"><h3>${ic('clock', 20)} ${tx(T('하루 시간 제한', 'Daily time limit'), true)}</h3>
         <p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${tx(S.lock.on ? T('켜져 있어요. 아이 프로필마다 시간을 정해요. 부모 프로필은 제한이 없어요.', 'On. Each kid has their own time. Parent profiles have no limit.') : T('꺼져 있어요. 켜야 시간 제한이 적용돼요.', 'Off. Turn it on to apply the limits.'))}</p>
         <button class="btn ${S.lock.on ? 'ghost' : 'mint'} sm" id="m-on">${tx(S.lock.on ? T('시간 제한 끄기', 'Turn off') : T('시간 제한 켜기', 'Turn on'))}</button></div>
+      ${RW.menuCard()}
       <div class="sec">${tx(T('아이들', 'Kids'), true)}</div>
       ${kids.length ? kids.map((p) => {
         const used = Net.usedToday(p), bon = p.bonus && p.bonus.date === d ? p.bonus.min : 0, lim = (p.limit || 15) + bon, forced = p.lockedDate === d;
@@ -4664,6 +4734,7 @@ Views.manage = (root) => {
           <div class="row"><button class="btn mint sm" data-m="plus" data-id="${p.id}">${tx(T('+10분', '+10 min'))}</button>${forced ? `<button class="btn lav sm" data-m="unlock" data-id="${p.id}">${tx(T('잠금 풀기', 'Unlock'))}</button>` : `<button class="btn pink sm" data-m="lock" data-id="${p.id}">${tx(T('지금 잠그기', 'Lock now'))}</button>`}<button class="btn ghost sm" data-m="zero" data-id="${p.id}">${tx(T('사용시간 지우기', 'Reset today'))}</button></div>
           <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="minus">−</button><b>${p.limit || 15}${tx(T('분', 'm'), true)}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="plus">＋</button></div></div>
           ${rq ? `<div class="bubble" style="margin:10px 0 0">${rich(T(`<b>${esc(p.nick)}</b>이(가) 기록 지우기를 요청했어요.`, `<b>${esc(p.nick)}</b> asked to erase progress.`))}<div class="row" style="margin-top:8px"><button class="btn pink sm" data-m="eok" data-id="${p.id}">${tx(T('허락 (지워요)', 'Allow (erase)'))}</button><button class="btn ghost sm" data-m="eno" data-id="${p.id}">${tx(T('거절', 'Decline'))}</button></div></div>` : ''}
+          ${RW.kidCard(p)}
         </div>`;
       }).join('') : `<p style="text-align:center;color:var(--ink2)">${tx(T('아이 프로필이 아직 없어요.', 'No kid profiles yet.'))}</p>`}
       <p style="text-align:center;color:var(--ink2);font-size:.8rem">${tx(T('아이 폰이 인터넷에 연결되어 있으면 바로 반영돼요.', 'Applies right away when the kid\'s phone is online.'))}</p>
@@ -4676,6 +4747,7 @@ Views.manage = (root) => {
   root.addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return; sfx('tap');
     try {
+      if (t.dataset.rw) { await RW.parentClick(t, upd, draw); return; }
       if (t.id === 'm-on') { S.lock.on = !S.lock.on; Lock.lastTouch = Date.now(); saveNow(); Net.pushNow(); draw(); return; }
       const p = Net.profs.find((x) => x.id === t.dataset.id); if (!p) return; const m = t.dataset.m, d = ymd();
       if (m === 'plus') { await upd(p, { bonus: { date: d, min: (p.bonus && p.bonus.date === d ? p.bonus.min : 0) + 10 } }); toast(T('10분을 더했어요', 'Added 10 minutes')); }
@@ -4718,6 +4790,7 @@ const chip = (set, v, label, cur, extra) => `<button class="chip" data-set="${se
 function applyPrefs() {
   const r = document.documentElement;
   r.dataset.board = S.board === 'mint' ? '' : S.board;
+  if (typeof RW !== 'undefined') RW.apply();
   if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.dataset.theme = S.theme;
 }
 
@@ -4726,7 +4799,7 @@ const esc2 = (x) => String(x).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&l
 Views.home = (root) => {
   setTop({ title: T('하루체스', 'Daily Chess'), settings: true, right: Cloud.available ? '<button class="btn ghost sm who" id="tb-who"></button>' : '' });
   const all = Content.basic.concat(Content.pro);
-  const totalStars = all.reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0);
+  const bal = RW.balance();
   const greets = [
     T('안녕! 나는 사자 코치 <b>레오</b>야. 오늘도 같이 체스 하자!', 'Hi! I am Coach <b>Leo</b>. Let us play chess together today!'),
     T('어서 와! 오늘은 어떤 말을 배워 볼까?', 'Welcome back! Which piece shall we learn today?'),
@@ -4745,7 +4818,7 @@ Views.home = (root) => {
     </div>
     ${g ? `<div class="resume-bar"><span>${tx(T('하던 대국이 있어요', 'A game is waiting'), true)}</span><button class="btn mint sm" id="resume">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
     <div class="card" style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-around">
-      <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">★ ${totalStars}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('모은 별', 'Stars'))}</div></div>
+      <div class="stat-link" data-go="treasure" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">★ ${bal}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('별 상점 ›', 'Star shop ›'))}</div></div>
       <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.streak.n}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('연속 연습 일', 'Day streak'))}</div></div>
       <div class="stat-link" data-go="history" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.stats.games}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('한 대국 ›', 'Games ›'))}</div></div>
     </div></div></div>`;
@@ -4838,13 +4911,13 @@ Views.settings = (root) => {
       <p style="margin:0 0 10px;color:var(--ink2);font-size:.92rem">${tx(Lock.enabled() ? T(`하루 ${S.lock.limit}분 제한이 켜져 있어요.`, `A ${S.lock.limit}-minute daily limit is on.`) : T('지금은 꺼져 있어요.', 'Currently off.'))}</p>
       <button class="btn lav" id="btn-parent">${ic('lock', 20)} ${tx(T('부모님 설정 열기', 'Open parent settings'), true)}</button></div>
     <div class="card"><h3>${tx(T('내 기록', 'My record'), true)}</h3>
-      <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${Content.basic.concat(Content.pro).reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0)}`, `${st.games} games · ${wins} wins · ★ ${Content.basic.concat(Content.pro).reduce((a, c) => a + ((S.progress[c.id] || {}).stars || 0), 0)} stars`))}</p>
+      <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${RW.total()}`, `${st.games} games · ${wins} wins · ★ ${RW.total()} stars`))}</p>
       <div class="row" style="margin-top:12px"><button class="btn lav sm" data-go="history">${tx(T('대국 기록·복기', 'Games & review'))}</button><button class="btn pink sm" id="btn-reset">${tx(T('기록 지우기', 'Erase progress'))}</button></div></div>
     <p style="text-align:center;color:var(--ink2);font-size:.85rem">${tx(T('하루체스 · 인터넷 없이도 쓸 수 있어요', 'Daily Chess · works without internet'))}</p>
   </div></div>`;
   root.addEventListener('click', async (e) => {
     const c = e.target.closest('.chip[data-set]');
-    if (c) { sfx('tap'); S[c.dataset.set] = c.dataset.v; save(); applyPrefs(); rerender(); return; }
+    if (c) { sfx('tap'); S[c.dataset.set] = c.dataset.v; if (c.dataset.set === 'board') { RW.st().eq.board = ''; RW.st().eqt = Date.now(); } save(); applyPrefs(); rerender(); return; }
     const tg = e.target.closest('.tg');
     if (tg) { sfx('tap'); if (tg.id === 'sw-sound') S.sound = !S.sound; if (tg.id === 'sw-coords') S.coords = !S.coords; save(); tg.setAttribute('aria-checked', tg.id === 'sw-sound' ? S.sound : S.coords); return; }
     if (e.target.closest('#btn-parent')) { sfx('tap'); if (await verifyParent()) go('parent'); return; }
@@ -4971,7 +5044,7 @@ function leadsToMate(g, m, n) {
 }
 
 function dailyChap() {
-  const d = ymd(), p = Puzzles[dayIndex(d) % Puzzles.length], w = p.fen.split(' ')[1] === 'w';
+  const d = ymd(), p = RW.puzzleFor(d), w = p.fen.split(' ')[1] === 'w';
   const side = w ? T('흰색', 'White') : T('검은색', 'Black'), sk = side.ko, se = side.en;
   const title = { m1: T('오늘의 퍼즐 · 체크메이트 1수', 'Daily puzzle · Mate in 1'), m2: T('오늘의 퍼즐 · 체크메이트 2수', 'Daily puzzle · Mate in 2'), f: T('오늘의 퍼즐 · 공짜 말 잡기', 'Daily puzzle · Free piece') }[p.k];
   const step = p.k === 'f'
@@ -5153,11 +5226,15 @@ Views.lesson = (root, params) => {
     D.done[d] = Math.min(L.mistakes, 9);
     if (first) { const y = new Date(); y.setDate(y.getDate() - 1); D.n = D.last === ymd(y) ? D.n + 1 : 1; D.last = d; }
     const keys = Object.keys(D.done).sort(); if (keys.length > 60) delete D.done[keys[0]];
-    touchStreak(); saveNow(); sfx('win');
+    touchStreak();
+    if (first) RW.earn('puzzle', { mistakes: L.mistakes });
+    const rw = RW.take();
+    saveNow(); sfx('win');
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
     const k = await ask({ lion: 'cheer', title: T('오늘의 퍼즐 완료!', 'Daily puzzle complete!'),
-      html: `<div style="font-size:2.2rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div><p>${rich(T(`퍼즐을 <b>${D.n}일 연속</b>으로 풀었어요! 내일 새 퍼즐이 기다려요.`, `Puzzle streak: <b>${D.n} day(s)</b>! A new puzzle comes tomorrow.`))}</p>`,
+      html: `<div style="font-size:2.2rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div>${RW.html(rw)}<p>${rich(T(`퍼즐을 <b>${D.n}일 연속</b>으로 풀었어요! 내일 새 퍼즐이 기다려요.`, `Puzzle streak: <b>${D.n} day(s)</b>! A new puzzle comes tomorrow.`))}</p>`,
       buttons: [{ k: 'home', label: T('홈으로', 'Home'), cls: 'mint' }, { k: 'again', label: T('다시 풀기', 'Again'), cls: 'ghost' }] });
+    await RW.celebrate(rw);
     if (L.dead) return;
     if (k === 'again') go('lesson', { daily: true }); else go('home');
   }
@@ -5167,17 +5244,20 @@ Views.lesson = (root, params) => {
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
     const prev = (S.progress[ch.id] || {}).stars || 0;
     S.progress[ch.id] = { stars: Math.max(prev, st) };
-    touchStreak(); saveNow();
-    if (goPlay) { go('setup', { mode: 'cpu' }); return; }
+    touchStreak(); RW.earn('lesson', { gain: Math.max(0, st - prev) });
+    const rw = RW.take();
+    saveNow();
+    if (goPlay) { go('setup', { mode: 'cpu' }); RW.notify(rw); return; }
     sfx('win');
     const idx = all.findIndex((c) => c.id === ch.id), nx = all[idx + 1];
     const nxOk = nx && (Content.basic.includes(nx) || Content.basic.every((c) => chapDone(c.id)) || S.proOpen);
     const msg = st === 3 ? T('실수 없이 해냈어요! 최고예요!', 'No mistakes! You are amazing!') : st === 2 ? T('잘했어요! 다음엔 별 3개에 도전해 봐요.', 'Well done! Try for 3 stars next time.') : T('끝까지 해냈어요! 다시 하면 별을 더 받을 수 있어요.', 'You finished! Play again to earn more stars.');
     const k = await ask({
       lion: 'cheer', title: T('단원 완료!', 'Chapter complete!'),
-      html: `<div style="font-size:2.4rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div><p>${rich(msg)}</p>`,
+      html: `<div style="font-size:2.4rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div>${prev < st ? `<p class="rwnote" style="margin:0">${tx(T(`별 +${st - prev} 모았어요`, `+${st - prev} star${st - prev > 1 ? 's' : ''}`))}</p>` : ''}${RW.html(rw)}<p>${rich(msg)}</p>`,
       buttons: [nxOk ? { k: 'next', label: T('다음 단원', 'Next chapter'), cls: 'mint' } : null, { k: 'again', label: T('다시 하기', 'Again'), cls: 'ghost' }, { k: 'map', label: T('단원 목록', 'Chapters'), cls: 'lav' }].filter(Boolean),
     });
+    await RW.celebrate(rw);
     if (L.dead) return;
     if (k === 'next') go('lesson', { ch: nx.id }); else if (k === 'again') go('lesson', { ch: ch.id }); else go('learn');
   }
@@ -5647,14 +5727,18 @@ Views.game = (root, params) => {
           S.stats.games++; const nt = S.stats.net || (S.stats.net = { w: 0, l: 0, d: 0 });
           if (res.winner === -1) nt.d++; else if (res.winner === cfg.me) nt.w++; else nt.l++;
           recordHistory(res);
+          RW.earn('game', { net: true, win: res.winner === cfg.me, plies: G.moves.length });
         }
       }
-    } else { S.game = null; S.stats.games++; recordHistory(res); }
+    } else {
+      S.game = null; S.stats.games++; recordHistory(res);
+      if (res.reason !== 'cancel') RW.earn('game', { cpu: cfg.mode === 'cpu', win: cfg.mode === 'cpu' && res.winner === cfg.me, level: cfg.level, plies: G.moves.length });
+    }
     if (cfg.mode === 'cpu') {
       const bucket = res.winner === -1 ? 'draws' : res.winner === cfg.me ? 'wins' : 'losses';
       S.stats[bucket][cfg.level] = (S.stats[bucket][cfg.level] || 0) + 1;
     }
-    touchStreak(); saveNow();
+    touchStreak(); G.rw = RW.take(); saveNow();
     renderBars(); updateBadges();
     const g = G.g;
     board.mark({ chk: res.reason === 'mate' ? g.k[g.turn] : null });
@@ -5677,9 +5761,10 @@ Views.game = (root, params) => {
     const tip = cfg.mode === 'cpu' && res.winner !== -1 && res.winner !== cfg.me ? T('좋은 승부였어요! 다시 도전하면 더 잘할 수 있어요. \'수고하셨습니다\'!', 'Good game! Try again and you will do even better. Good game!') : T('서로 \'수고하셨습니다\' 인사를 해요!', 'Shake hands and say \'good game\'!');
     const k = await ask({
       lion: mood, title: head,
-      html: `<p><b>${tx(ttl, true)}</b><br>${rich(why)}</p><p style="font-size:.92rem;color:var(--ink2)">${rich(tip)}</p>`,
+      html: `<p><b>${tx(ttl, true)}</b><br>${rich(why)}</p>${RW.html(G.rw)}<p style="font-size:.92rem;color:var(--ink2)">${rich(tip)}</p>`,
       buttons: [NG ? null : { k: 'again', label: T('한 판 더', 'Play again'), cls: 'mint' }, G.hid ? { k: 'review', label: T('복기하기 (실수 찾기)', 'Review & find mistakes'), cls: 'lav' } : null, { k: 'view', label: T('판 보기', 'Review board'), cls: 'ghost' }, { k: 'copy', label: T('기보 복사', 'Copy moves'), cls: 'ghost' }, { k: 'home', label: NG ? T('친구 화면으로', 'Back to friends') : T('홈으로', 'Home'), cls: 'lav' }].filter(Boolean),
     });
+    await RW.celebrate(G.rw); G.rw = null;
     if (G.dead) return;
     overAction(k);
   }
@@ -5794,7 +5879,7 @@ Views.game = (root, params) => {
       if (cfg.me === 1) setTimeout(() => { if (!G.dead && !G.over) aiTurn(); }, 700);
     } else turnMsg();
   }
-  touchStreak();
+  touchStreak(); RW.notify();
 };
 
 </script>
@@ -5894,8 +5979,10 @@ Views.replay = (root, params) => {
         res.push([Math.round(s), r.uci || '']);
       }
     }
+    const firstTime = !E.an;
     R.an = res; E.an = res; R.busy = false; save(); if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory();
     computeFlags(); renderMoves(); show(true);
+    if (firstTime && !R.dead) { RW.earn('review'); RW.notify(); }
   }
 
   /* ----- rendering ----- */
@@ -5959,11 +6046,622 @@ Views.replay = (root, params) => {
 
 </script>
 <script>
+/* Rewards data: earning rules, levels, shop catalog, badges. Pure data, so packs/*.json can extend it later (see RW.loadPacks). */
+'use strict';
+const RWD = (() => {
+  /* ---- earning rules (stars) ---- */
+  const RULES = {
+    puzzle: { ok: 1, perfect: 2 },            // daily puzzle, once a day
+    game: { play: 1, win: 1, cap: 3, minPlies: 12 }, // per day cap: effort counts, not only winning
+    review: { n: 1, cap: 1 },                  // analysing a finished game ("find my mistakes")
+    mission: { n: 2 },                         // finish all three of today's missions
+    week: { days: 4, n: 3 },                   // practise on 4 different days in a week
+    lvWin: 2,                                  // first win against each computer level
+    streak: { 3: 2, 7: 3, 14: 5, 30: 10, 60: 15, 100: 20, 200: 30, 365: 50 },
+    streakEvery: { from: 400, step: 100, n: 20 }, // after the table runs out: every 100 days, forever
+    passEvery: 7, passMax: 2,                  // a "rest pass" per 7-day streak (max 2) forgives one missed day
+    levelK: 4,                                 // stars needed for level L = levelK * L * (L + 1): never ends
+  };
+
+  const TITLES = [
+    T('체스 새싹', 'Chess Sprout'), T('폰 병정', 'Pawn Soldier'), T('나이트 모험가', 'Knight Explorer'), T('비숍 탐험가', 'Bishop Scout'),
+    T('룩 수문장', 'Rook Guardian'), T('퀸 도전자', 'Queen Challenger'), T('킹 후보', 'King Candidate'), T('체스 마스터', 'Chess Master'),
+    T('그랜드 레오', 'Grand Leo'), T('전설의 사자', 'Legendary Lion'),
+  ];
+
+  /* ---- Leo accessories (drawn on Leo's 120x120 canvas) ---- */
+  const SW = 'stroke-linejoin="round" stroke-linecap="round"';
+  const flower = (x, y, c) => `<g><circle cx="${x - 3.2}" cy="${y}" r="2.6" fill="${c}"/><circle cx="${x + 3.2}" cy="${y}" r="2.6" fill="${c}"/><circle cx="${x}" cy="${y - 3.2}" r="2.6" fill="${c}"/><circle cx="${x}" cy="${y + 3.2}" r="2.6" fill="${c}"/><circle cx="${x}" cy="${y}" r="2" fill="#ffd23f"/></g>`;
+  const ART = {
+    crown: `<path d="M37 31 L40 12 L51 22 L60 8 L69 22 L80 12 L83 31 Z" fill="#ffd23f" stroke="#c98a00" stroke-width="2.4" ${SW}/><rect x="37" y="28" width="46" height="7" rx="3.5" fill="#ffb300" stroke="#c98a00" stroke-width="2"/><circle cx="40" cy="12" r="2.8" fill="#ff6b81"/><circle cx="60" cy="8" r="3" fill="#4dd0e1"/><circle cx="80" cy="12" r="2.8" fill="#ff6b81"/>`,
+    cap: `<path d="M36 35 Q60 3 84 35 Z" fill="#4f8ef7" stroke="#2c5fb8" stroke-width="2.4" ${SW}/><path d="M79 32 Q99 30 103 37 Q90 41 76 37 Z" fill="#3a74d8" stroke="#2c5fb8" stroke-width="2.2" ${SW}/><circle cx="60" cy="9" r="3" fill="#2c5fb8"/><path d="M60 17 l2.2 4.6 5 .7 -3.6 3.5 .9 5 -4.5 -2.4 -4.5 2.4 .9 -5 -3.6 -3.5 5 -.7z" fill="#fff" opacity=".95"/>`,
+    party: `<path d="M60 1 L44 35 L76 35 Z" fill="#ff7eb6" stroke="#d6428a" stroke-width="2.4" ${SW}/><path d="M53 16 L67 22 M49 26 L71 31" stroke="#ffe066" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="3" r="4.4" fill="#ffd23f" stroke="#c98a00" stroke-width="1.8"/>`,
+    wizard: `<ellipse cx="60" cy="33" rx="31" ry="6.5" fill="#6d4fd1" stroke="#4a30a0" stroke-width="2.4"/><path d="M42 32 Q55 10 63 2 Q66 18 78 32 Z" fill="#8564ee" stroke="#4a30a0" stroke-width="2.4" ${SW}/><path d="M56 22 l1.6 3.4 3.6 .5 -2.6 2.5 .6 3.6 -3.2 -1.7 -3.2 1.7 .6 -3.6 -2.6 -2.5 3.6 -.5z" fill="#ffd23f"/><circle cx="68" cy="26" r="1.8" fill="#ffd23f"/>`,
+    ribbon: `<path d="M60 20 L40 8 Q35 20 40 32 Z" fill="#ff7eb6" stroke="#d6428a" stroke-width="2.4" ${SW}/><path d="M60 20 L80 8 Q85 20 80 32 Z" fill="#ff7eb6" stroke="#d6428a" stroke-width="2.4" ${SW}/><circle cx="60" cy="20" r="6" fill="#ff9ccc" stroke="#d6428a" stroke-width="2.4"/>`,
+    flowers: `<path d="M34 38 Q60 18 86 38" fill="none" stroke="#69b36a" stroke-width="3.4" stroke-linecap="round"/>${flower(37, 36, '#ff9aa2')}${flower(48, 27, '#fff')}${flower(60, 23, '#ffb0d4')}${flower(72, 27, '#fff')}${flower(83, 36, '#ff9aa2')}`,
+    phones: `<path d="M27 52 Q27 10 60 10 Q93 10 93 52" fill="none" stroke="#3b3a57" stroke-width="5" stroke-linecap="round"/><rect x="19" y="44" width="14" height="22" rx="7" fill="#ff6b81" stroke="#3b3a57" stroke-width="2.6"/><rect x="87" y="44" width="14" height="22" rx="7" fill="#ff6b81" stroke="#3b3a57" stroke-width="2.6"/>`,
+    chef: `<rect x="40" y="26" width="40" height="10" rx="3" fill="#fff" stroke="#c9d1e0" stroke-width="2.4"/><circle cx="46" cy="20" r="9" fill="#fff" stroke="#c9d1e0" stroke-width="2.4"/><circle cx="60" cy="14" r="11" fill="#fff" stroke="#c9d1e0" stroke-width="2.4"/><circle cx="74" cy="20" r="9" fill="#fff" stroke="#c9d1e0" stroke-width="2.4"/><rect x="41" y="27" width="38" height="8" rx="3" fill="#fff"/>`,
+    round: `<circle cx="48" cy="57" r="10.5" fill="#fff" fill-opacity=".25" stroke="#7a4b2a" stroke-width="2.8"/><circle cx="72" cy="57" r="10.5" fill="#fff" fill-opacity=".25" stroke="#7a4b2a" stroke-width="2.8"/><path d="M58.5 56 Q60 53 61.5 56" fill="none" stroke="#7a4b2a" stroke-width="2.8"/><path d="M38 55 L31 52 M82 55 L89 52" stroke="#7a4b2a" stroke-width="2.6" stroke-linecap="round"/>`,
+    shades: `<path d="M36 51 H84 Q84 66 72 66 Q62 66 60 57 Q58 66 48 66 Q36 66 36 51 Z" fill="#2b2a3d" stroke="#15142a" stroke-width="2.4" ${SW}/><path d="M42 54 l7 -2 M66 54 l7 -2" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/>`,
+    starglass: `<path d="M48 45 l3.6 7.4 8.1 1.1 -5.9 5.7 1.4 8.1 -7.2 -3.9 -7.2 3.9 1.4 -8.1 -5.9 -5.7 8.1 -1.1z" fill="#ffd23f" fill-opacity=".85" stroke="#c98a00" stroke-width="2.2" ${SW}/><path d="M72 45 l3.6 7.4 8.1 1.1 -5.9 5.7 1.4 8.1 -7.2 -3.9 -7.2 3.9 1.4 -8.1 -5.9 -5.7 8.1 -1.1z" fill="#ffd23f" fill-opacity=".85" stroke="#c98a00" stroke-width="2.2" ${SW}/><path d="M57 56 H63" stroke="#c98a00" stroke-width="2.6"/>`,
+    stache: `<path d="M60 74 Q54 70 47 72 Q41 74 40 79 Q47 78 52 77 Q57 76 60 78 Q63 76 68 77 Q73 78 80 79 Q79 74 73 72 Q66 70 60 74 Z" fill="#6b4226" stroke="#4a2c14" stroke-width="1.8" ${SW}/>`,
+    sticker: `<path d="M38 72 l2.4 4.8 5.3 .8 -3.8 3.7 .9 5.3 -4.8 -2.5 -4.8 2.5 .9 -5.3 -3.8 -3.7 5.3 -.8z" fill="#ff6b81"/><path d="M82 72 l2.4 4.8 5.3 .8 -3.8 3.7 .9 5.3 -4.8 -2.5 -4.8 2.5 .9 -5.3 -3.8 -3.7 5.3 -.8z" fill="#4dd0e1"/>`,
+    bowtie: `<path d="M60 102 L44 94 Q41 102 44 110 Z" fill="#e8445a" stroke="#a82238" stroke-width="2.2" ${SW}/><path d="M60 102 L76 94 Q79 102 76 110 Z" fill="#e8445a" stroke="#a82238" stroke-width="2.2" ${SW}/><circle cx="60" cy="102" r="5" fill="#ff7a8c" stroke="#a82238" stroke-width="2.2"/>`,
+    scarf: `<path d="M34 94 Q60 108 86 94 L88 104 Q60 120 32 104 Z" fill="#4f8ef7" stroke="#2c5fb8" stroke-width="2.4" ${SW}/><path d="M44 100 l-2 10 M60 104 l0 10 M76 100 l2 10" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/><path d="M80 104 L90 118 L78 118 L74 106 Z" fill="#3a74d8" stroke="#2c5fb8" stroke-width="2.2" ${SW}/>`,
+    medal: `<path d="M48 90 L58 106 M72 90 L62 106" stroke="#e8445a" stroke-width="5" stroke-linecap="round"/><circle cx="60" cy="110" r="9" fill="#ffd23f" stroke="#c98a00" stroke-width="2.6"/><path d="M60 104 l2 4 4.4 .6 -3.2 3 .8 4.4 -4 -2.1 -4 2.1 .8 -4.4 -3.2 -3 4.4 -.6z" fill="#fff3b0"/>`,
+    bandana: `<path d="M34 92 Q60 104 86 92 L60 118 Z" fill="#e8445a" stroke="#a82238" stroke-width="2.4" ${SW}/><circle cx="56" cy="102" r="1.8" fill="#fff"/><circle cx="64" cy="104" r="1.8" fill="#fff"/><circle cx="60" cy="110" r="1.8" fill="#fff"/><circle cx="50" cy="97" r="1.6" fill="#fff"/><circle cx="70" cy="98" r="1.6" fill="#fff"/>`,
+    bell: `<path d="M34 94 Q60 106 86 94" fill="none" stroke="#e8445a" stroke-width="4.4" stroke-linecap="round"/><circle cx="60" cy="108" r="7" fill="#ffd23f" stroke="#c98a00" stroke-width="2.4"/><path d="M53 108 H67" stroke="#c98a00" stroke-width="1.8"/><circle cx="60" cy="112" r="1.6" fill="#c98a00"/>`,
+  };
+
+  const CATALOG = [
+    /* slot: hat | face | neck | board | piece. cost in stars; minLv = level needed; from = release date (packs use it for monthly drops) */
+    { id: 'hat-ribbon', slot: 'hat', art: 'ribbon', cost: 6, ko: '핑크 리본', en: 'Pink ribbon' },
+    { id: 'hat-cap', slot: 'hat', art: 'cap', cost: 8, ko: '파란 모자', en: 'Blue cap' },
+    { id: 'hat-party', slot: 'hat', art: 'party', cost: 10, ko: '파티 고깔', en: 'Party hat' },
+    { id: 'hat-flowers', slot: 'hat', art: 'flowers', cost: 14, minLv: 2, ko: '꽃 화관', en: 'Flower crown' },
+    { id: 'hat-phones', slot: 'hat', art: 'phones', cost: 18, minLv: 3, ko: '헤드폰', en: 'Headphones' },
+    { id: 'hat-chef', slot: 'hat', art: 'chef', cost: 20, minLv: 4, ko: '요리사 모자', en: 'Chef hat' },
+    { id: 'hat-wizard', slot: 'hat', art: 'wizard', cost: 30, minLv: 6, ko: '마법사 모자', en: 'Wizard hat' },
+    { id: 'hat-crown', slot: 'hat', art: 'crown', cost: 50, minLv: 8, ko: '황금 왕관', en: 'Golden crown' },
+    { id: 'face-round', slot: 'face', art: 'round', cost: 8, ko: '동그란 안경', en: 'Round glasses' },
+    { id: 'face-sticker', slot: 'face', art: 'sticker', cost: 8, ko: '볼 스티커', en: 'Cheek stickers' },
+    { id: 'face-stache', slot: 'face', art: 'stache', cost: 12, minLv: 2, ko: '멋진 수염', en: 'Fancy mustache' },
+    { id: 'face-shades', slot: 'face', art: 'shades', cost: 16, minLv: 3, ko: '선글라스', en: 'Sunglasses' },
+    { id: 'face-star', slot: 'face', art: 'starglass', cost: 22, minLv: 5, ko: '별 안경', en: 'Star glasses' },
+    { id: 'neck-bell', slot: 'neck', art: 'bell', cost: 6, ko: '방울 목걸이', en: 'Bell collar' },
+    { id: 'neck-bowtie', slot: 'neck', art: 'bowtie', cost: 10, ko: '빨간 나비넥타이', en: 'Red bow tie' },
+    { id: 'neck-bandana', slot: 'neck', art: 'bandana', cost: 12, minLv: 2, ko: '빨간 반다나', en: 'Red bandana' },
+    { id: 'neck-scarf', slot: 'neck', art: 'scarf', cost: 16, minLv: 3, ko: '파란 목도리', en: 'Blue scarf' },
+    { id: 'neck-medal', slot: 'neck', art: 'medal', cost: 28, minLv: 6, ko: '금메달', en: 'Gold medal' },
+
+    { id: 'bd-wood', slot: 'board', cost: 10, vars: { l: '#f0d9b5', d: '#b58863' }, ko: '나무 체스판', en: 'Wooden board' },
+    { id: 'bd-green', slot: 'board', cost: 10, vars: { l: '#eeeed2', d: '#769656' }, ko: '초록 체스판', en: 'Green board' },
+    { id: 'bd-ocean', slot: 'board', cost: 12, vars: { l: '#e8f1f8', d: '#5b8db8' }, ko: '바다 체스판', en: 'Ocean board' },
+    { id: 'bd-candy', slot: 'board', cost: 14, minLv: 2, vars: { l: '#fff0f6', d: '#f48fb1' }, ko: '사탕 체스판', en: 'Candy board' },
+    { id: 'bd-sunset', slot: 'board', cost: 16, minLv: 3, vars: { l: '#fff1d6', d: '#e8825a' }, ko: '노을 체스판', en: 'Sunset board' },
+    { id: 'bd-mocha', slot: 'board', cost: 18, minLv: 4, vars: { l: '#f3e6d8', d: '#a67c5b' }, ko: '모카 체스판', en: 'Mocha board' },
+    { id: 'bd-night', slot: 'board', cost: 24, minLv: 5, vars: { l: '#c9d1e8', d: '#5a6590' }, ko: '밤하늘 체스판', en: 'Night board' },
+    { id: 'bd-gold', slot: 'board', cost: 40, minLv: 8, vars: { l: '#fff6d6', d: '#d9a52b' }, ko: '황금 체스판', en: 'Golden board' },
+
+    { id: 'pc-ink', slot: 'piece', cost: 12, vars: { wf: '#ffffff', wl: '#222222', bf: '#3a3a3a', bl: '#000000', wd: '#bbbbbb', bd: '#8a8a8a' }, ko: '먹물 말', en: 'Ink pieces' },
+    { id: 'pc-ice', slot: 'piece', cost: 15, vars: { wf: '#f4fbff', wl: '#2a6f97', bf: '#5aa9d6', bl: '#12405e', wd: '#a9cfe6', bd: '#9cc9e6' }, ko: '얼음 말', en: 'Ice pieces' },
+    { id: 'pc-rose', slot: 'piece', cost: 15, vars: { wf: '#fff0f3', wl: '#a4325a', bf: '#e2749b', bl: '#5c1531', wd: '#e8b0c4', bd: '#f1b5ca' }, ko: '장미 말', en: 'Rose pieces' },
+    { id: 'pc-forest', slot: 'piece', cost: 18, minLv: 2, vars: { wf: '#f6fbe8', wl: '#3f6b2c', bf: '#6fae4f', bl: '#1f3b14', wd: '#b6d39f', bd: '#b5dc9d' }, ko: '숲속 말', en: 'Forest pieces' },
+    { id: 'pc-candy', slot: 'piece', cost: 20, minLv: 3, vars: { wf: '#fff1f8', wl: '#c2185b', bf: '#8e5bd6', bl: '#2f0f63', wd: '#f0b2d0', bd: '#c8abf1' }, ko: '사탕 말', en: 'Candy pieces' },
+    { id: 'pc-sunset', slot: 'piece', cost: 22, minLv: 4, vars: { wf: '#fff3e0', wl: '#bf5b04', bf: '#f0813a', bl: '#5a2200', wd: '#f3c99b', bd: '#ffc08f' }, ko: '노을 말', en: 'Sunset pieces' },
+    { id: 'pc-gold', slot: 'piece', cost: 36, minLv: 7, vars: { wf: '#fff6cf', wl: '#8a6200', bf: '#d9a52b', bl: '#4a3300', wd: '#e6cf86', bd: '#f5d98a' }, ko: '황금 말', en: 'Golden pieces' },
+    { id: 'pc-galaxy', slot: 'piece', cost: 45, minLv: 9, vars: { wf: '#e8e4ff', wl: '#33257a', bf: '#4a3b9e', bl: '#120a40', wd: '#b7aef0', bd: '#8f84dd' }, ko: '은하수 말', en: 'Galaxy pieces' },
+  ];
+
+  const SLOTS = [
+    { id: 'hat', ko: '모자', en: 'Hats', ico: '🎩' }, { id: 'face', ko: '얼굴', en: 'Face', ico: '🕶️' }, { id: 'neck', ko: '목', en: 'Neck', ico: '🧣' },
+    { id: 'board', ko: '체스판', en: 'Boards', ico: '🟫' }, { id: 'piece', ko: '말 모양', en: 'Pieces', ico: '♞' },
+  ];
+
+  /* ---- badges: process-focused (effort, review, coming back), not only winning. m = metric name, gte = threshold ---- */
+  const B = (id, ico, ko, en, dko, den, m, gte) => ({ id, ico, ko, en, dko, den, m, gte });
+  const BADGES = [
+    B('first-lesson', '🌱', '첫걸음', 'First step', '단원을 하나 끝냈어요', 'Finished a chapter', 'chap', 1),
+    B('lessons-7', '📘', '배움이 즐거워', 'Happy learner', '단원 7개 완료', '7 chapters done', 'chap', 7),
+    B('basic-all', '🎓', '기초 졸업', 'Basics graduate', '기초 과정을 모두 끝냈어요', 'Finished every basic chapter', 'basicAll', 1),
+    B('three-5', '🌟', '꼼꼼한 친구', 'Careful player', '별 3개짜리 단원 5개', 'Five 3-star chapters', 'c3', 5),
+    B('earn-30', '⭐', '별 모으기', 'Star collector', '별을 30개 모았어요', 'Collected 30 stars', 'earned', 30),
+    B('earn-150', '💫', '별이 반짝반짝', 'Sparkling', '별을 150개 모았어요', 'Collected 150 stars', 'earned', 150),
+    B('earn-500', '🌠', '별 부자', 'Star rich', '별을 500개 모았어요', 'Collected 500 stars', 'earned', 500),
+    B('streak-3', '🔥', '3일 연속', '3-day streak', '3일 연속 연습', 'Practised 3 days in a row', 'streakMax', 3),
+    B('streak-7', '🔥', '일주일 연속', '7-day streak', '7일 연속 연습', '7 days in a row', 'streakMax', 7),
+    B('streak-30', '🏅', '한 달 연속', '30-day streak', '30일 연속 연습', '30 days in a row', 'streakMax', 30),
+    B('streak-100', '🏆', '백일의 사자', '100-day lion', '100일 연속 연습', '100 days in a row', 'streakMax', 100),
+    B('puzzle-7', '🧩', '퍼즐 탐정', 'Puzzle detective', '오늘의 퍼즐 7번 풀기', 'Solved 7 daily puzzles', 'pz', 7),
+    B('puzzle-30', '🔍', '퍼즐 박사', 'Puzzle doctor', '오늘의 퍼즐 30번 풀기', 'Solved 30 daily puzzles', 'pz', 30),
+    B('puzzle-perfect', '💎', '한 번에 척척', 'First try!', '틀리지 않고 퍼즐 10번', '10 puzzles with no mistakes', 'pzp', 10),
+    B('first-game', '♟️', '첫 대국', 'First game', '대국을 한 판 끝까지 뒀어요', 'Finished a game', 'games', 1),
+    B('games-10', '🎮', '열 판 완주', 'Ten games', '대국 10판', '10 games played', 'games', 10),
+    B('first-win', '🥇', '첫 승리', 'First win', '컴퓨터를 처음 이겼어요', 'Beat Leo for the first time', 'wins', 1),
+    B('levels-3', '🦁', '레오 도전자', 'Leo challenger', '레오의 3단계를 이겼어요', 'Beat 3 different Leo levels', 'lvwin', 3),
+    B('levels-6', '👑', '레오 정복', 'Leo conqueror', '레오의 6단계 모두 이겼어요', 'Beat all 6 Leo levels', 'lvwin', 6),
+    B('tough-5', '💪', '포기하지 않아', 'Never give up', '졌어도 끝까지 5판 두었어요', 'Played on after 5 losses', 'loss', 5),
+    B('review-5', '🔎', '복기 꿈나무', 'Review rookie', '복기로 실수를 5번 찾았어요', 'Reviewed 5 games', 'rev', 5),
+    B('review-20', '🧠', '복기왕', 'Review master', '복기 20번', 'Reviewed 20 games', 'rev', 20),
+    B('online-1', '🤝', '친구와 한 판', 'Game with a friend', '친구와 온라인 대국', 'Played a friend online', 'net', 1),
+    B('mission-7', '🎯', '미션 성공', 'Mission master', '오늘의 미션 7번 완료', '7 daily missions done', 'ms', 7),
+    B('week-4', '📅', '꾸준한 한 달', 'Steady month', '주간 목표를 4번 이뤘어요', '4 weekly goals reached', 'wk', 4),
+    B('shop-1', '🛍️', '첫 쇼핑', 'First shopping', '상점에서 처음 샀어요', 'Bought something', 'buy', 1),
+    B('shop-10', '🎁', '멋쟁이 레오', 'Stylish Leo', '꾸미기 아이템 10개', '10 items bought', 'buy', 10),
+    B('lv-5', '⬆️', '레벨 5', 'Level 5', '레벨 5 달성', 'Reached level 5', 'level', 5),
+    B('lv-10', '🚀', '레벨 10', 'Level 10', '레벨 10 달성', 'Reached level 10', 'level', 10),
+  ];
+
+  /* preset ideas for the parents' reward list (parents edit freely) */
+  const PRESETS = [
+    { ko: '아이스크림 먹기', en: 'Ice cream', cost: 30 }, { ko: '가족 보드게임 하는 날', en: 'Family game night', cost: 50 },
+    { ko: '저녁 메뉴 내가 고르기', en: 'Pick dinner', cost: 60 }, { ko: '친구랑 놀기', en: 'Playdate', cost: 80 },
+    { ko: '작은 선물', en: 'Small gift', cost: 120 }, { ko: '주말 나들이 장소 정하기', en: 'Choose the weekend trip', cost: 150 },
+  ];
+
+  return { RULES, TITLES, ART, CATALOG, SLOTS, BADGES, PRESETS };
+})();
+
+</script>
+<script>
+/* Rewards engine: one star wallet for every kind of practice, daily caps, endless levels, badges, shop, parent gifts, content packs. */
+'use strict';
+const RW = (() => {
+  const { RULES, TITLES, ART, SLOTS } = RWD;
+  const R0 = () => ({ v: 1, e: {}, s: {}, pe: {}, pu: {}, own: {}, eq: { hat: '', face: '', neck: '', board: '', piece: '' }, eqt: 0, bd: {}, m: {}, sm: {}, lw: {}, ms: { d: '', p: 0, g: 0, l: 0, x: 0 }, wk: { id: '', days: [], x: 0 }, gifts: [], claims: [], lv: 0 });
+  const packs = { items: [], badges: [], puzzles: [], loaded: 0 };
+  let P = { n: 0, lines: [], pass: '' };
+  let flushT = 0;
+
+  /* ---------- state ---------- */
+  function st() {
+    let r = S.rw;
+    if (!r || typeof r !== 'object') r = S.rw = R0();
+    const d = R0();
+    for (const k of Object.keys(d)) if (r[k] == null) r[k] = d[k];
+    for (const k of Object.keys(d.eq)) if (typeof r.eq[k] !== 'string') r.eq[k] = '';
+    return r;
+  }
+  const sum = (o) => Object.keys(o || {}).reduce((a, k) => a + (+o[k] || 0), 0);
+  const cnt = (o) => Object.keys(o || {}).length;
+  function lessonStars() { let n = 0; const p = S.progress || {}; for (const k of Object.keys(p)) n += (p[k] || {}).stars || 0; return n; }
+  const total = () => lessonStars() + sum(st().e);
+  function hold() { try { const m = Net.me(); return m && m.rwReq && m.rwReq.status === 'pending' ? (+m.rwReq.cost || 0) : 0; } catch (e) { return 0; } }
+  const spent = () => sum(st().s);
+  const balance = () => Math.max(0, total() - spent() - hold());
+  const need = (L) => RULES.levelK * L * (L + 1);
+  function level() { return lvOfTotal(total()); }
+  function lvOfTotal(t) { let L = Math.max(0, Math.floor((-1 + Math.sqrt(1 + 4 * t / RULES.levelK)) / 2)); while (need(L + 1) <= t) L++; while (L > 0 && need(L) > t) L--; return L; }
+  const titleOf = (L) => TITLES[Math.min(TITLES.length - 1, Math.max(0, Math.floor((L - 1) / 2)))];
+  const passes = () => Math.max(0, cnt(st().pe) - cnt(st().pu));
+
+  /* ---------- queue of "what just happened" ---------- */
+  function arm() { clearTimeout(flushT); flushT = setTimeout(() => { if (P.lines.length || P.pass) notify(); }, 1600); }
+  function award(key, n, ko, en, accumulate) {
+    if (n <= 0) return 0;
+    const r = st();
+    r.e[key] = accumulate ? (r.e[key] || 0) + n : n;
+    P.n += n; P.lines.push({ n, t: T(ko, en) }); arm(); save();
+    return n;
+  }
+  function msn() { const r = st(), t = ymd(); if (r.ms.d !== t) r.ms = { d: t, p: 0, g: 0, l: 0, x: 0 }; return r.ms; }
+  function mark(slot) {
+    const m = msn(), r = st(); m[slot] = 1;
+    if (m.p && m.g && m.l && !m.x) { m.x = 1; r.m.ms = (r.m.ms || 0) + 1; award('m' + ymd(), RULES.mission.n, '오늘의 미션 완료!', 'Daily missions complete!'); }
+    save();
+  }
+
+  /* ---------- earning ---------- */
+  function earn(kind, o) {
+    o = o || {}; const r = st(), t = ymd();
+    if (kind === 'lesson') { mark('l'); arm(); }
+    else if (kind === 'puzzle') {
+      if (r.e['p' + t]) return;
+      const perfect = o.mistakes === 0;
+      r.m.pz = (r.m.pz || 0) + 1; if (perfect) r.m.pzp = (r.m.pzp || 0) + 1;
+      award('p' + t, perfect ? RULES.puzzle.perfect : RULES.puzzle.ok, perfect ? '퍼즐을 한 번에 풀었어요' : '오늘의 퍼즐', perfect ? 'Solved it first try' : 'Daily puzzle');
+      mark('p');
+    } else if (kind === 'game') {
+      if (!(o.plies >= RULES.game.minPlies)) return; // very short games do not count
+      let n = RULES.game.play + (o.win ? RULES.game.win : 0);
+      const used = r.e['g' + t] || 0, room = Math.max(0, RULES.game.cap - used);
+      n = Math.min(n, room);
+      if (n > 0) award('g' + t, n, o.win ? '대국에서 이겼어요' : '끝까지 둔 대국', o.win ? 'Won a game' : 'Played to the end', true);
+      if (o.cpu && o.win && o.level && !r.lw[o.level]) { r.lw[o.level] = 1; award('l' + o.level, RULES.lvWin, `레오 ${o.level}단계 첫 승리!`, `First win vs Leo level ${o.level}!`); }
+      mark('g');
+    } else if (kind === 'review') {
+      r.m.rev = (r.m.rev || 0) + 1;
+      if (!(r.e['r' + t])) award('r' + t, RULES.review.n, '복기로 실수를 찾았어요', 'Reviewed a game');
+      mark('l');
+    } else if (kind === 'gift') {
+      award('g:' + o.id, o.n, '부모님이 주신 칭찬 별', 'A praise star from your parent');
+    }
+    save();
+  }
+
+  const weekId = (t) => { const p = t.split('-').map(Number), dt = new Date(Date.UTC(p[0], p[1] - 1, p[2])); dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7)); return dt.toISOString().slice(0, 10); };
+  function onDay() { // called once per new practice day by touchStreak()
+    const r = st(), t = ymd(), n = S.streak.n || 0;
+    r.m.sx = Math.max(r.m.sx || 0, n);
+    const wid = weekId(t);
+    if (r.wk.id !== wid) { if (r.wk.id < wid) r.wk = { id: wid, days: [], x: 0 }; }
+    if (r.wk.id === wid) {
+      if (!r.wk.days.includes(t)) r.wk.days.push(t);
+      if (!r.wk.x && r.wk.days.length >= RULES.week.days) { r.wk.x = 1; r.m.wk = (r.m.wk || 0) + 1; award('w' + wid, RULES.week.n, '이번 주 목표 달성!', 'Weekly goal reached!'); }
+    }
+    let b = RULES.streak[n]; const se = RULES.streakEvery;
+    if (!b && n >= se.from && (n - se.from) % se.step === 0) b = se.n;
+    if (b && !r.sm['s' + n]) { r.sm['s' + n] = 1; award('s' + n, b, `${n}일 연속 연습!`, `${n}-day streak!`); }
+    if (n > 0 && n % RULES.passEvery === 0 && !r.pe[t] && passes() < RULES.passMax) { r.pe[t] = 1; P.pass = 'new'; arm(); }
+    save();
+  }
+  function usePass() { // a single missed day is forgiven if a rest pass is available
+    if (passes() <= 0) return false;
+    st().pu[ymd()] = 1; P.pass = 'used'; arm(); return true;
+  }
+
+  /* ---------- metrics, badges, levels ---------- */
+  const allItems = () => RWD.CATALOG.concat(packs.items).filter((i) => !i.from || i.from <= ymd());
+  const allBadges = () => RWD.BADGES.concat(packs.badges);
+  const itemById = (id) => RWD.CATALOG.concat(packs.items).find((i) => i.id === id) || null;
+  function metric(m) {
+    const r = st(), p = S.progress || {}, w = S.stats.wins || {}, net = S.stats.net || { w: 0, l: 0, d: 0 };
+    switch (m) {
+      case 'chap': return Object.keys(p).filter((k) => ((p[k] || {}).stars || 0) > 0).length;
+      case 'c3': return Object.keys(p).filter((k) => ((p[k] || {}).stars || 0) === 3).length;
+      case 'basicAll': return Content.basic.every((c) => chapDone(c.id)) ? 1 : 0;
+      case 'earned': return total();
+      case 'streakMax': return Math.max(r.m.sx || 0, S.streak.n || 0);
+      case 'games': return S.stats.games || 0;
+      case 'wins': return sum(w);
+      case 'loss': return sum(S.stats.losses) + (net.l || 0);
+      case 'lvwin': return Object.keys(w).filter((k) => w[k] > 0).length;
+      case 'net': return (net.w || 0) + (net.l || 0) + (net.d || 0);
+      case 'level': return level();
+      default: return r.m[m] || 0;
+    }
+  }
+  function take() { // collect everything that happened since the last call (stars, level-up, new badges)
+    const r = st(), out = { n: P.n, lines: P.lines, pass: P.pass, badges: [], lvUp: null };
+    P = { n: 0, lines: [], pass: '' }; clearTimeout(flushT);
+    const lv = level();
+    if (lv > r.lv) { out.lvUp = { from: r.lv, to: lv }; r.lv = lv; }
+    for (const b of allBadges()) if (!r.bd[b.id] && metric(b.m) >= b.gte) { r.bd[b.id] = ymd(); out.badges.push(b); }
+    if (out.n || out.badges.length || out.lvUp || out.pass) save();
+    return out;
+  }
+  const hasNews = (r) => r && (r.n || (r.badges && r.badges.length) || r.lvUp || r.pass);
+
+  /* ---------- result chips + celebration ---------- */
+  function html(r) {
+    if (!r || !(r.n || r.lines.length)) return '';
+    return `<div class="rwgain"><b class="pop-star">+${r.n} ★</b>${r.lines.map((l) => `<small>${tx(l.t, true)} <i>+${l.n}</i></small>`).join('')}</div>`;
+  }
+  async function celebrate(r) {
+    if (!r || !(r.lvUp || (r.badges && r.badges.length))) { if (r && r.pass) toastPass(r); return; }
+    const parts = [];
+    let title, mood = 'cheer';
+    if (r.lvUp) {
+      const L = r.lvUp.to, un = allItems().filter((i) => (i.minLv || 0) > r.lvUp.from && (i.minLv || 0) <= L).length;
+      title = T(`레벨 ${L}!`, `Level ${L}!`);
+      parts.push(`<div class="rwlv pop-star">Lv ${L}</div><p><b>${tx(titleOf(L), true)}</b></p>` + (un ? `<p style="font-size:.92rem;color:var(--ink2)">${rich(T(`새로 열린 꾸미기가 <b>${un}개</b> 있어요!`, `<b>${un}</b> new item(s) unlocked!`))}</p>` : ''));
+    } else title = T('새 배지를 받았어요!', 'New badge!');
+    if (r.badges && r.badges.length) {
+      const shown = r.badges.slice(0, 4);
+      parts.push(`<div class="rwbd-list">${shown.map((b) => `<div class="rwbd"><span class="ic">${b.ico}</span><b>${tx(T(b.ko, b.en), true)}</b><small>${tx(T(b.dko, b.den))}</small></div>`).join('')}${r.badges.length > shown.length ? `<small>+${r.badges.length - shown.length}</small>` : ''}</div>`);
+    }
+    sfx('win');
+    const k = await ask({ lion: mood, title, html: parts.join(''), buttons: [{ k: 'shop', label: T('별 상점 보기', 'See shop'), cls: 'lav' }, { k: 'ok', label: T('좋아요', 'Nice'), cls: 'mint' }] });
+    if (k === 'shop') go('treasure');
+  }
+  function toastPass(r) { toast(r.pass === 'used' ? T('🛡️ 휴식권을 써서 연속 기록을 지켰어요!', '🛡️ A rest pass saved your streak!') : T('🛡️ 휴식권을 받았어요! 하루 쉬어도 연속 기록이 이어져요.', '🛡️ You got a rest pass! One missed day will not break your streak.'), 3600); }
+  async function notify(r) {
+    r = r || take(); if (!hasNews(r)) return;
+    if (r.lvUp || r.badges.length) { await celebrate(r); return; }
+    if (r.pass) toastPass(r);
+    else if (r.n) toast(T(`★ +${r.n}  ${r.lines.map((l) => l.t.ko).join(', ')}`, `★ +${r.n}  ${r.lines.map((l) => l.t.en).join(', ')}`), 3000);
+    if (V.name === 'home' || V.name === 'treasure') rerender();
+  }
+
+  /* ---------- shop ---------- */
+  function owned(id) { return !!st().own[id]; }
+  function equip(id) { const it = itemById(id), r = st(); if (!it || !owned(id)) return; r.eq[it.slot] = id; r.eqt = Date.now(); save(); apply(); }
+  function unequip(slot) { const r = st(); r.eq[slot] = ''; r.eqt = Date.now(); save(); apply(); }
+  function buy(id) {
+    const it = itemById(id), r = st();
+    if (!it) return 'none'; if (owned(id)) return 'owned';
+    if (level() < (it.minLv || 0)) return 'lv';
+    if (balance() < it.cost) return 'stars';
+    r.own[id] = 1; r.s['i' + id] = it.cost; r.m.buy = (r.m.buy || 0) + 1;
+    equip(id); save(); return 'ok';
+  }
+  const VARMAP = { wf: '--p-fill-w', wl: '--p-line-w', bf: '--p-fill-b', bl: '--p-line-b', wd: '--p-dt-w', bd: '--p-dt-b' };
+  function apply() { // board / piece themes are plain CSS variables
+    const root = document.documentElement.style, eq = st().eq;
+    const bd = eq.board && owned(eq.board) ? itemById(eq.board) : null;
+    if (bd && bd.vars) { root.setProperty('--sq-l', bd.vars.l); root.setProperty('--sq-d', bd.vars.d); } else { root.removeProperty('--sq-l'); root.removeProperty('--sq-d'); }
+    const pc = eq.piece && owned(eq.piece) ? itemById(eq.piece) : null;
+    for (const k of Object.keys(VARMAP)) { if (pc && pc.vars && pc.vars[k]) root.setProperty(VARMAP[k], pc.vars[k]); else root.removeProperty(VARMAP[k]); }
+  }
+
+  /* ---------- Leo's outfit ---------- */
+  const baseLion = Art.lion;
+  function itemSvg(it) { if (!it) return ''; if (it.svg) return it.svg; return ART[it.art] || ''; }
+  function outfitSvg(eq) { let s = ''; for (const slot of ['neck', 'face', 'hat']) { const id = eq[slot]; if (id && owned(id)) s += `<g class="acc">${itemSvg(itemById(id))}</g>`; } return s; }
+  Art.lion = function (mood, bare) { const s = baseLion(mood); if (bare) return s; const o = outfitSvg(st().eq); return o ? s.replace(/<\/svg>$/, o + '</svg>') : s; };
+  Art.lionWith = function (mood, slot, id) { const it = itemById(id); return baseLion(mood).replace(/<\/svg>$/, it ? `<g class="acc">${itemSvg(it)}</g></svg>` : '</svg>'); };
+
+  /* ---------- merge / pack (cloud + other devices). Every counter is keyed per device or per event, so merging never loses or doubles stars. ---------- */
+  function pack() { const r = st(); return clone({ v: 1, e: r.e, s: r.s, pe: r.pe, pu: r.pu, own: r.own, eq: r.eq, eqt: r.eqt, bd: r.bd, m: r.m, sm: r.sm, lw: r.lw, ms: r.ms, wk: r.wk, gifts: r.gifts, claims: r.claims, lv: r.lv }); }
+  function merge(rem) {
+    if (!rem || typeof rem !== 'object') return;
+    const r = st(), mx = (a, b) => { for (const k of Object.keys(b || {})) a[k] = Math.max(a[k] || 0, +b[k] || 0); };
+    for (const k of ['e', 's', 'pe', 'pu', 'm', 'sm', 'lw']) mx(r[k], rem[k]);
+    for (const k of Object.keys(rem.own || {})) r.own[k] = 1;
+    for (const k of Object.keys(rem.bd || {})) if (!r.bd[k]) r.bd[k] = rem.bd[k];
+    if ((rem.eqt || 0) > (r.eqt || 0) && rem.eq) { for (const k of Object.keys(r.eq)) r.eq[k] = typeof rem.eq[k] === 'string' ? rem.eq[k] : ''; r.eqt = rem.eqt; }
+    const rm = rem.ms || {};
+    if (rm.d && rm.d > r.ms.d) r.ms = { d: rm.d, p: rm.p || 0, g: rm.g || 0, l: rm.l || 0, x: rm.x || 0 };
+    else if (rm.d && rm.d === r.ms.d) { for (const k of ['p', 'g', 'l', 'x']) r.ms[k] = r.ms[k] || rm[k] || 0; }
+    const rk = rem.wk || {};
+    if (rk.id && rk.id > r.wk.id) r.wk = { id: rk.id, days: (rk.days || []).slice(), x: rk.x || 0 };
+    else if (rk.id && rk.id === r.wk.id) { for (const d of rk.days || []) if (!r.wk.days.includes(d)) r.wk.days.push(d); r.wk.x = r.wk.x || rk.x || 0; }
+    for (const g of rem.gifts || []) if (!r.gifts.includes(g)) r.gifts.push(g);
+    for (const c of rem.claims || []) if (!r.claims.some((x) => x.at === c.at)) r.claims.push(c);
+    r.claims.sort((a, b) => b.at - a.at); r.claims.length = Math.min(r.claims.length, 20);
+    r.lv = Math.max(r.lv || 0, rem.lv || 0);
+    apply();
+  }
+
+  /* ---------- parent: gift menu, requests, praise ---------- */
+  const menu = () => (Array.isArray(S.cloud.menu) ? S.cloud.menu : []);
+  async function requestGift(item) {
+    const me = Net.me(); if (!me) throw new Error('noprofile');
+    if (hold() > 0) throw new Error('pending');
+    if (balance() < item.cost) throw new Error('stars');
+    await withTimeout(Cloud.update('profiles/' + me.id, { rwReq: { id: item.id, ko: item.ko, cost: item.cost, status: 'pending', at: Date.now() } }));
+  }
+  async function cancelRequest() { const me = Net.me(); if (me) await withTimeout(Cloud.update('profiles/' + me.id, { rwReq: null })); }
+  function applyRemote(me) { // the kid's device reacts to what a parent did (approve / decline / praise)
+    const r = st(); let changed = false;
+    const q = me.rwReq;
+    if (q && q.status === 'ok') {
+      if (!r.s['c' + q.at]) { r.s['c' + q.at] = q.cost; r.claims.unshift({ id: q.id, ko: q.ko, cost: q.cost, at: q.at }); r.claims.length = Math.min(r.claims.length, 20); changed = true; }
+      Cloud.update('profiles/' + me.id, { rwReq: null }).catch(() => {});
+      toast(T(`🎉 부모님이 <b>${esc(q.ko)}</b> 선물을 허락했어요!`, `🎉 Your parent said yes to <b>${esc(q.ko)}</b>!`), 4200); sfx('win');
+    } else if (q && q.status === 'no') {
+      Cloud.update('profiles/' + me.id, { rwReq: null }).catch(() => {});
+      toast(T('부모님이 이번엔 어렵대요. 별은 그대로 있어요.', 'Not this time. Your stars are safe.'), 3600); changed = true;
+    }
+    for (const g of me.rwGifts || []) {
+      if (g && g.id && !r.gifts.includes(g.id)) { r.gifts.push(g.id); earn('gift', { id: g.id, n: Math.max(1, Math.min(20, +g.n || 1)) }); changed = true; }
+    }
+    if (r.gifts.length > 60) r.gifts = r.gifts.slice(-60);
+    if (changed) { save(); notify(); if (V.name === 'treasure') rerender(); }
+  }
+
+  /* ---------- content packs (packs/*.json): new shop items, badges and puzzles without touching the app code ---------- */
+  const DATE = /^\d{4}-\d{2}-\d{2}$/, HEX = /^#[0-9a-fA-F]{3,8}$/, ID = /^[a-z0-9][a-z0-9_-]{1,31}$/;
+  const clean = (s, n) => String(s == null ? '' : s).replace(/[<>]/g, '').slice(0, n || 40);
+  function safeSvg(s) {
+    s = String(s || ''); if (s.length > 5000) return '';
+    if (/<\s*(script|foreignObject|image|iframe|use|style|a)\b/i.test(s) || /\bon\w+\s*=/i.test(s) || /javascript:|data:|href\s*=|src\s*=/i.test(s)) return '';
+    return s;
+  }
+  function okItem(x) {
+    if (!x || !ID.test(x.id || '') || !SLOTS.some((s) => s.id === x.slot) || itemById(x.id)) return null;
+    const it = { id: x.id, slot: x.slot, cost: Math.max(1, Math.min(9999, Math.round(+x.cost) || 0)), minLv: Math.max(0, Math.min(99, Math.round(+x.minLv) || 0)), ko: clean(x.ko), en: clean(x.en || x.ko), from: DATE.test(x.from || '') ? x.from : '' };
+    if (!it.cost) return null;
+    if (x.slot === 'board') { if (!x.vars || !HEX.test(x.vars.l || '') || !HEX.test(x.vars.d || '')) return null; it.vars = { l: x.vars.l, d: x.vars.d }; }
+    else if (x.slot === 'piece') { it.vars = {}; for (const k of Object.keys(VARMAP)) { if (!x.vars || !HEX.test(x.vars[k] || '')) return null; it.vars[k] = x.vars[k]; } }
+    else { if (x.art && ART[x.art]) it.art = x.art; else { const sv = safeSvg(x.svg); if (!sv) return null; it.svg = sv; } }
+    return it;
+  }
+  const METRICS = ['chap', 'c3', 'basicAll', 'earned', 'streakMax', 'games', 'wins', 'loss', 'lvwin', 'net', 'level', 'pz', 'pzp', 'rev', 'ms', 'wk', 'buy'];
+  function okBadge(x) {
+    if (!x || !ID.test(x.id || '') || allBadges().some((b) => b.id === x.id) || !METRICS.includes(x.m) || !(+x.gte > 0)) return null;
+    return { id: x.id, ico: clean(x.ico, 4) || '🏅', ko: clean(x.ko), en: clean(x.en || x.ko), dko: clean(x.dko, 60), den: clean(x.den || x.dko, 60), m: x.m, gte: +x.gte };
+  }
+  function okPuzzle(x) {
+    try {
+      if (!x || !['m1', 'm2', 'f'].includes(x.k) || typeof x.fen !== 'string' || !Array.isArray(x.ok) || !x.ok.length) return null;
+      const g = new Chess(x.fen); if (!x.ok.every((u) => typeof u === 'string' && g.findUci(u))) return null;
+      return { k: x.k, fen: x.fen, ok: x.ok.slice(0, 6) };
+    } catch (e) { return null; }
+  }
+  async function loadPacks() {
+    try {
+      const res = await fetch('packs/index.json?t=' + Math.floor(Date.now() / 3600000), { cache: 'no-cache' });
+      if (!res.ok) return; const idx = await res.json();
+      for (const f of (idx.packs || []).slice(0, 60)) {
+        if (!/^[A-Za-z0-9._-]+\.json$/.test(f)) continue;
+        try {
+          const pr = await fetch('packs/' + f + '?t=' + Math.floor(Date.now() / 3600000), { cache: 'no-cache' }); if (!pr.ok) continue;
+          const pk = await pr.json();
+          for (const x of (pk.items || []).slice(0, 200)) { const it = okItem(x); if (it) packs.items.push(it); }
+          for (const x of (pk.badges || []).slice(0, 100)) { const b = okBadge(x); if (b) packs.badges.push(b); }
+          const list = (pk.puzzles || []).slice(0, 2000).map(okPuzzle).filter(Boolean);
+          if (list.length) packs.puzzles.push({ from: DATE.test(pk.from || '') ? pk.from : '0000-00-00', list });
+          packs.loaded++;
+        } catch (e) { /* a broken pack is skipped, the rest still load */ }
+      }
+      packs.puzzles.sort((a, b) => (a.from < b.from ? -1 : 1));
+      apply(); if (V.name === 'treasure') rerender();
+    } catch (e) { /* offline or no packs: built-in content only */ }
+  }
+  function puzzleFor(d) {
+    const pool = Puzzles.slice();
+    for (const pk of packs.puzzles) if (pk.from <= d) for (const p of pk.list) pool.push(p);
+    return pool[dayIndex(d) % pool.length];
+  }
+  const puzzleCount = () => Puzzles.length + packs.puzzles.reduce((a, pk) => a + (pk.from <= ymd() ? pk.list.length : 0), 0);
+
+  function init() { st(); apply(); }
+
+  return { st, total, balance, level, need, titleOf, lessonStars, passes, earn, take, notify, celebrate, html, hasNews, owned, equip, unequip, buy, apply, itemById, allItems, allBadges, metric, menu, requestGift, cancelRequest, applyRemote, pack, merge, onDay, usePass, loadPacks, puzzleFor, puzzleCount, init, msn, weekId, hold, packs, lvOfTotal };
+})();
+
+</script>
+<script>
+/* Rewards screens: star shop + badges + parent gifts (Views.treasure) and the parent-side helpers used by "Manage kids". */
+'use strict';
+Object.assign(RW, (() => {
+  const { RULES, SLOTS, PRESETS } = RWD;
+  const nm = (it) => T(it.ko, it.en);
+  const sumv = (o) => Object.keys(o || {}).reduce((a, k) => a + (+o[k] || 0), 0);
+  const DAYS = [T('월', 'M'), T('화', 'T'), T('수', 'W'), T('목', 'T'), T('금', 'F'), T('토', 'S'), T('일', 'S')];
+
+  function preview(it, sz) {
+    sz = sz || 84;
+    if (it.slot === 'board') {
+      const sq = Array.from({ length: 16 }, (_, i) => `<i style="background:${((i >> 2) + i) % 2 ? it.vars.d : it.vars.l}"></i>`).join('');
+      return `<div class="mb" style="width:${sz}px;height:${sz}px">${sq}</div>`;
+    }
+    if (it.slot === 'piece') {
+      const v = it.vars, st = `--p-fill-w:${v.wf};--p-line-w:${v.wl};--p-fill-b:${v.bf};--p-line-b:${v.bl};--p-dt-w:${v.wd};--p-dt-b:${v.bd}`;
+      return `<div class="mp" style="${st};height:${sz}px"><svg viewBox="0 0 100 100"><use href="#wN"/></svg><svg viewBox="0 0 100 100"><use href="#bN"/></svg></div>`;
+    }
+    return `<div class="ml" style="width:${sz}px">${Art.lionWith('happy', it.slot, it.id)}</div>`;
+  }
+
+  /* ---------------- kid screen ---------------- */
+  Views.treasure = (root, params) => {
+    setTop({ back: 'home', title: T('별 상점', 'Star shop') });
+    const view = { tab: params.tab || 'shop', slot: params.slot || 'hat' };
+    const isParent = typeof Net !== 'undefined' && Net.meParent();
+    const draw = () => {
+      const keep = $('.scroll', root) ? $('.scroll', root).scrollTop : 0;
+      const r = RW.st(), lv = RW.level(), tot = RW.total(), a = RW.need(lv), b = RW.need(lv + 1);
+      const pct = Math.max(2, Math.min(100, Math.round(100 * (tot - a) / (b - a))));
+      const m = RW.msn(), t = ymd(), wid = RW.weekId(t);
+      const wdays = r.wk.id === wid ? r.wk.days : [];
+      const p = t.split('-').map(Number), mon = new Date(Date.UTC(p[0], p[1] - 1, p[2])); mon.setUTCDate(mon.getUTCDate() - ((mon.getUTCDay() + 6) % 7));
+      const dots = DAYS.map((d, i) => { const dt = new Date(mon.getTime() + i * 86400000).toISOString().slice(0, 10); return `<span class="${wdays.includes(dt) ? 'on' : ''}${dt === t ? ' today' : ''}"><b>${tx(d)}</b></span>`; }).join('');
+      const ms = [['p', '🧩', T('오늘의 퍼즐', 'Daily puzzle')], ['g', '♟️', T('대국 한 판', 'Play a game')], ['l', '📘', T('배우기·복기', 'Lesson or review')]];
+      const earnedBd = RW.allBadges().filter((x) => r.bd[x.id]).length, allBd = RW.allBadges().length;
+      const pend = RW.hold() > 0;
+      const head = `<div class="card rwhead"><div class="rwleo">${Art.lion('cheer')}</div><div class="rwinfo">
+          <div class="rwlvl">Lv ${lv} · ${tx(RW.titleOf(lv), true)}</div>
+          <div class="rwbar"><i style="width:${pct}%"></i></div>
+          <small>${tx(T(`다음 레벨까지 ★ ${b - tot}`, `★ ${b - tot} to next level`), true)}</small>
+          <div class="rwbal">★ ${RW.balance()} <small>${tx(T('쓸 수 있는 별', 'to spend'), true)}</small></div></div></div>
+        <div class="card rwtoday"><h3>${tx(T('오늘의 별 미션', 'Today\'s star missions'), true)}</h3>
+          <div class="rwms">${ms.map(([k, e, tt]) => `<div class="${m[k] ? 'on' : ''}"><span>${m[k] ? '✅' : e}</span>${tx(tt)}</div>`).join('')}</div>
+          <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`), true)}</p>
+          <div class="rwweek"><div class="rwdots">${dots}</div><small>${tx(T(`이번 주 ${wdays.length}/${RULES.week.days}일 · 목표를 이루면 ★${RULES.week.n}`, `This week ${wdays.length}/${RULES.week.days} days · goal gives ★${RULES.week.n}`), true)}</small></div>
+          <div class="rwstreak">🔥 ${tx(T(`${S.streak.n || 0}일 연속`, `${S.streak.n || 0}-day streak`), true)}${RW.passes() ? ` · 🛡️ ×${RW.passes()} <small>${tx(T('휴식권', 'rest pass'))}</small>` : ''}</div></div>
+        <div class="chips rwtabs"><button class="chip" data-tab="shop" aria-pressed="${view.tab === 'shop'}">${tx(T('꾸미기 상점', 'Shop'))}</button><button class="chip" data-tab="badges" aria-pressed="${view.tab === 'badges'}">${tx(T('배지', 'Badges'))}<small class="en">${earnedBd}/${allBd}</small></button><button class="chip" data-tab="gifts" aria-pressed="${view.tab === 'gifts'}">${tx(T('부모님 선물', 'Gifts'))}${pend ? ' <span class="rwdot"></span>' : ''}</button></div>`;
+      let body = '';
+      if (view.tab === 'shop') body = shopHtml(r, lv);
+      else if (view.tab === 'badges') body = badgesHtml(r);
+      else body = giftsHtml(r, isParent);
+      root.innerHTML = `<div class="scroll"><div class="wrap">${head}${body}</div></div>`;
+      const sc = $('.scroll', root); if (sc) sc.scrollTop = keep;
+    };
+    function shopHtml(r, lv) {
+      const chips = SLOTS.map((s) => `<button class="chip" data-slot="${s.id}" aria-pressed="${view.slot === s.id}">${s.ico} ${tx(T(s.ko, s.en))}</button>`).join('');
+      const items = RW.allItems().filter((i) => i.slot === view.slot).sort((x, y) => (x.minLv || 0) - (y.minLv || 0) || x.cost - y.cost);
+      const bal = RW.balance();
+      const cards = items.map((it) => {
+        const own = RW.owned(it.id), on = r.eq[it.slot] === it.id, lock = !own && lv < (it.minLv || 0), poor = !own && !lock && bal < it.cost;
+        let btn;
+        if (on) btn = `<button class="btn ghost sm" data-act="off" data-slot="${it.slot}">${tx(T('착용 중 ✓', 'Wearing ✓'))}</button>`;
+        else if (own) btn = `<button class="btn mint sm" data-act="on" data-id="${it.id}">${tx(T(it.slot === 'board' || it.slot === 'piece' ? '쓰기' : '입기', 'Use'))}</button>`;
+        else if (lock) btn = `<button class="btn ghost sm" disabled>🔒 Lv ${it.minLv}</button>`;
+        else btn = `<button class="btn sm" data-act="buy" data-id="${it.id}" ${poor ? 'disabled' : ''}>★ ${it.cost}</button>`;
+        return `<div class="rwitem${on ? ' on' : ''}${lock ? ' lock' : ''}"><div class="rwprev">${preview(it)}</div><b>${tx(nm(it), true)}</b>${poor ? `<small class="rwneed">${tx(T(`별 ${it.cost - bal}개 더 필요해요`, `${it.cost - bal} more ★`), true)}</small>` : ''}${btn}</div>`;
+      }).join('');
+      const note = view.slot === 'board' ? `<p class="rwnote">${tx(T('기본 체스판 4가지는 설정에서 바꿀 수 있어요.', 'The 4 free boards are in Settings.'))}</p>` : '';
+      return `<div class="chips rwslots">${chips}</div>${note}<div class="rwgrid">${cards || `<p class="rwnote">${tx(T('곧 새 아이템이 와요!', 'New items are coming soon!'))}</p>`}</div>`;
+    }
+    function badgesHtml(r) {
+      const bs = RW.allBadges();
+      return `<div class="rwgrid rwbadges">${bs.map((b) => {
+        const got = r.bd[b.id], cur = Math.min(b.gte, Math.floor(RW.metric(b.m))), pc = Math.round(100 * cur / b.gte);
+        return `<div class="rwbdg${got ? ' on' : ''}"><span class="ic">${b.ico}</span><b>${tx(T(b.ko, b.en), true)}</b><small>${tx(T(b.dko, b.den))}</small>${got ? '' : `<div class="rwbar sm"><i style="width:${pc}%"></i></div><small>${cur}/${b.gte}</small>`}</div>`;
+      }).join('')}</div>`;
+    }
+    function giftsHtml(r, parentView) {
+      const items = RW.menu(), me = Net.me ? Net.me() : null, req = me && me.rwReq && me.rwReq.status === 'pending' ? me.rwReq : null;
+      let h = `<p class="rwnote">${tx(T('모은 별로 부모님께 선물을 신청해요. 부모님이 허락하면 별이 사용돼요.', 'Ask your parent for a reward with your stars. The stars are used when they say yes.'))}</p>`;
+      if (parentView) return h + `<div class="card"><p style="margin:0">${rich(T('부모님 프로필이에요. 선물 목록은 <b>계정 → 자녀 관리</b>에서 만들어요.', 'This is a parent profile. Make the gift list in <b>Account → Manage kids</b>.'))}</p></div>`;
+      if (!Cloud.available || !Net.user || !me) return h + `<div class="card"><p style="margin:0">${rich(T('선물 신청은 부모님 계정으로 로그인한 뒤에 쓸 수 있어요.', 'Gift requests need a signed-in parent account.'))}</p></div>`;
+      if (req) h += `<div class="card rwreq">${rich(T(`<b>${esc(req.ko)}</b> 신청 중 · ★ ${req.cost}<br><small>부모님이 보고 있어요. 별은 잠시 맡겨둬요.</small>`, `Asked for <b>${esc(req.ko)}</b> · ★ ${req.cost}<br><small>Waiting for your parent. The stars are on hold.</small>`))}<div class="row" style="margin-top:8px"><button class="btn ghost sm" data-act="cancelreq">${tx(T('신청 취소', 'Cancel'))}</button></div></div>`;
+      if (!items.length) h += `<div class="card"><p style="margin:0">${rich(T('아직 선물 목록이 없어요. 부모님께 목록을 만들어 달라고 해 봐요!', 'No gifts yet. Ask your parent to make a list!'))}</p></div>`;
+      else h += `<div class="rwgifts">${items.map((g) => { const ok = RW.balance() >= g.cost && !req; return `<div class="card rwgift"><span class="ic">🎁</span><div class="grow"><b>${esc(g.ko)}</b><small>★ ${g.cost}${RW.balance() < g.cost ? ' · ' + tx(T(`별 ${g.cost - RW.balance()}개 더`, `${g.cost - RW.balance()} more`)) : ''}</small></div><button class="btn sm" data-act="ask" data-id="${esc(g.id)}" ${ok ? '' : 'disabled'}>${tx(T('신청', 'Ask'))}</button></div>`; }).join('')}</div>`;
+      if (r.claims.length) h += `<div class="sec">${tx(T('받은 선물', 'Received'), true)}</div>` + r.claims.slice(0, 8).map((c) => `<div class="rwclaim">🎉 ${esc(c.ko)} <small>★ ${c.cost} · ${new Date(c.at).getMonth() + 1}/${new Date(c.at).getDate()}</small></div>`).join('');
+      return h;
+    }
+    draw();
+    const redraw = () => { if (V.name === 'treasure') draw(); };
+    if (typeof Net !== 'undefined') { Net.ui.add(redraw); V.cleanup = () => Net.ui.delete(redraw); if (Net.refreshMenu) Net.refreshMenu().then(redraw).catch(() => {}); }
+    root.addEventListener('click', async (e) => {
+      const b = e.target.closest('button'); if (!b || b.disabled) return;
+      if (b.dataset.tab) { sfx('tap'); view.tab = b.dataset.tab; draw(); return; }
+      if (b.dataset.slot && !b.dataset.act) { sfx('tap'); view.slot = b.dataset.slot; draw(); return; }
+      const act = b.dataset.act; if (!act) return; sfx('tap');
+      try {
+        if (act === 'on') { RW.equip(b.dataset.id); sfx('good'); draw(); }
+        else if (act === 'off') { RW.unequip(b.dataset.slot); draw(); }
+        else if (act === 'buy') {
+          const it = RW.itemById(b.dataset.id); if (!it) return;
+          const k = await ask({ lion: 'happy', title: T('이걸 살까요?', 'Buy this?'), html: `<div class="rwconfirm">${preview(it, 96)}</div><p><b>${tx(nm(it), true)}</b></p>`, buttons: [{ k: 'y', label: T(`별 ${it.cost}개로 사기`, `Buy for ★${it.cost}`), cls: 'mint' }, { k: 'n', label: T('다음에', 'Not now'), cls: 'ghost' }] });
+          if (k !== 'y') return;
+          const res = RW.buy(it.id);
+          if (res === 'ok') { sfx('win'); toast(T('멋져요! 바로 써 볼게요 ✨', 'Awesome! Wearing it now ✨')); const nr = RW.take(); draw(); RW.notify(nr); }
+          else toast(res === 'stars' ? T('별이 조금 모자라요', 'Not enough stars yet') : res === 'lv' ? T('레벨이 더 필요해요', 'You need a higher level') : T('이미 가지고 있어요', 'You already have it'));
+        } else if (act === 'ask') {
+          const g = RW.menu().find((x) => x.id === b.dataset.id); if (!g) return;
+          const k = await ask({ lion: 'happy', title: T('부모님께 신청할까요?', 'Ask your parent?'), html: `<p><b>🎁 ${esc(g.ko)}</b><br>★ ${g.cost}</p><p style="font-size:.9rem;color:var(--ink2)">${tx(T('허락하면 별이 사용돼요. 거절하면 별은 그대로예요.', 'Stars are used only if they say yes.'))}</p>`, buttons: [{ k: 'y', label: T('신청하기', 'Ask'), cls: 'mint' }, { k: 'n', label: T('다음에', 'Not now'), cls: 'ghost' }] });
+          if (k !== 'y') return;
+          await RW.requestGift(g); toast(T('부모님께 신청했어요!', 'Request sent!')); draw();
+        } else if (act === 'cancelreq') { await RW.cancelRequest(); draw(); }
+      } catch (err) { toast(err && err.message === 'stars' ? T('별이 모자라요', 'Not enough stars') : err && err.message === 'pending' ? T('이미 신청한 선물이 있어요', 'A request is already waiting') : (typeof errText === 'function' ? errText(err) : T('잠시 후 다시 해 봐요', 'Please try again')), 3200); }
+    });
+  };
+
+  /* ---------------- parent helpers (used by the "Manage kids" screen) ---------------- */
+  function form(title, fields) {
+    return new Promise((res) => {
+      const ov = openModal(`<h2>${tx(title)}</h2>${fields.map((f) => `<label class="rwfld">${tx(f.label)}<input class="input" id="f-${f.id}" ${f.num ? 'type="number" inputmode="numeric" min="1" max="999"' : 'type="text" maxlength="26"'} value="${esc(f.val || '')}" autocomplete="off"></label>`).join('')}<div class="msg" id="f-msg" style="min-height:1.2em;color:var(--bad)"></div><div class="row" style="margin-top:6px"><button class="btn mint" data-k="o">${tx(T('저장', 'Save'))}</button><button class="btn ghost" data-k="x">${tx(T('취소', 'Cancel'))}</button></div>`, { dismiss: false, top: true });
+      ov.addEventListener('click', (e) => {
+        const b = e.target.closest('button[data-k]'); if (!b) return;
+        if (b.dataset.k === 'x') { ov.remove(); res(null); return; }
+        const out = {}; for (const f of fields) out[f.id] = ($('#f-' + f.id, ov).value || '').trim();
+        if (!out[fields[0].id]) { $('#f-msg', ov).textContent = tx(T('이름을 적어 주세요', 'Please write a name')); return; }
+        const cost = +out.cost; if (!(cost >= 1 && cost <= 999)) { $('#f-msg', ov).textContent = tx(T('별은 1~999개로 정해 주세요', 'Use 1 to 999 stars')); return; }
+        ov.remove(); res(out);
+      });
+    });
+  }
+  const kidStat = (p) => {
+    const rw = p.rw || {}, ls = sumv(p.progress), tot = ls + sumv(rw.e), hold = p.rwReq && p.rwReq.status === 'pending' ? (+p.rwReq.cost || 0) : 0;
+    return { tot, bal: Math.max(0, tot - sumv(rw.s) - hold), lv: RW.lvOfTotal(tot) };
+  };
+  function menuCard() {
+    const list = RW.menu();
+    return `<div class="card"><h3>🎁 ${tx(T('별 선물 목록', 'Star gift list'), true)}</h3>
+      <p style="margin:0 0 10px;font-size:.92rem;color:var(--ink2)">${tx(T('아이가 모은 별로 신청할 수 있는 선물이에요. 신청이 오면 아래 아이 카드에서 허락해요.', 'Rewards your kids can ask for with their stars. Requests show up on the kid\'s card below.'))}</p>
+      ${list.map((g, i) => `<div class="rwgift"><span class="ic">🎁</span><div class="grow"><b>${esc(g.ko)}</b><small>★ ${g.cost}</small></div><button class="btn ghost sm" data-rw="edit" data-i="${i}">${tx(T('고치기', 'Edit'))}</button><button class="btn ghost sm" data-rw="del" data-i="${i}" aria-label="delete">✕</button></div>`).join('')}
+      <div class="row" style="margin-top:8px"><button class="btn mint sm" data-rw="add">＋ ${tx(T('선물 추가', 'Add'))}</button>${list.length ? '' : `<button class="btn lav sm" data-rw="preset">${tx(T('추천 목록 넣기', 'Use suggestions'))}</button>`}</div></div>`;
+  }
+  function kidCard(p) {
+    const k = kidStat(p), rq = p.rwReq && p.rwReq.status === 'pending' ? p.rwReq : null;
+    return `<div class="rwkid"><div class="row" style="justify-content:space-between"><b>⭐ ${k.bal} <small style="font-weight:400;color:var(--ink2)">${tx(T('쓸 수 있는 별', 'to spend'))} · Lv ${k.lv}</small></b>
+      <span class="row"><small>${tx(T('칭찬 별', 'Praise'))}</small><button class="btn ghost sm" data-rw="praise" data-n="1" data-id="${p.id}">+1</button><button class="btn ghost sm" data-rw="praise" data-n="3" data-id="${p.id}">+3</button><button class="btn ghost sm" data-rw="praise" data-n="5" data-id="${p.id}">+5</button></span></div>
+      ${rq ? `<div class="bubble" style="margin:10px 0 0">${rich(T(`<b>${esc(p.nick)}</b>이(가) <b>${esc(rq.ko)}</b> 선물을 신청했어요 (★ ${rq.cost}).`, `<b>${esc(p.nick)}</b> asked for <b>${esc(rq.ko)}</b> (★ ${rq.cost}).`))}<div class="row" style="margin-top:8px"><button class="btn mint sm" data-rw="ok" data-id="${p.id}">${tx(T('허락 (별 사용)', 'Allow'))}</button><button class="btn ghost sm" data-rw="no" data-id="${p.id}">${tx(T('다음에', 'Not now'))}</button></div></div>` : ''}</div>`;
+  }
+  const pendingCount = () => (typeof Net !== 'undefined' && Net.meParent() ? Net.profs.filter((p) => !p.parent && p.rwReq && p.rwReq.status === 'pending').length : 0);
+  async function parentClick(t, upd, draw) { // returns true when the click was a rewards action
+    const a = t.dataset.rw; if (!a) return false;
+    const list = RW.menu().slice(), save = async () => { S.cloud.menu = list; saveNow(); try { await Net.pushMenu(); } catch (e) { toast(T('목록을 서버에 올리지 못했어요. 인터넷을 확인해 주세요.', 'Could not upload the list. Check your connection.'), 3200); } draw(); };
+    if (a === 'add' || a === 'edit') {
+      const cur = a === 'edit' ? list[+t.dataset.i] : null;
+      const r = await form(a === 'add' ? T('선물 추가', 'Add a gift') : T('선물 고치기', 'Edit gift'), [{ id: 'ko', label: T('선물 이름', 'Gift'), val: cur ? cur.ko : '' }, { id: 'cost', label: T('필요한 별', 'Stars needed'), val: cur ? cur.cost : '30', num: true }]);
+      if (!r) return true;
+      if (cur) { cur.ko = r.ko; cur.cost = +r.cost; } else list.push({ id: 'g' + Date.now().toString(36), ko: r.ko, cost: +r.cost });
+      await save(); return true;
+    }
+    if (a === 'del') { list.splice(+t.dataset.i, 1); await save(); return true; }
+    if (a === 'preset') { PRESETS.forEach((x, i) => list.push({ id: 'g' + Date.now().toString(36) + i, ko: x.ko, cost: x.cost })); await save(); return true; }
+    const p = Net.profs.find((x) => x.id === t.dataset.id); if (!p) return true;
+    if (a === 'praise') { const n = +t.dataset.n; await upd(p, { rwGifts: (p.rwGifts || []).slice(-4).concat([{ id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n, at: Date.now() }]) }); toast(T(`${p.nick}에게 칭찬 별 ${n}개를 보냈어요`, `Sent ${n} praise star(s) to ${p.nick}`)); return true; }
+    if (a === 'ok') { await upd(p, { rwReq: Object.assign({}, p.rwReq, { status: 'ok', at: p.rwReq.at }) }); toast(T('허락했어요. 아이 폰에서 별이 사용돼요.', 'Allowed. The stars are used on the kid\'s phone.'), 3200); return true; }
+    if (a === 'no') { await upd(p, { rwReq: Object.assign({}, p.rwReq, { status: 'no' }) }); return true; }
+    return false;
+  }
+  return { menuCard, kidCard, parentClick, pendingCount, preview, kidStat };
+})());
+
+</script>
+<script>
 /* Boot */
 'use strict';
 (function () {
   document.body.insertAdjacentHTML('afterbegin', Art.sprite());
+  RW.init();
   applyPrefs();
+  RW.loadPacks();
   addEventListener('pagehide', saveNow);
   setInterval(lockTick, 1000);
   if (Lock.active() && Lock.remaining() <= 0) showLock();

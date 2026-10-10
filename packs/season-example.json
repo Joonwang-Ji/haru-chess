@@ -1,0 +1,17 @@
+{
+  "id": "season-example",
+  "from": "2027-01-01",
+  "items": [
+    { "id": "bd-example", "slot": "board", "ko": "예시 보드", "en": "Example board", "cost": 20, "minLv": 3, "from": "2027-01-01", "vars": { "l": "#f3e5ab", "d": "#7a9f5a" } },
+    { "id": "pc-example", "slot": "piece", "ko": "예시 기물", "en": "Example pieces", "cost": 30, "minLv": 4,
+      "vars": { "wf": "#ffffff", "wl": "#333333", "bf": "#222222", "bl": "#111111", "wd": "#999999", "bd": "#cccccc" } },
+    { "id": "hat-example", "slot": "hat", "ko": "예시 모자", "en": "Example hat", "cost": 15, "minLv": 2,
+      "svg": "<path d='M20 30 L50 5 L80 30 Z' fill='#e44' stroke='#611' stroke-width='3'/>" }
+  ],
+  "badges": [
+    { "id": "pz-300", "ico": "🧩", "ko": "퍼즐 300개", "en": "300 puzzles", "dko": "퍼즐을 300개 풀었어요", "den": "Solved 300 puzzles", "m": "pz", "gte": 300 }
+  ],
+  "puzzles": [
+    { "k": "m1", "fen": "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1", "ok": ["a1a8"] }
+  ]
+}
