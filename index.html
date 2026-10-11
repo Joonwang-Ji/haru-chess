@@ -4552,7 +4552,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v16 · family</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v17 · themes</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4585,7 +4585,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v16 · family</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v17 · themes</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5114,6 +5114,22 @@ function leadsToMate(g, m, n) {
   return ok;
 }
 
+/* Tactic names for "best move" puzzles. A pack puzzle lists a theme key for each accepted move; the text appears only after solving. */
+const THEMES = {
+  fork: T('<b>포크</b>! 한 말이 상대 말 두 개를 동시에 공격해요. 상대는 한 번에 하나만 지킬 수 있어요.', '<b>Fork!</b> One piece attacks two enemy pieces at once. The opponent can only save one.'),
+  pin: T('<b>핀</b>! 앞에 있는 말은 뒤에 있는 더 소중한 말 때문에 마음대로 움직일 수 없어요.', '<b>Pin!</b> The front piece cannot move freely because a more valuable piece is behind it.'),
+  skewer: T('<b>스큐어</b>! 소중한 말이 먼저 비켜야 하고, 그러면 뒤에 있던 말을 잡을 수 있어요.', '<b>Skewer!</b> The valuable piece must step aside, and then you can take the piece behind it.'),
+  discover: T('<b>발견 공격</b>! 말이 비켜 주자 뒤에 숨어 있던 말이 공격을 시작해요.', '<b>Discovered attack!</b> When one piece moves away, the piece behind it starts to attack.'),
+  hang: T('지키는 말이 없는 상대 말을 <b>공짜로</b> 잡았어요.', 'You took an unprotected piece for <b>free</b>.'),
+  trade: T('잡고 잡히는 <b>바꿔 먹기</b>를 끝까지 세어 보면 내가 더 많이 얻어요.', 'Count the <b>exchange</b> to the end: you come out ahead.'),
+  sac: T('일부러 말을 내주는 <b>희생</b>이에요. 그 뒤에 더 큰 이득이 와요.', 'A <b>sacrifice</b>: you give up material on purpose and win more afterwards.'),
+  checkwin: T('<b>체크</b>로 상대가 대답할 수밖에 없게 만든 뒤 말을 얻어요.', 'A <b>check</b> forces the reply, and then you win material.'),
+  promo: T('폰이 끝까지 가서 <b>퀸</b>이 되는 것이 핵심이에요.', 'The key is the pawn reaching the last row to become a <b>queen</b>.'),
+  defmate: T('상대가 <b>체크메이트</b>를 노리고 있었어요! 먼저 막는 것이 가장 중요해요.', 'The opponent was threatening <b>checkmate</b>! Stopping it comes first.'),
+  escape: T('공격받는 내 말을 <b>먼저 지키는</b> 수예요. 위험한 내 말부터 살펴봐요.', 'Save your attacked piece <b>first</b>. Always check your own pieces for danger.'),
+  material: T('이 수가 가장 좋은 이유는 몇 수 뒤에 상대 말을 <b>얻게</b> 되기 때문이에요.', 'This is the best move because it wins <b>material</b> a few moves later.'),
+  advantage: T('말을 바로 잡지 않아도, 이 수로 위치와 위협이 가장 좋아져요.', 'You do not take anything yet, but this move gives you the best position and threats.'),
+};
 function dailyChap(pz, prac) {
   const d = ymd(), p = pz || RW.puzzleFor(d), w = p.fen.split(' ')[1] === 'w';
   const side = w ? T('흰색', 'White') : T('검은색', 'Black'), sk = side.ko, se = side.en;
@@ -5122,7 +5138,7 @@ function dailyChap(pz, prac) {
   const title = prac ? T(`퍼즐 연습 · ${lv}단계 · ${kd.ko}${p.fresh ? '' : ' · 복습'}`, `Practice · Lv ${lv} · ${kd.en}${p.fresh ? '' : ' · review'}`) : T(`오늘의 퍼즐 · ${lv}단계 · ${kd.ko}`, `Daily puzzle · Lv ${lv} · ${kd.en}`);
   let step;
   if (p.k === 'f') step = { t: 'move', fen: p.fen, ok: p.ok, text: T(`지키는 말이 없는 상대 말이 있어요! <b>공짜로 잡을 수</b> 있는 말을 찾아보세요.`, 'One enemy piece is not protected! Find the piece you can <b>take for free</b>.'), win: T('잘 찾았어요! 지켜지지 않은 말은 공짜예요.', 'Well spotted! A piece nobody protects is free.'), no: T('그 수는 아니에요. 지켜지는 말을 잡으면 도로 잡힐 수 있어요. 지켜지지 않는 말을 찾아봐요.', 'Not that one. If a piece is protected, you may be captured back. Look for one that is not protected.') };
-  else if (p.k === 't') step = { t: 'move', fen: p.fen, ok: p.ok, text: T(`${sk} 차례예요! 말을 얻거나 크게 유리해지는 <b>가장 좋은 한 수</b>를 찾아보세요.`, `${se} to move! Find the <b>best move</b>: it wins material or a big advantage.`), win: T('정확해요! 가장 좋은 수를 찾았어요.', 'Exactly! You found the best move.'), no: T('더 좋은 수가 있어요. 상대의 약한 곳과 내 말이 만드는 위협을 다시 살펴봐요.', 'There is a better move. Look again for weak spots and for threats you can make.') };
+  else if (p.k === 't') step = { t: 'move', fen: p.fen, ok: p.ok, th: p.th, text: T(`${sk} 차례예요! 말을 얻거나 크게 유리해지는 <b>가장 좋은 한 수</b>를 찾아보세요.`, `${se} to move! Find the <b>best move</b>: it wins material or a big advantage.`), win: T('정확해요! 가장 좋은 수를 찾았어요.', 'Exactly! You found the best move.'), no: T('더 좋은 수가 있어요. 상대의 약한 곳과 내 말이 만드는 위협을 다시 살펴봐요.', 'There is a better move. Look again for weak spots and for threats you can make.') };
   else {
     const n = p.k === 'm3' ? 3 : p.k === 'm2' ? 2 : 1;
     step = { t: 'mate', n, ok: n === 3 ? p.ok : undefined, fen: p.fen, text: n === 3 ? T(`${sk}이 세 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 가장 중요해요.`, `${se} to move: checkmate in <b>three moves</b>! The first move matters most.`) : n === 2 ? T(`${sk}이 두 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 중요해요.`, `${se} to move: checkmate in <b>two moves</b>! The first move matters.`) : T(`${sk}이 한 수로 <b>체크메이트</b>를 해 보세요!`, `${se} to move: give <b>checkmate</b> in one move!`), win: T('체크메이트! 멋져요!', 'Checkmate! Wonderful!') };
@@ -5244,8 +5260,9 @@ Views.lesson = (root, params) => {
     const s = L.step, g = L.g, tok = L.tok;
     if (s.t === 'move') {
       if (okMatch(s.ok, g, m)) {
+        const tk = Array.isArray(s.ok) && Array.isArray(s.th) ? s.th[s.ok.indexOf(g.uci(m))] : '', tm = tk && THEMES[tk];
         L.accept = false; doMove(m); sfx('good');
-        say(s.win || T('좋아요!', 'Good!'), 'cheer'); acts.innerHTML = nextBtn();
+        say(s.win || T('좋아요!', 'Good!'), 'cheer', tm ? '<div class="more">' + rich(tm) + '</div>' : ''); acts.innerHTML = nextBtn();
       } else {
         const u = g.uci(m);
         reject((s.wrong && s.wrong[u]) || s.no || T('아쉬워요! 다시 한 번 생각해 봐요.', 'Not quite! Think once more.'));
@@ -6561,7 +6578,8 @@ const RW = (() => {
       if (!x || !LV_DEF[x.k] || typeof x.fen !== 'string' || !Array.isArray(x.ok) || !x.ok.length) return null;
       const g = new Chess(x.fen); if (!x.ok.every((u) => typeof u === 'string' && g.findUci(u))) return null;
       const lv = Math.round(+x.lv);
-      return { k: x.k, fen: x.fen, ok: x.ok.slice(0, 6), lv: lv >= 1 && lv <= 5 ? lv : LV_DEF[x.k] };
+      const th = Array.isArray(x.th) ? x.th.slice(0, 6).map((v) => (typeof v === 'string' && /^[a-z]{2,12}$/.test(v) ? v : '')) : undefined; // theme key per accepted move (same order as ok)
+      return { k: x.k, fen: x.fen, ok: x.ok.slice(0, 6), lv: lv >= 1 && lv <= 5 ? lv : LV_DEF[x.k], th };
     } catch (e) { return null; }
   }
   // packsSettled: the load attempt is over (success or failure). packsReady: the packs really loaded, so it is safe to remember today's puzzle.
@@ -6610,7 +6628,7 @@ const RW = (() => {
     let list = all.filter((p) => lvOf(p) === L);
     for (let k = L - 1; !list.length && k >= 1; k--) list = all.filter((p) => lvOf(p) === k);
     if (!list.length) list = all;
-    const p = list[dayIndex(d) % list.length], q = { k: p.k, fen: p.fen, ok: p.ok, lv: lvOf(p) };
+    const p = list[dayIndex(d) % list.length], q = { k: p.k, fen: p.fen, ok: p.ok, lv: lvOf(p), th: p.th };
     if (packsReady) { if (!D.pick || D.pick.d !== d) D.pick = { d, m: {} }; D.pick.m[pid] = q; save(); }
     return q;
   }
@@ -6651,7 +6669,7 @@ const RW = (() => {
       p = top[Math.floor(Math.random() * top.length)];
     }
     lastPick = pkey(p.fen);
-    return { k: p.k, fen: p.fen, ok: p.ok, lv: lvOf(p), sel: L, fresh: fresh.length > 0, left: Math.max(0, fresh.length - (fresh.length ? 1 : 0)) };
+    return { k: p.k, fen: p.fen, ok: p.ok, lv: lvOf(p), th: p.th, sel: L, fresh: fresh.length > 0, left: Math.max(0, fresh.length - (fresh.length ? 1 : 0)) };
   }
   function pzStats() {
     const r = st(), inPool = new Set(puzzlePool(ymd()).map((q) => pkey(q.fen)));
