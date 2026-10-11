@@ -393,7 +393,8 @@ svg.pc, svg.ic { overflow: visible; }
 /* home hero keeps one fixed height so buttons never jump when the quote changes */
 .home-hero { height: 136px; align-items: stretch; padding: 0 0 8px; }
 .home-hero .lion { align-self: center; width: 84px; }
-.home-hero .bubble { align-self: stretch; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; font-size: .93rem; line-height: 1.35; padding: 8px 12px; }
+.home-hero .bubble { align-self: stretch; display: flex; flex-direction: column; overflow-y: auto; font-size: .93rem; line-height: 1.35; padding: 8px 12px; }
+.home-hero .bubble > div { margin: auto 0; }
 .home-hero .bubble .en { font-size: .8rem; }
 .home-hero .bubble small.en { font-size: .78rem; }
 .home-hero .bubble::before { top: 50%; margin-top: -8px; }
@@ -1875,14 +1876,20 @@ function saveNow() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 function icons(s) { return s.replace(/\{([wb][PNBRQK])\}/g, (m, id) => `<svg class="ic" viewBox="0 0 100 100"><use href="#${id}"/></svg>`); }
 /* plain-text label for screen readers: Korean unless the app is set to English */
 const aria = (ko, en) => (S.lang === 'en' ? en : ko);
+/* Korean line breaks: a WORD JOINER (U+2060) keeps Hangul glued to an adjacent inline tag (Safari splits "<b>레오</b>예요" even with keep-all) and to ( ) · + / so "퀸(9)이" never wraps as "퀸" / "(9)이" */
+const glue = (s) => (typeof s === 'string' && /[가-힣]/.test(s) ? s
+  .replace(/(<\/(?:b|i|em|strong|u|mark|span)>)(?=[가-힣(·+\/])/g, '$1\u2060')
+  .replace(/([가-힣0-9)])(?=<(?:b|i|em|strong|u|mark)[ >])/g, '$1\u2060')
+  .replace(/([가-힣0-9])(?=[(·+\/])/g, '$1\u2060')
+  .replace(/([)·+\/])(?=[가-힣])/g, '$1\u2060') : s);
 function tx(o, inline) {
   if (o == null) return '';
-  if (typeof o === 'string') return o;
+  if (typeof o === 'string') return glue(o);
   const l = S.lang;
-  if (l === 'ko') return o.ko;
+  if (l === 'ko') return glue(o.ko);
   if (l === 'en') return o.en;
   // one wrapper so a flex parent (button, pill) treats "한글 English" as ONE item that wraps as a sentence, not two columns
-  return inline ? `<span class="bil">${o.ko}<span class="en">${o.en}</span></span>` : `${o.ko}<small class="en">${o.en}</small>`;
+  return inline ? `<span class="bil">${glue(o.ko)}<span class="en">${o.en}</span></span>` : `${glue(o.ko)}<small class="en">${o.en}</small>`;
 }
 const rich = (o, inline) => icons(tx(o, inline));
 // a unit next to a number (15분 / 15 m): both-language mode shows it once, in Korean, so it never reads "15분 m"
@@ -4564,7 +4571,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v19 · check</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v20 · tactics</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4597,7 +4604,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v19 · check</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v20 · tactics</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4882,7 +4889,7 @@ Views.home = (root) => {
   ];
   const g = S.game && !S.game.over ? S.game : null;
   root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g ? ' has-resume' : ''}">
-    <div class="hero home-hero">${Art.lion('happy')}<div class="bubble">${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div>
+    <div class="hero home-hero">${Art.lion('happy')}<div class="bubble"><div>${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div></div>
     <div class="menu">
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
       <button class="btn tile mint" data-go="setup" data-mode="cpu"><span class="ico">${Art.lion('wink')}</span>${tx(T('컴퓨터와 대국', 'Play Computer'))}</button>
@@ -6090,8 +6097,18 @@ Views.replay = (root, params) => {
     if (sc(i) >= 2500 && best) lines.push(T('여기서는 <b>체크메이트</b>를 할 수 있었어요!', 'You could have given <b>checkmate</b> here!'));
     else if (best && best.c && !(mvs[i].c)) lines.push(T(`잡을 수 있었던 상대 말: <b>${Coach.NM[best.c & 7].ko}</b>`, `You could have captured the <b>${Coach.NM[best.c & 7].en}</b>.`));
     if (!lines.length) lines.push(T('더 좋은 수가 있었어요.', 'There was a better move.'));
-    return { lines, best, bestSan };
+    // why the better move is better: reuse the coach's reasons (fork, capture, check ...), skipping its generic fallback
+    let why = [];
+    try {
+      if (best) {
+        const gb = new Chess(fens[i]); gb.track = false; const bm = gb.findUci(R.an[i][1]);
+        const r = bm ? Coach.explain(gb, bm, { cp: sc(i), mate: 0, pv: [] }) : null;
+        if (r) why = r.reasons.filter((x) => !/^여러 수 앞을/.test(x.ko)).slice(0, 2).map((x) => T(x.ko, x.en));
+      }
+    } catch (e) { why = []; }
+    return { lines, best, bestSan, why };
   }
+  const pack = (r) => [Math.round(Math.abs(r.score) > 25000 ? (r.score > 0 ? 3000 : -3000) : Math.max(-1500, Math.min(1500, r.score))), r.uci || ''];
   async function analyze() {
     if (R.busy) return; R.busy = true; const tok = ++R.tok;
     const res = [];
@@ -6103,10 +6120,24 @@ Views.replay = (root, params) => {
       const st = g.status();
       if (st.over) res.push([st.reason === 'mate' ? -3000 : 0, '']);
       else {
-        let r = null; try { r = await AIC.analyze(fens[k], 260, 5); } catch (e) { r = null; }
+        let r = null; try { r = await AIC.analyze(fens[k], 420, 7); } catch (e) { r = null; }
         if (!r) { R.busy = false; show(); return; }
-        const s = Math.abs(r.score) > 25000 ? (r.score > 0 ? 3000 : -3000) : Math.max(-1500, Math.min(1500, r.score));
-        res.push([Math.round(s), r.uci || '']);
+        res.push(pack(r));
+      }
+    }
+    // second look: re-check the moves that look like mistakes with more thinking time, so shallow-search noise does not blame a good move
+    R.an = res; const cand = [];
+    for (let i = 0; i < N; i++) if (mine(i)) { const l = loss(i); if (l >= 80) cand.push([l, i]); }
+    cand.sort((a, b) => b[0] - a[0]);
+    const todo = cand.slice(0, 10).map((x) => x[1]).sort((a, b) => a - b);
+    for (let q = 0; q < todo.length; q++) {
+      if (R.dead || tok !== R.tok) { R.busy = false; R.an = E.an || null; if (!R.dead) show(); return; }
+      const i = todo[q];
+      say(T(`레오가 헷갈리는 수를 한 번 더 확인해요… <b>${q + 1}/${todo.length}</b>`, `Leo double-checks the tricky moves… <b>${q + 1}/${todo.length}</b>`), 'think', `<div class="prog"><i style="width:${Math.round((q + 1) / todo.length * 100)}%"></i></div>`);
+      for (const k of [i, i + 1]) {
+        const g = new Chess(fens[k]); g.track = false; if (g.status().over) continue;
+        let r = null; try { r = await AIC.analyze(fens[k], 1000, 9); } catch (e) { r = null; }
+        if (r) res[k] = pack(r);
       }
     }
     const firstTime = !E.an;
@@ -6146,7 +6177,7 @@ Views.replay = (root, params) => {
       const arr = [[last.f, last.t, 'red']];
       if (ex.best) arr.push([ex.best.f, ex.best.t, '#2fb36b']);
       board.setArrows(arr);
-      say(`<b>${sans[i - 1]}${MK[k]} · ${rich(lab)}</b>`, 'oops', `<ul>${ex.lines.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>${ex.bestSan ? `<div class="more">${rich(T(`더 좋은 수: <b>${ex.bestSan}</b> (초록 화살표)`, `Better: <b>${ex.bestSan}</b> (green arrow)`))}</div>` : ''}`);
+      say(`<b>${sans[i - 1]}${MK[k]} · ${rich(lab)}</b>`, 'oops', `<ul>${ex.lines.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>${ex.bestSan ? `<div class="more">${rich(T(`더 좋은 수: <b>${ex.bestSan}</b> (초록 화살표)`, `Better: <b>${ex.bestSan}</b> (green arrow)`))}</div>` : ''}${ex.why && ex.why.length ? `<ul class="why">${ex.why.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>` : ''}`);
     } else if (summary && R.an) {
       const tot = R.count[0] + R.count[1] + R.count[2] + R.count[3], good = tot ? Math.round((R.count[0] / tot) * 100) : 100;
       say(T(`내가 둔 ${tot}수 중 <b>${R.count[0]}수</b>가 좋은 수였어요 (${good}%).<br>큰 실수 ${R.count[3]} · 실수 ${R.count[2]} · 아쉬운 수 ${R.count[1]}`, `Of your ${tot} moves, <b>${R.count[0]}</b> were good (${good}%).<br>Blunders ${R.count[3]} · Mistakes ${R.count[2]} · Inaccuracies ${R.count[1]}`), R.count[3] + R.count[2] ? 'happy' : 'cheer');

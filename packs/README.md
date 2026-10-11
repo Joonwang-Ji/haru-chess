@@ -18,3 +18,7 @@
 - 설정 > 오늘의 퍼즐 난이도에서 자동/1~5단계를 고르면 그 단계의 퍼즐이 하루에 하나씩 나옵니다. (프로필마다 따로 저장)
 - 파일 `puzzles-lv1.json` ~ `puzzles-lv5.json` 은 단계별로 나눈 기본 팩입니다.
 - v18: `puzzles-lv1b.json`, `puzzles-lv2b.json` (각 100개, `from` 2026-10-12)를 추가했습니다. 모든 퍼즐은 엔진으로 만들고 앱 규칙 엔진으로 다시 검증했습니다.
+- v20: `puzzles-lv3b.json`(58) `puzzles-lv4b.json`(60) `puzzles-lv5b.json`(55)를 추가했습니다 (`from` 2026-10-13). 레벨 3 = 2수 메이트 35 + 최선의 한 수 23, 레벨 4·5 = 3수 메이트 각 45 + 최선의 한 수 15·10. 사람처럼 실수하는 엔진 자기대국(약한 쪽·강한 쪽)에서 뽑았고, 정답이 하나뿐인 위치만 남긴 뒤 앱 규칙 엔진으로 다시 검증했습니다.
+- v20: 기존 `puzzles-lv2~5.json`의 "최선의 한 수" 중 23개는 막연한 `advantage`/`material`/`checkwin`/`trade` 대신 구체적인 `fork`(포크)·`pin`(핀)·`skewer`(스큐어)·`discover`(발견 공격) 태그로 바꿨습니다.
+- `th` 키: fork pin skewer discover hang trade sac checkwin promo defmate escape material advantage
+
