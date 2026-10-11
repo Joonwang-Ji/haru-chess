@@ -34,19 +34,24 @@
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-b); font-size: 16px; line-height: 1.45;
+  word-break: keep-all; overflow-wrap: break-word;
   overflow: hidden; -webkit-user-select: none; user-select: none; touch-action: manipulation; overscroll-behavior: none;
 }
 button { font: inherit; color: inherit; cursor: pointer; }
 h1, h2, h3 { font-family: var(--font-d); font-weight: 400; margin: 0; letter-spacing: .01em; }
 small.en, .en-line { display: block; font-size: .78em; opacity: .78; font-family: var(--font-b); font-weight: 400; line-height: 1.3; }
-span.en { font-size: .78em; opacity: .78; margin-left: .35em; }
+span.en { font-size: .78em; opacity: .78; }
+span.en::before { content: ' '; }
 .ic { width: 1.35em; height: 1.35em; vertical-align: -0.35em; }
 svg.pc, svg.ic { overflow: visible; }
 
 #app { height: 100%; display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; position: relative; }
 .topbar { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 14px; min-height: 56px; }
 .topbar .title { font-family: var(--font-d); font-size: 1.25rem; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar .title small.en { display: inline; margin-left: .4em; }
+.topbar .title { line-height: 1.15; }
+.topbar .title .t-ko { display: block; overflow: hidden; text-overflow: ellipsis; }
+.topbar .title.wrap2 .t-ko { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.topbar .title small.en { display: block; font-size: .6em; opacity: .8; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .pill { background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: .9rem; box-shadow: 0 2px 0 var(--line); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .pill.warn { background: var(--sun); color: var(--brand-ink); }
 .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -60,6 +65,8 @@ svg.pc, svg.ic { overflow: visible; }
   font-family: var(--font-d); font-size: 1.05rem; box-shadow: 0 5px 0 var(--bd); transition: transform .08s, box-shadow .08s, filter .15s;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; line-height: 1.15;
 }
+/* "한글 English" inside a button are two flex items; if they do not fit side by side the English drops under the Korean instead of squeezing both into narrow columns */
+.btn:not(.tile) { flex-wrap: wrap; row-gap: 1px; }
 .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--bd); }
 .btn:disabled { filter: grayscale(.8) opacity(.55); cursor: default; }
 .btn.mint { --b: var(--mint); --bd: var(--mint-d); --bi: #0d3b34; }
@@ -132,7 +139,10 @@ svg.pc, svg.ic { overflow: visible; }
 .chap.done .badge { background: var(--sun); }
 .chap.locked { opacity: .6; }
 .chap .ct { flex: 1; min-width: 0; }
-.chap .ct b { font-family: var(--font-d); font-weight: 400; font-size: 1.08rem; display: block; }
+.chap .ct b { font-family: var(--font-d); font-weight: 400; font-size: 1.08rem; display: block; line-height: 1.25; }
+.chap .ct b small.en { font-size: .72em; margin-top: 1px; }
+.chap .ct .pill.start span.en { display: inline; font-size: .78em; color: inherit; }
+.chap .ct .pill.start { display: inline-flex; margin-top: 6px; white-space: normal; padding: 3px 10px; font-size: .85rem; }
 .chap .ct span { font-size: .88rem; color: var(--ink2); display: block; }
 .stars { display: inline-flex; gap: 2px; color: var(--sun); font-size: 1rem; letter-spacing: 1px; }
 .stars i { font-style: normal; color: var(--line); }
@@ -1546,10 +1556,10 @@ svg.pc, svg.ic { overflow: visible; }
       id: 'b8', piece: 'bK', title: T('체크', 'Check'), blurb: T('킹이 위험할 때', 'When the king is in danger'),
       steps: [
         say('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>체크!</b> 검은 비숍이 내 킹을 노려요. 체크를 받으면 <b>반드시</b> 해결해야 해요.', '<b>Check!</b> The black bishop attacks my king. When you are in check, you <b>must</b> fix it.', { arrows: [['c3', 'e1', 'red']] }),
-        say('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '해결 방법은 3가지! <b>① 킹이 피하기 ② 공격하는 말 잡기 ③ 사이를 막기</b>', 'There are 3 ways out! <b>1) Move the king 2) Capture the attacker 3) Block the way</b>', {}),
-        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>① 피하기</b>: 킹을 안전한 칸으로 옮겨 보세요.', '<b>1) Move away</b>: put the king on a safe square.', { piece: 'K' }, W('킹이 피했어요!', 'The king got away!')),
-        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>② 잡기</b>: 나이트로 공격하는 비숍을 잡아 보세요.', '<b>2) Capture</b>: take the attacking bishop with the knight.', ['b1c3'], W('공격하는 말을 잡았어요!', 'You captured the attacker!')),
-        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>③ 막기</b>: 비숍과 킹 사이 칸(<b>d2</b>)에 나이트를 놓아 보세요.', '<b>3) Block</b>: put the knight between them, on <b>d2</b>.', ['b1d2'], W('길을 막았어요!', 'You blocked the way!')),
+        say('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '해결 방법은 3가지! <b>1) 킹이 피하기 2) 공격하는 말 잡기 3) 사이를 막기</b>', 'There are 3 ways out! <b>1) Move the king 2) Capture the attacker 3) Block the way</b>', {}),
+        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>1) 피하기</b>: 킹을 안전한 칸으로 옮겨 보세요.', '<b>1) Move away</b>: put the king on a safe square.', { piece: 'K' }, W('킹이 피했어요!', 'The king got away!')),
+        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>2) 잡기</b>: 나이트로 공격하는 비숍을 잡아 보세요.', '<b>2) Capture</b>: take the attacking bishop with the knight.', ['b1c3'], W('공격하는 말을 잡았어요!', 'You captured the attacker!')),
+        move('7k/8/8/8/8/2b5/8/1N2K3 w - - 0 1', '<b>3) 막기</b>: 비숍과 킹 사이 칸(<b>d2</b>)에 나이트를 놓아 보세요.', '<b>3) Block</b>: put the knight between them, on <b>d2</b>.', ['b1d2'], W('길을 막았어요!', 'You blocked the way!')),
       ],
     },
     {
@@ -1568,15 +1578,15 @@ svg.pc, svg.ic { overflow: visible; }
       steps: [
         say('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1', '검은색 차례예요. 체크는 아닌데 움직일 곳이 하나도 없어요. 이걸 <b>스테일메이트</b>라고 하고, 결과는 <b>무승부</b>예요!', 'It is Black\'s turn. Not in check, but no legal move at all. This is <b>stalemate</b>, and the game is a <b>draw</b>!', { hl: ['h8'] }),
         mate('7k/8/6K1/8/8/8/8/5Q2 w - - 0 1', '스테일메이트를 조심하면서 체크메이트를 해 보세요. 킹이 갇혀도 \'체크\'가 아니면 무승부예요!', 'Checkmate, but beware of stalemate! If the king is trapped but not in check, it is a draw!', W('스테일메이트를 피해서 이겼어요!', 'You avoided stalemate and won!')),
-        say('8/8/8/4k3/8/8/4K3/8 w - - 0 1', '무승부는 또 있어요. <b>① 말이 부족해서</b> 아무도 체크메이트를 못 할 때(킹만 남은 경우 등)', 'There are more draws. <b>1) Not enough pieces</b> to ever checkmate (like only kings left).', {}),
-        say('8/8/8/4k3/8/8/4K3/8 w - - 0 1', '<b>② 같은 모양이 3번</b> 반복될 때 ③ <b>50수</b> 동안 폰도 안 움직이고 잡기도 없을 때 ④ 둘이 <b>합의</b>할 때', '<b>2) The same position three times</b> 3) <b>50 moves</b> with no pawn move or capture 4) Both players <b>agree</b> to a draw', {}),
+        say('8/8/8/4k3/8/8/4K3/8 w - - 0 1', '무승부는 또 있어요. <b>1) 말이 부족해서</b> 아무도 체크메이트를 못 할 때(킹만 남은 경우 등)', 'There are more draws. <b>1) Not enough pieces</b> to ever checkmate (like only kings left).', {}),
+        say('8/8/8/4k3/8/8/4K3/8 w - - 0 1', '<b>2) 같은 모양이 3번</b> 반복될 때 3) <b>50수</b> 동안 폰도 안 움직이고 잡기도 없을 때 4) 둘이 <b>합의</b>할 때', '<b>2) The same position three times</b> 3) <b>50 moves</b> with no pawn move or capture 4) Both players <b>agree</b> to a draw', {}),
       ],
     },
     {
       id: 'b11', piece: 'wR', title: T('특별한 규칙', 'Special Moves'), blurb: T('캐슬링·앙파상·프로모션', 'Castling, en passant, promotion'),
       steps: [
         say('r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1', '<b>캐슬링</b>: 킹을 룩 쪽으로 두 칸 옮기면 룩이 킹을 넘어 옆에 서요. 킹은 안전하게, 룩은 활동적으로!', '<b>Castling</b>: move the king two squares toward a rook, and the rook hops over to stand beside it. Safer king, active rook!', { arrows: [['e1', 'g1'], ['h1', 'f1']] }),
-        say('r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1', '조건: <b>① 킹과 룩이 한 번도 안 움직였고 ② 둘 사이가 비어 있고 ③ 킹이 체크가 아니며 지나가는 칸도 안전할 때</b>', 'Rules: <b>1) neither king nor rook has moved 2) nothing in between 3) the king is not in check and does not pass through an attacked square</b>', {}),
+        say('r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1', '조건: <b>1) 킹과 룩이 한 번도 안 움직였고 2) 둘 사이가 비어 있고 3) 킹이 체크가 아니며 지나가는 칸도 안전할 때</b>', 'Rules: <b>1) neither king nor rook has moved 2) nothing in between 3) the king is not in check and does not pass through an attacked square</b>', {}),
         move('4k3/8/8/8/8/8/8/4K2R w K - 0 1', '킹을 <b>g1</b>으로 두 칸 옮겨 캐슬링을 해 보세요.', 'Castle by moving the king two squares to <b>g1</b>.', ['e1g1'], W('캐슬링 성공! 룩이 f1로 따라왔죠?', 'Castled! See how the rook followed to f1?')),
         move('4k3/8/8/8/8/8/8/R3K3 w Q - 0 1', '이번엔 반대쪽! 킹을 <b>c1</b>으로 옮겨 보세요.', 'Now the other side! Move the king to <b>c1</b>.', ['e1c1'], W('긴 캐슬링도 성공!', 'Long castling works too!')),
         say('7k/3p4/8/4P3/8/8/8/K7 b - - 0 1', '<b>앙파상</b>: 상대 폰이 처음 두 칸을 나오면서 내 폰 옆을 \'지나가면\' 특별한 잡기가 가능해요.', '<b>En passant</b>: when an enemy pawn jumps two squares past my pawn, I get a special capture.', { arrows: [['d7', 'd5']] }),
@@ -1595,18 +1605,18 @@ svg.pc, svg.ic { overflow: visible; }
     {
       id: 'b13', piece: 'wB', title: T('초반 전략', 'Opening Basics'), blurb: T('처음 몇 수는 이렇게!', 'How to start a game'),
       steps: [
-        say(START, '초반의 3가지 약속! <b>① 가운데 차지하기 ② 나이트·비숍 꺼내기 ③ 캐슬링으로 킹 지키기</b>', 'Three opening promises! <b>1) Take the center 2) Bring out knights and bishops 3) Castle to protect your king</b>', { hl: ['d4', 'e4', 'd5', 'e5'] }),
-        say(START, '피할 것: <b>① 퀸을 너무 일찍 꺼내기 ② 같은 말을 계속 움직이기 ③ 가장자리 폰만 움직이기</b>', 'Avoid: <b>1) Bringing the queen out too early 2) Moving the same piece again and again 3) Only pushing edge pawns</b>', {}),
+        say(START, '초반의 3가지 약속! <b>1) 가운데 차지하기 2) 나이트·비숍 꺼내기 3) 캐슬링으로 킹 지키기</b>', 'Three opening promises! <b>1) Take the center 2) Bring out knights and bishops 3) Castle to protect your king</b>', { hl: ['d4', 'e4', 'd5', 'e5'] }),
+        say(START, '피할 것: <b>1) 퀸을 너무 일찍 꺼내기 2) 같은 말을 계속 움직이기 3) 가장자리 폰만 움직이기</b>', 'Avoid: <b>1) Bringing the queen out too early 2) Moving the same piece again and again 3) Only pushing edge pawns</b>', {}),
         move('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2', '흰색이 e4를 두고 검은색도 e5를 뒀어요. 다음 수로 <b>가장 좋은 수</b>를 골라 보세요!', 'White played e4 and Black replied e5. Pick a <b>good next move</b>!', ['g1f3', 'b1c3', 'f1c4', 'd2d4', 'f2f4'], Object.assign(W('좋아요! 말을 꺼내거나 가운데를 차지했어요.', 'Good! You developed a piece or fought for the center.'), { wrong: { d1h5: T('퀸을 일찍 꺼내면 상대가 쫓아다녀서 시간만 써요. 나이트를 먼저!', 'An early queen gets chased around and wastes time. Knights first!'), a2a3: T('가장자리 폰은 급하지 않아요. 나이트나 비숍을 꺼내 봐요!', 'Edge pawns can wait. Bring out a knight or bishop!'), h2h3: T('가장자리 폰은 급하지 않아요. 나이트나 비숍을 꺼내 봐요!', 'Edge pawns can wait. Bring out a knight or bishop!') } })),
         {
           t: 'seq', fen: START, side: 'w', text: T('따라 해 봐요! 이탈리안 오프닝으로 약속 3가지를 모두 지켜 볼게요.', 'Follow along! We will keep all three promises in the Italian Game.'),
           line: [
-            { m: 'e2e4', r: 'e7e5', say: T('① 가운데 폰! 비숍과 퀸의 길이 열려요.', '1) A center pawn! It opens lines for the bishop and queen.') },
-            { m: 'g1f3', r: 'b8c6', say: T('② 나이트를 꺼내고 e5 폰도 공격해요.', '2) Knight out, and it attacks the e5 pawn.') },
+            { m: 'e2e4', r: 'e7e5', say: T('1) 가운데 폰! 비숍과 퀸의 길이 열려요.', '1) A center pawn! It opens lines for the bishop and queen.') },
+            { m: 'g1f3', r: 'b8c6', say: T('2) 나이트를 꺼내고 e5 폰도 공격해요.', '2) Knight out, and it attacks the e5 pawn.') },
             { m: 'f1c4', r: 'f8c5', say: T('비숍을 꺼내 f7을 노려요. 검은색 약점이에요.', 'Bishop out, eyeing f7, a weak spot for Black.') },
             { m: 'c2c3', r: 'g8f6', say: T('c3은 다음에 d4로 중앙을 키우려는 준비예요.', 'c3 prepares d4 to grow the center.') },
             { m: 'd2d3', r: 'd7d6', say: T('d3 폰이 e4를 지키고 비숍 길도 열어요.', 'The d3 pawn protects e4 and opens the bishop.') },
-            { m: 'e1g1', r: 'e8g8', say: T('③ 캐슬링! 킹이 안전해졌어요. 약속 3가지 완료!', '3) Castle! The king is safe. All three promises done!') },
+            { m: 'e1g1', r: 'e8g8', say: T('3) 캐슬링! 킹이 안전해졌어요. 약속 3가지 완료!', '3) Castle! The king is safe. All three promises done!') },
           ],
         },
         say(START, '이제 컴퓨터와 첫 대국을 해 볼까요? 쉬운 단계부터 시작하면 돼요!', 'Ready for your first game against the computer? Start with an easy level!', { goto: 'play' }),
@@ -1717,7 +1727,7 @@ svg.pc, svg.ic { overflow: visible; }
     {
       id: 'p8', piece: 'bQ', title: T('생각하는 습관', 'Thinking Habits'), blurb: T('고수처럼 수 읽기', 'Think like a strong player'),
       steps: [
-        say(START, '수를 읽을 때는 이 순서로! <b>① 체크(Check)할 수 있나? ② 잡을(Capture) 수 있나? ③ 위협(Threat)할 수 있나?</b>', 'Look at moves in this order! <b>1) Can I give Check? 2) Can I Capture? 3) Can I make a Threat?</b>', {}),
+        say(START, '수를 읽을 때는 이 순서로! <b>1) 체크(Check)할 수 있나? 2) 잡을(Capture) 수 있나? 3) 위협(Threat)할 수 있나?</b>', 'Look at moves in this order! <b>1) Can I give Check? 2) Can I Capture? 3) Can I make a Threat?</b>', {}),
         { t: 'quiz', fen: START, text: T('상대가 방금 수를 뒀어요. 내 수를 두기 <b>전에</b> 가장 먼저 해야 할 일은?', 'Your opponent just moved. What should you do <b>before</b> playing your move?'), choices: [
           { ko: '빨리 두기', en: 'Play quickly' },
           { ko: '상대가 뭘 노리는지 살펴보기', en: 'Check what the opponent is aiming at', ok: true },
@@ -1856,9 +1866,12 @@ function tx(o, inline) {
   const l = S.lang;
   if (l === 'ko') return o.ko;
   if (l === 'en') return o.en;
-  return inline ? `${o.ko}<span class="en">${o.en}</span>` : `${o.ko}<small class="en">${o.en}</small>`;
+  // one wrapper so a flex parent (button, pill) treats "한글 English" as ONE item that wraps as a sentence, not two columns
+  return inline ? `<span class="bil">${o.ko}<span class="en">${o.en}</span></span>` : `${o.ko}<small class="en">${o.en}</small>`;
 }
 const rich = (o, inline) => icons(tx(o, inline));
+// a unit next to a number (15분 / 15 m): both-language mode shows it once, in Korean, so it never reads "15분 m"
+const unit = (o) => (S.lang === 'both' ? o.ko : tx(o));
 const T = (ko, en) => ({ ko, en });
 const plain = (s) => s.replace(/<[^>]+>/g, ' ').replace(/\{[wb][PNBRQK]\}/g, '').replace(/\s+/g, ' ').trim();
 function speak(o) {
@@ -2264,13 +2277,23 @@ function setTop(o) {
   V.back = o.back || null;
   tb.innerHTML =
     (o.back ? `<button class="btn ghost icon" id="tb-back" aria-label="back">${ic('back')}</button>` : '') +
-    `<div class="title">${o.title ? tx(o.title, true) : ''}</div>` + (o.right || '') +
+    `<div class="title">${o.title ? (typeof o.title === 'object' && S.lang === 'both' ? `<span class="t-ko">${o.title.ko}</span><small class="en">${o.title.en}</small>` : tx(o.title)) : ''}</div>` + (o.right || '') +
     `<span class="pill" id="lockpill" hidden></span>` +
     (o.settings ? `<button class="btn ghost icon" id="tb-set" aria-label="settings">${ic('gear')}</button>` : '');
+  fitTitle();
   if (o.back) $('#tb-back').onclick = () => { sfx('tap'); (typeof o.back === 'function' ? o.back : () => go(o.back))(); };
   if (o.settings) $('#tb-set').onclick = () => { sfx('tap'); go('settings'); };
   updateLockPill();
 }
+// long titles: shrink a little first, then let the Korean line use two lines, so nothing is cut off
+function fitTitle() {
+  const t = $('#topbar .title'); if (!t) return;
+  t.style.fontSize = ''; t.classList.remove('wrap2');
+  const over = () => { const k = t.querySelector('.t-ko'), e = t.querySelector('small.en'); return (k && k.scrollWidth > k.clientWidth + 1) || (e && e.scrollWidth > e.clientWidth + 1) || t.scrollWidth > t.clientWidth + 1; };
+  for (const sz of ['1.12rem', '1rem', '.92rem']) { if (!over()) return; t.style.fontSize = sz; }
+  if (over()) t.classList.add('wrap2');
+}
+window.addEventListener('resize', () => { try { fitTitle(); } catch (e) { /* no top bar yet */ } });
 function updateLockPill() {
   const p = $('#lockpill'); if (!p) return;
   if (!Lock.active()) { p.hidden = true; return; }
@@ -4526,7 +4549,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · review</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · bilingual</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4560,7 +4583,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · review</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · bilingual</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4740,10 +4763,10 @@ Views.manage = (root) => {
         const used = Net.usedToday(p), bon = p.bonus && p.bonus.date === d ? p.bonus.min : 0, lim = (p.limit || 15) + bon, forced = p.lockedDate === d;
         const pct = Math.min(100, Math.round(100 * used / Math.max(1, lim * 60)));
         const rq = p.eraseReq && p.eraseReq.status === 'pending';
-        return `<div class="card" style="margin-bottom:12px"><div class="row" style="flex-wrap:nowrap">${avHtml(p.avatar, 48)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${forced ? ` <span class="pill warn">${ic('lock', 14)} ${tx(T('잠김', 'Locked'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">${tx(T('오늘', 'Today'))} ${Math.round(used / 60)}${tx(T('분', 'm'), true)} / ${lim}${tx(T('분', 'm'), true)}${p.lastActive ? ` · ${tx(ago(p.lastActive))}` : ''}</div></div></div>
+        return `<div class="card" style="margin-bottom:12px"><div class="row" style="flex-wrap:nowrap">${avHtml(p.avatar, 48)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${forced ? ` <span class="pill warn">${ic('lock', 14)} ${tx(T('잠김', 'Locked'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">${tx(T('오늘', 'Today'))} ${Math.round(used / 60)}${unit(T('분', 'm'))} / ${lim}${unit(T('분', 'm'))}${p.lastActive ? ` · ${tx(ago(p.lastActive))}` : ''}</div></div></div>
           <div style="height:10px;border-radius:99px;background:var(--surface2);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct >= 100 ? 'var(--bad)' : 'var(--brand)'}"></div></div>
           <div class="row"><button class="btn mint sm" data-m="plus" data-id="${p.id}">${tx(T('+10분', '+10 min'))}</button>${forced ? `<button class="btn lav sm" data-m="unlock" data-id="${p.id}">${tx(T('잠금 풀기', 'Unlock'))}</button>` : `<button class="btn pink sm" data-m="lock" data-id="${p.id}">${tx(T('지금 잠그기', 'Lock now'))}</button>`}<button class="btn ghost sm" data-m="zero" data-id="${p.id}">${tx(T('사용시간 지우기', 'Reset today'))}</button></div>
-          <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="minus">−</button><b>${p.limit || 15}${tx(T('분', 'm'), true)}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="plus">＋</button></div></div>
+          <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="minus">−</button><b>${p.limit || 15}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="plus">＋</button></div></div>
           ${rq ? `<div class="bubble" style="margin:10px 0 0">${rich(T(`<b>${esc(p.nick)}</b>이(가) 기록 지우기를 요청했어요.`, `<b>${esc(p.nick)}</b> asked to erase progress.`))}<div class="row" style="margin-top:8px"><button class="btn pink sm" data-m="eok" data-id="${p.id}">${tx(T('허락 (지워요)', 'Allow (erase)'))}</button><button class="btn ghost sm" data-m="eno" data-id="${p.id}">${tx(T('거절', 'Decline'))}</button></div></div>` : ''}
           ${RW.kidCard(p)}
         </div>`;
@@ -4824,7 +4847,7 @@ Views.home = (root) => {
       <button class="btn tile mint" data-go="setup" data-mode="cpu"><span class="ico">${Art.lion('wink')}</span>${tx(T('컴퓨터와 대국', 'Play Computer'))}</button>
       <button class="btn tile pink" data-go="setup" data-mode="2p"><span class="ico two"><svg viewBox="0 0 100 100"><use href="#wK"/></svg><svg viewBox="0 0 100 100"><use href="#bK"/></svg></span>${tx(T('둘이서 대국', '2 Players'))}</button>
       ${Cloud.available ? `<button class="btn tile sun" data-go="online" id="h-online"><span class="ico">${ic('users', 44)}</span>${tx(T('친구·온라인', 'Friends & Online'))}<span class="nbadge" id="h-badge" hidden></span></button>` : ''}
-      <button class="btn tile sun half" id="h-daily"><span class="ico">${ic('bulb', 28)}</span><span>${tx(T('오늘의 퍼즐', 'Daily puzzle'))}<span class="dchk">${S.daily.done[ymd()] != null ? '✓ ' + tx(T('완료', 'Done')) : S.daily.n ? '🔥 ' + S.daily.n + tx(T('일', 'd')) : ''}</span></span></button>
+      <button class="btn tile sun half" id="h-daily"><span class="ico">${ic('bulb', 28)}</span><span>${tx(T('오늘의 퍼즐', 'Daily puzzle'))}<span class="dchk">${S.daily.done[ymd()] != null ? '✓ ' + tx(T('완료', 'Done')) : S.daily.n ? '🔥 ' + S.daily.n + unit(T('일', 'd')) : ''}</span></span></button>
       <button class="btn tile lav half" data-go="guide"><span class="ico">${ic('clock', 28)}</span>${tx(T('규칙·시계', 'Rules'))}</button>
     </div>
     ${g ? `<div class="resume-bar"><span>${tx(T('하던 대국이 있어요', 'A game is waiting'), true)}</span><button class="btn mint sm" id="resume">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
@@ -4882,7 +4905,7 @@ Views.learn = (root) => {
   const basicDone = Content.basic.every((c) => chapDone(c.id));
   const proOpen = basicDone || S.proOpen;
   const next = (basicDone ? Content.pro : Content.basic).find((c) => !chapDone(c.id));
-  const card = (c, locked) => `<button class="chap ${chapDone(c.id) ? 'done' : ''} ${locked ? 'locked' : ''}" data-ch="${c.id}" data-locked="${locked ? 1 : 0}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${c.piece}"/></svg></span><span class="ct"><b>${tx(c.title, true)}</b><span>${tx(c.blurb)}</span>${locked ? ic('lock', 16) : stars((S.progress[c.id] || {}).stars || 0)}</span>${next && next.id === c.id ? `<span class="pill warn">${tx(T('여기부터!', 'Start here!'), true)}</span>` : ''}</button>`;
+  const card = (c, locked) => `<button class="chap ${chapDone(c.id) ? 'done' : ''} ${locked ? 'locked' : ''}" data-ch="${c.id}" data-locked="${locked ? 1 : 0}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${c.piece}"/></svg></span><span class="ct"><b>${tx(c.title)}</b><span>${tx(c.blurb)}</span>${locked ? ic('lock', 16) : stars((S.progress[c.id] || {}).stars || 0)}${next && next.id === c.id ? `<span class="pill warn start">${tx(T('여기부터!', 'Start here!'), true)}</span>` : ''}</span></button>`;
   root.innerHTML = `<div class="scroll"><div class="wrap">
     <div class="hero">${Art.lion('cheer')}<div class="bubble">${rich(T('차근차근 한 단원씩! 별 3개를 모아 봐요.', 'One chapter at a time! Try to collect 3 stars.'))}</div></div>
     <div class="sec">${tx(T('기초 과정', 'Basic course'), true)}</div><div class="chapters">${Content.basic.map((c) => card(c, false)).join('')}</div>
@@ -4981,12 +5004,12 @@ Views.parent = (root) => {
   const used = Math.round(Lock.used() / 60), lim = Math.round(Lock.limit() / 60);
   root.innerHTML = `<div class="scroll"><div class="wrap">
     <div class="card"><h3>${tx(T('오늘 사용한 시간', 'Time used today'), true)}</h3>
-      <div style="font-family:var(--font-d);font-size:1.8rem">${used}${tx(T('분', ' min'), true)} <span style="color:var(--ink2);font-size:1.1rem">/ ${lim}${tx(T('분', ' min'), true)}</span></div>
+      <div style="font-family:var(--font-d);font-size:1.8rem">${used}${unit(T('분', ' min'))} <span style="color:var(--ink2);font-size:1.1rem">/ ${lim}${unit(T('분', ' min'))}</span></div>
       <div style="height:12px;border-radius:99px;background:var(--surface2);margin-top:8px;overflow:hidden"><div style="height:100%;width:${Math.min(100, Math.round(100 * Lock.used() / Math.max(1, Lock.limit())))}%;background:var(--brand)"></div></div>
       <div class="row" style="margin-top:12px"><button class="btn mint sm" id="p-plus">${tx(T('오늘 +10분', 'Today +10 min'))}</button><button class="btn ghost sm" id="p-reset">${tx(T('오늘 사용시간 지우기', 'Reset today'))}</button></div></div>
     <div class="card"><h3>${tx(T('하루 시간 제한', 'Daily limit'), true)}</h3>
       ${sw('p-on', T('시간 제한 사용', 'Use time limit'), T('시간이 다 되면 앱이 비밀번호로 잠겨요', 'When time is up the app locks with the password'), L.on && !!L.pin)}
-      <div class="switch"><div class="lab"><b>${tx(T('하루 제한 시간', 'Minutes per day'))}</b></div><div class="stepper"><button class="btn ghost icon" id="p-minus" aria-label="minus">−</button><b>${L.limit}${tx(T('분', 'm'), true)}</b><button class="btn ghost icon" id="p-add" aria-label="plus">＋</button></div></div>
+      <div class="switch"><div class="lab"><b>${tx(T('하루 제한 시간', 'Minutes per day'))}</b></div><div class="stepper"><button class="btn ghost icon" id="p-minus" aria-label="minus">−</button><b>${L.limit}${unit(T('분', 'm'))}</b><button class="btn ghost icon" id="p-add" aria-label="plus">＋</button></div></div>
       <div class="row" style="margin-top:12px"><button class="btn lav sm" id="p-pin">${ic('lock', 18)} ${tx(L.pin ? T('비밀번호 바꾸기', 'Change password') : T('비밀번호 만들기', 'Create password'), true)}</button>${L.pin ? `<button class="btn pink sm" id="p-lock">${tx(T('지금 잠그기', 'Lock now'))}</button>` : ''}</div></div>
     <div class="card"><h3>${tx(T('알아 두세요', 'Good to know'), true)}</h3>
       <p style="margin:0;font-size:.92rem;color:var(--ink2)">${rich(T('이 앱의 시간 제한은 앱을 켜 놓고 쓴 시간만 재요. 더 확실한 잠금이 필요하면 기기의 <b>스크린 타임</b>도 함께 쓰세요. 브라우저 기록을 지우면 설정이 사라질 수 있어요.', 'This limit counts only the time the app is open. For a stricter lock, also use your device\'s <b>Screen Time</b>. Clearing browser data can erase these settings.'))}</p></div>
@@ -5029,7 +5052,7 @@ Views.setup = (root, params) => {
       <div class="field">${tx(T('시계 (수 읽는 시간)', 'Clock (thinking time)'), true)}</div>
       <div class="chips">${CLOCKS.map((c) => chip('clock', c.id, c.label, su.clock)).join('')}</div>
       <div style="margin-top:8px;font-size:.92rem;color:var(--ink2)">${tx(cl ? cl.tag : T('', ''))}${cfg ? ` · ${tx(T(`한 사람당 ${cfg.min}분, 한 수마다 +${cfg.inc}초`, `${cfg.min} min each, +${cfg.inc} sec per move`))}` : ''}</div>
-      ${su.clock === 'custom' ? `<div class="row" style="margin-top:10px;gap:18px"><div class="stepper"><button class="btn ghost icon" data-st="min-" aria-label="minus">−</button><b>${su.custom.min}${tx(T('분', 'm'), true)}</b><button class="btn ghost icon" data-st="min+" aria-label="plus">＋</button></div><div class="stepper"><button class="btn ghost icon" data-st="inc-" aria-label="minus">−</button><b>+${su.custom.inc}${tx(T('초', 's'), true)}</b><button class="btn ghost icon" data-st="inc+" aria-label="plus">＋</button></div></div>` : ''}
+      ${su.clock === 'custom' ? `<div class="row" style="margin-top:10px;gap:18px"><div class="stepper"><button class="btn ghost icon" data-st="min-" aria-label="minus">−</button><b>${su.custom.min}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-st="min+" aria-label="plus">＋</button></div><div class="stepper"><button class="btn ghost icon" data-st="inc-" aria-label="minus">−</button><b>+${su.custom.inc}${unit(T('초', 's'))}</b><button class="btn ghost icon" data-st="inc+" aria-label="plus">＋</button></div></div>` : ''}
       <div class="field">${tx(T('도우미', 'Helpers'), true)}</div><div class="card" style="padding:4px 14px">
         ${sw('s-hint', T('훈수 (이유까지 알려줘요)', 'Hints (with the reasons)'), null, su.hint)}
         ${sw('s-safety', T('안전 확인 (말을 잃을 수 있으면 물어봐요)', 'Safety check (asks before you lose a piece)'), null, su.safety)}
