@@ -314,6 +314,17 @@ svg.pc, svg.ic { overflow: visible; }
   .lesson .coach .bubble { max-height: 60vh; }
 }
 .game .coach { height: clamp(110px, 19vh, 180px); }
+/* replay: board + controls + move strip + coach. Reserve room for the two extra rows, allow scrolling, two columns when wide */
+.lesson.replay { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+.lesson.replay .boardwrap { width: min(100%, calc(100vh - 360px)); width: min(100%, calc(100dvh - 360px)); min-width: 200px; }
+.lesson.replay .coach { flex: none; height: auto; min-height: 132px; }
+.lesson.replay .rmoves { min-width: 0; }
+@media (min-aspect-ratio: 1/1) and (min-width: 760px) {
+  .lesson.replay { display: grid; grid-template-columns: min(60vw, calc(100vh - 100px)) minmax(0, 1fr); grid-template-columns: min(60vw, calc(100dvh - 100px)) minmax(0, 1fr); grid-template-rows: auto auto 1fr; gap: 8px 16px; align-content: start; }
+  .lesson.replay .boardwrap { grid-column: 1; grid-row: 1 / span 3; width: 100%; align-self: start; }
+  .lesson.replay .rctl, .lesson.replay .rmoves, .lesson.replay .coach { grid-column: 2; min-width: 0; }
+  .lesson.replay .coach { flex-direction: column; align-self: stretch; }
+}
 .pbar { min-height: 50px; }
 
 /* ---- online ---- */
@@ -4515,7 +4526,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v14 · practice</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · review</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4549,7 +4560,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v14 · practice</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · review</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4938,6 +4949,7 @@ Views.settings = (root) => {
     <p style="text-align:center;color:var(--ink2);font-size:.85rem">${tx(T('하루체스 · 인터넷 없이도 쓸 수 있어요', 'Daily Chess · works without internet'))}</p>
   </div></div>`;
   root.addEventListener('click', async (e) => {
+    const gb = e.target.closest('[data-go]'); if (gb) { sfx('tap'); go(gb.dataset.go); return; }
     const pc = e.target.closest('.chip[data-pl]');
     if (pc) { sfx('tap'); RW.setPl(+pc.dataset.pl); rerender(); return; }
     const c = e.target.closest('.chip[data-set]');
@@ -5953,7 +5965,7 @@ Views.history = (root) => {
     return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${d.getMonth() + 1}/${d.getDate()} · ${Math.ceil(e.mv.length / 2)}${tx(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : ''}</small></span><span>›</span></button>`;
   };
   root.innerHTML = `<div class="scroll"><div class="wrap">${list.length
-    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 이 기기에 저장돼요. 눌러서 다시 보고 <b>실수</b>를 찾아봐요.', 'The last 30 games are saved on this device. Tap one to replay it and find <b>mistakes</b>.'))}</p><div class="hlist">${list.map(row).join('')}</div>`
+    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 저장돼요. 로그인하면 다른 기기에서도 볼 수 있어요. 눌러서 다시 보고 <b>실수</b>를 찾아봐요.', 'The last 30 games are saved. Sign in to see them on other devices too. Tap one to replay it and find <b>mistakes</b>.'))}</p><div class="hlist">${list.map(row).join('')}</div>`
     : `<div class="card" style="text-align:center"><div style="width:90px;margin:0 auto">${Art.lion('happy')}</div><p>${rich(T('아직 기록이 없어요. 대국을 한 판 하고 오면 여기에 저장돼요!', 'No games yet. Play a game and it will be saved here!'))}</p></div>`}</div></div>`;
   root.addEventListener('click', (e) => { const b = e.target.closest('[data-id]'); if (b) { sfx('tap'); go('replay', { id: b.dataset.id }); } });
 };
