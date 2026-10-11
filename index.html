@@ -4515,10 +4515,10 @@ const errText = (e) => {
 function profileForm(p, preset) {
   return new Promise((res) => {
     let av = p ? p.avatar : AVATARS[Math.floor(Math.random() * 6)];
-    const ov = openModal(`<h2>${tx(p ? T('프로필 고치기', 'Edit profile') : T('새 프로필', 'New profile'))}</h2>
+    const ov = openModal(`<h2>${tx(p ? T('프로필 고치기', 'Edit profile') : preset && preset.owner ? T('내 프로필', 'My profile') : preset && preset.kid ? T('자녀 프로필', 'Kid profile') : T('새 프로필', 'New profile'))}</h2>
       <p>${tx(T('별명과 그림만 정해요. 진짜 이름은 쓰지 않아요!', 'Pick a nickname and a picture. Do not use a real name!'))}</p>
       <input class="input" id="pf-nick" maxlength="8" autocomplete="off" placeholder="${shortL(T('별명 (8자까지)', 'Nickname (max 8)'))}" value="${esc(p ? p.nick : '')}">
-      <label style="display:flex;gap:8px;align-items:center;margin:6px 0;font-size:.95rem"><input type="checkbox" id="pf-par" ${(p ? p.parent : preset && preset.parent) ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('부모님 프로필 (시간 제한 없음 · 고르려면 비밀번호 필요)', 'Parent profile (no time limit · password to switch)'))}</span></label>
+      ${(preset && (preset.owner || preset.kid)) || (typeof Net !== 'undefined' && !Net.profs.some((x) => !x.parent)) ? '' : `<label style="display:flex;gap:8px;align-items:center;margin:6px 0;font-size:.95rem"><input type="checkbox" id="pf-par" ${(p ? p.parent : preset && preset.parent) ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('부모 프로필 (시간 제한 없음 · 고르려면 비밀번호 필요)', 'Parent profile (no time limit · password to switch)'))}</span></label>`}
       <div class="avgrid" id="pf-av"></div><div class="msg" id="pf-msg" style="min-height:1.3em;color:var(--bad)"></div>
       <div class="row"><button class="btn ghost sm" data-k="c">${tx(T('취소', 'Cancel'))}</button><button class="btn" data-k="o">${tx(T('저장', 'Save'))}</button></div>`, { dismiss: false, top: true });
     const draw = () => { $('#pf-av', ov).innerHTML = AVATARS.map((a) => `<button class="avb" data-av="${a}" aria-pressed="${a === av}">${avHtml(a, 52)}</button>`).join(''); };
@@ -4529,7 +4529,7 @@ function profileForm(p, preset) {
       if (b.dataset.k === 'c') { ov.remove(); res(null); return; }
       const nick = cleanNick($('#pf-nick', ov).value);
       if (!nick) { $('#pf-msg', ov).innerHTML = tx(T('별명을 입력해 주세요', 'Please enter a nickname')); return; }
-      const par = !!$('#pf-par', ov).checked; ov.remove(); res({ nick, avatar: av, parent: par });
+      const cb = $('#pf-par', ov); const par = cb ? !!cb.checked : (preset && preset.owner) ? true : (preset && preset.kid) ? false : !!(p && p.parent); ov.remove(); res({ nick, avatar: av, parent: par });
     });
   });
 }
@@ -4543,16 +4543,16 @@ Views.account = (root) => {
     }
     if (!Net.ready) { root.innerHTML = `<div class="scroll"><div class="wrap"><p style="text-align:center;margin-top:40px">${tx(T('잠깐만요…', 'One moment…'))}</p></div></div>`; return; }
     if (!Net.user) {
-      root.innerHTML = `<div class="scroll"><div class="wrap"><div class="hero">${Art.lion('wink')}<div class="bubble">${rich(T('친구와 진도를 나누고 온라인으로 대국하려면 <b>부모님 계정</b>으로 로그인해요.', 'To share progress and play online, a <b>parent signs in</b>.'))}</div></div>
-        <div class="card"><h3>${ic('lock', 20)} ${tx(T('안전하게 쓰는 법', 'Staying safe'), true)}</h3><ul style="margin:0;padding-left:20px;font-size:.95rem"><li>${rich(T('아이의 <b>이름·나이·이메일은 저장하지 않아요.</b> 별명과 그림만 써요.', 'We <b>do not store a child\'s name, age or email.</b> Only a nickname and a picture.'))}</li><li>${rich(T('<b>채팅은 없어요.</b> 정해진 인사 말풍선만 보낼 수 있어요.', '<b>There is no chat.</b> Only set greeting bubbles.'))}</li><li>${rich(T('친구는 <b>코드를 아는 사람</b>만 되고, 부모님 확인이 있어야 수락돼요.', 'Friends are only people who know your <b>code</b>, and a parent confirms each request.'))}</li></ul></div>
+      root.innerHTML = `<div class="scroll"><div class="wrap"><div class="hero">${Art.lion('wink')}<div class="bubble">${rich(T('<b>로그인</b>하면 진도를 여러 기기에서 이어 하고, 친구와 온라인으로 대국할 수 있어요.', 'With an <b>account</b> you keep your progress on every device and can play friends online.'))}</div></div>
+        <div class="card"><h3>${ic('lock', 20)} ${tx(T('안전하게 쓰는 법', 'Staying safe'), true)}</h3><ul style="margin:0;padding-left:20px;font-size:.95rem"><li>${rich(T('<b>진짜 이름과 나이는 저장하지 않아요.</b> 별명과 그림만 써요.', 'We <b>do not store real names or ages.</b> Only a nickname and a picture.'))}</li><li>${rich(T('<b>채팅은 없어요.</b> 정해진 인사 말풍선만 보낼 수 있어요.', '<b>There is no chat.</b> Only set greeting bubbles.'))}</li><li>${rich(T('친구는 <b>코드를 아는 사람</b>만 되고, 수락해야 연결돼요. 자녀 프로필은 부모 확인이 필요해요.', 'Friends are only people who know your <b>code</b>, and each request must be accepted. Kid profiles need a parent\'s OK.'))}</li></ul></div>
         <div class="card"><h3>${tx(T('이메일로 로그인', 'Sign in with email'), true)}</h3>
-          <input class="input" id="a-em" type="email" autocomplete="username" autocapitalize="off" placeholder="${shortL(T('부모님 이메일', 'Parent email'))}">
+          <input class="input" id="a-em" type="email" autocomplete="username" autocapitalize="off" placeholder="${shortL(T('이메일', 'Email'))}">
           <input class="input" id="a-pw" type="password" autocomplete="current-password" placeholder="${shortL(T('비밀번호 (6자 이상)', 'Password (6+ chars)'))}" style="margin-top:8px">
           <div class="msg" id="a-msg" style="min-height:1.3em;color:var(--bad);margin:6px 0"></div>
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · bilingual</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v16 · family</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4568,25 +4568,24 @@ Views.account = (root) => {
     let wiz = '';
     if (!Net.parentOk) wiz = `<div class="card"><h3>${tx(T('계정을 확인하고 있어요…', 'Checking your account…'), true)}</h3><button class="btn ghost sm" id="w-retry">${tx(T('다시 확인', 'Check again'))}</button></div>`;
     else {
-      const st = !S.lock.pin ? 1 : !hasParent ? 2 : !hasKid ? 3 : 0;
-      const txt = { 1: [T('1단계 · 부모님 비밀번호 만들기', 'Step 1 · Create a parent password'), T('아이가 모르는 숫자 4자리를 정해요. 친구 수락, 시간 설정, 부모 프로필에 필요해요.', 'Pick 4+ digits your child does not know. It protects friends, time settings and the parent profile.'), T('비밀번호 만들기', 'Create password')],
-        2: [T('2단계 · 부모님 프로필 만들기', 'Step 2 · Create the parent profile'), T('부모님이 직접 쓰는 프로필이에요. 시간 제한이 없어요.', 'Your own profile. No time limit.'), T('부모님 프로필 만들기', 'Create parent profile')],
-        3: [T('3단계 · 아이 프로필 만들기', 'Step 3 · Create a kid profile'), T('별명과 그림만 정해요. 아이마다 하나씩 만들어요.', 'Just a nickname and a picture. One per child.'), T('아이 프로필 만들기', 'Create kid profile')] }[st];
-      if (st) wiz = `<div class="card wiz"><h3>${tx(txt[0], true)}</h3><p style="margin:0 0 10px;font-size:.95rem">${tx(txt[1])}</p><button class="btn tile-go" id="w-go" data-st="${st}">${tx(txt[2], true)}</button></div>`;
+      if (!hasParent) wiz = `<div class="card wiz"><h3>${tx(T('내 프로필 만들기', 'Create your profile'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem">${tx(T('별명과 그림만 정해요. 바로 친구·온라인을 쓸 수 있어요.', 'Just a nickname and a picture. Then you can use Friends & Online right away.'))}</p><button class="btn tile-go" id="w-go">${tx(T('프로필 만들기', 'Create profile'), true)}</button></div>`;
     }
     const list = Net.profs.filter((p) => !(kidDev && p.parent));
+    const famOn = hasKid;
+    const fam = (kidDev || famOn || !hasParent) ? '' : `<div class="card" style="margin-top:12px"><h3>${ic('lock', 20)} ${tx(T('자녀와 함께 쓰나요?', 'Using it with your child?'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem">${rich(T('<b>부모 모드</b>를 켜면 자녀 프로필을 만들고, 부모 메뉴를 비밀번호로 지키고, 하루 시간 제한과 선물 허락을 쓸 수 있어요. 혼자 쓴다면 켜지 않아도 돼요.', 'Turn on <b>Parent mode</b> to add a kid profile, protect parent menus with a password, and use daily time limits and gift approvals. If you play alone, you do not need it.'))}</p><button class="btn lav" id="a-fam">${ic('users', 20)} ${tx(T('부모 모드 켜고 자녀 추가', 'Turn on Parent mode'), true)}</button></div>`;
     root.innerHTML = `<div class="scroll"><div class="wrap">
       ${wiz}
-      ${kidDev ? '' : `<div class="card" style="margin-top:12px"><h3>${tx(T('부모님 계정', 'Parent account'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${esc(Net.user.name || '')} · ${tx(T('로그인됨', 'Signed in'))}</p><div class="row"><button class="btn pink sm" id="a-out">${tx(T('로그아웃', 'Sign out'))}</button>${hasKid && S.lock.pin ? `<button class="btn lav sm" id="a-mg">${ic('clock', 18)} ${tx(T('자녀 관리', 'Manage kids'), true)}</button>` : ''}</div>
+      ${kidDev ? '' : `<div class="card" style="margin-top:12px"><h3>${tx(T('내 계정', 'My account'), true)}</h3><p style="margin:0 0 10px;font-size:.95rem;color:var(--ink2)">${esc(Net.user.name || '')} · ${tx(T('로그인됨', 'Signed in'))}</p><div class="row"><button class="btn pink sm" id="a-out">${tx(T('로그아웃', 'Sign out'))}</button>${hasKid && S.lock.pin ? `<button class="btn lav sm" id="a-mg">${ic('clock', 18)} ${tx(T('자녀 관리', 'Manage kids'), true)}</button>` : ''}</div>
         ${hasKid ? `<label style="display:flex;gap:10px;align-items:center;margin-top:12px;font-size:.95rem"><input type="checkbox" id="a-kid" ${S.cloud.kid ? 'checked' : ''} style="width:22px;height:22px"> <span>${tx(T('이 기기는 아이 전용 (부모 프로필·설정 숨김)', 'Kid-only device (hides parent profile & settings)'))}</span></label>` : ''}</div>`}
+      ${fam}
       <div class="sec">${tx(T('프로필', 'Profiles'), true)}</div>
-      <div class="profs">${list.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${p.parent ? ` <span class="pill">${tx(T('부모', 'Parent'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
+      <div class="profs">${list.map((p) => `<div class="card prof ${p.id === cur ? 'cur' : ''}">${avHtml(p.avatar, 56)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${p.parent && famOn ? ` <span class="pill">${tx(T('부모', 'Parent'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">★ ${p.stars || 0} · ${tx(T('코드', 'Code'))} ${fmtCode(esc(p.code))}</div></div>
         ${p.id === cur ? `<span class="pill warn">${tx(T('사용 중', 'In use'))}</span>` : `<button class="btn mint sm" data-sel="${p.id}">${tx(T('선택', 'Use'))}</button>`}${kidDev ? '' : `<button class="btn ghost sm" data-ed="${p.id}">${tx(T('고치기', 'Edit'))}</button>`}</div>`).join('')}</div>
-      ${!kidDev && Net.profs.length < 6 && !wiz.includes('w-go') ? `<div class="row center" style="margin-top:12px"><button class="btn lav" id="a-add">＋ ${tx(T('프로필 추가', 'Add profile'), true)}</button></div>` : ''}
+      ${!kidDev && famOn && Net.profs.length < 6 && !wiz.includes('w-go') ? `<div class="row center" style="margin-top:12px"><button class="btn lav" id="a-add">＋ ${tx(T('프로필 추가', 'Add profile'), true)}</button></div>` : ''}
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
-      ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
+      ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v15 · bilingual</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v16 · family</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4604,10 +4603,20 @@ Views.account = (root) => {
     try {
       if (t.id === 'w-retry') { await Net.syncParent(); draw(); }
       else if (t.id === 'w-go') {
-        const st = +t.dataset.st;
-        if (st === 1) { if (await createPin()) { S.lock.on = true; saveNow(); Net.pushNow(); toast(T('비밀번호를 만들었어요', 'Password created')); } }
-        else { const r = await profileForm(null, { parent: st === 2 }); if (!r) return; const id = await Net.createProfile(r.nick, r.avatar, st === 2 ? true : r.parent); if (st === 2) await Net.select(id); toast(T('프로필을 만들었어요!', 'Profile created!')); }
+        const r = await profileForm(null, { owner: true }); if (!r) return;
+        const id = await Net.createProfile(r.nick, r.avatar, true); await Net.select(id); toast(T('프로필을 만들었어요!', 'Profile created!'));
         draw();
+      }
+      else if (t.id === 'a-fam') {
+        if (!S.lock.pin) {
+          const k = await ask({ lion: 'wink', title: T('부모 모드를 켤까요?', 'Turn on Parent mode?'), text: T('자녀가 모르는 <b>부모 비밀번호</b>를 먼저 만들고, 이어서 자녀 프로필을 만들어요.', 'First you create a <b>parent password</b> your child does not know, then a kid profile.'), buttons: [{ k: 'y', label: T('시작', 'Start'), cls: 'mint' }, { k: 'n', label: T('취소', 'Cancel'), cls: 'ghost' }], top: true });
+          if (k !== 'y') return;
+          if (!(await createPin())) return;
+          S.lock.on = false; saveNow(); Net.pushNow();
+        }
+        const r = await profileForm(null, { kid: true }); if (!r) { draw(); return; }
+        await Net.createProfile(r.nick, r.avatar, false);
+        toast(T('부모 모드를 켰어요. 자녀 프로필을 만들었어요!', 'Parent mode is on. Kid profile created!'), 3500); draw();
       }
       else if (t.id === 'a-pm') { if (await verifyParent(T('부모님 메뉴', 'Parent menu'))) { Net.parentMenu = true; draw(); } }
       else if (t.id === 'a-mg') { if (await verifyParent()) go('manage'); }
@@ -4633,7 +4642,7 @@ Views.account = (root) => {
 };
 
 Views.online = (root) => {
-  if (!Cloud.available || !Net.user || !Net.me() || !S.lock.pin) { go('account'); return; }
+  if (!Cloud.available || !Net.user || !Net.me()) { go('account'); return; }
   setTop({ back: 'home', title: T('친구·온라인', 'Friends & Online'), right: `<button class="btn ghost sm" id="tb-acc">${tx(T('계정', 'Account'))}</button>` });
   $('#tb-acc').onclick = () => go('account');
   let unwatchF = () => {}; let watchKey = ''; let waiting = null;
@@ -4655,7 +4664,7 @@ Views.online = (root) => {
     root.innerHTML = `<div class="scroll"><div class="wrap">
       <div class="card prof cur">${avHtml(me.avatar, 60)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.2rem">${esc(me.nick)}</b><div style="font-size:.85rem;color:var(--ink2)">★ ${Object.values(S.progress).reduce((a, c) => a + ((c || {}).stars || 0), 0)} · ${tx(T(`온라인 ${net.w}승 ${net.l}패 ${net.d}무`, `Online ${net.w}W ${net.l}L ${net.d}D`))}</div></div></div>
       <div class="card" style="margin-top:12px"><h3>${tx(T('내 친구 코드', 'My friend code'), true)}</h3><div class="codebox"><span id="mycode">${fmtCode(esc(me.code))}</span><button class="btn ghost sm" id="o-copy">${ic('copy', 18)} ${tx(T('복사', 'Copy'))}</button></div>
-        <p style="margin:8px 0 0;font-size:.88rem;color:var(--ink2)">${tx(T('친구에게 이 코드를 알려 주세요. 부모님과 함께 확인해요.', 'Share this code with a friend. Check it with a parent.'))}</p></div>
+        <p style="margin:8px 0 0;font-size:.88rem;color:var(--ink2)">${tx(T('아는 친구에게만 이 코드를 알려 주세요.', 'Only share this code with friends you know.'))}</p></div>
       <div class="card" style="margin-top:12px"><h3>${tx(T('친구 추가', 'Add a friend'), true)}</h3><div class="row"><input class="input grow" id="o-code" placeholder="${shortL(T('친구 코드 입력', 'Friend code'))}" maxlength="12" autocapitalize="characters" autocomplete="off" style="text-align:left"><button class="btn mint" id="o-add">${tx(T('요청', 'Send'))}</button></div>
         ${outs.length ? `<p style="margin:8px 0 0;font-size:.88rem;color:var(--ink2)">${tx(T('수락을 기다리는 중: ', 'Waiting for: '))}${outs.map((o) => esc(o.toNick)).join(', ')}</p>` : ''}</div>
       ${(ins.length || invIn.length) ? `<div class="sec">${tx(T('도착한 알림', 'Notifications'), true)}</div>` : ''}
@@ -4686,7 +4695,7 @@ Views.online = (root) => {
         const c = await Net.requestFriend(v); $('#o-code', root).value = '';
         toast(T(`${esc(c.nick)}님에게 요청을 보냈어요`, `Request sent to ${esc(c.nick)}`), 3500);
       } else if (t.dataset.facc) {
-        if (!(await verifyParent(T('친구 수락에는 부모님 확인이 필요해요', 'A parent must confirm new friends')))) return;
+        if (!(await verifyParent(T('친구 수락을 확인해요', 'Confirm to accept this friend')))) return;
         const f = Net.fs.find((x) => x.id === t.dataset.facc); await Net.acceptFriend(f); toast(T('친구가 되었어요!', 'You are friends now!'));
       } else if (t.dataset.fno) { if (!(await verifyParent())) return; await Net.removeFriend(t.dataset.fno); }
       else if (t.dataset.gacc) {
@@ -4865,7 +4874,7 @@ Views.home = (root) => {
       const w = $('#tb-who'); if (!w) return; const me = Net.me();
       if (!Net.ready) w.innerHTML = '';
       else if (!Net.user) w.innerHTML = tx(T('로그인', 'Sign in'));
-      else if (me) w.innerHTML = `${avHtml(me.avatar, 26)}<span class="wn">${esc(me.nick)}</span>${me.parent ? ' <span class="pill">' + tx(T('부모', 'Parent')) + '</span>' : ''}`;
+      else if (me) w.innerHTML = `${avHtml(me.avatar, 26)}<span class="wn">${esc(me.nick)}</span>${me.parent && Net.profs.some((x) => !x.parent) ? ' <span class="pill">' + tx(T('부모', 'Parent')) + '</span>' : ''}`;
       else w.innerHTML = tx(T('프로필 만들기', 'Add profile'));
     };
     bd(); Net.ui.add(bd); V.cleanup = () => Net.ui.delete(bd);
@@ -4964,10 +4973,10 @@ Views.settings = (root) => {
       <p style="margin:10px 0 0;font-size:.92rem;color:var(--ink2)">${rich(RW.plVal() === 0 ? T(`푼 퍼즐이 늘수록 점점 어려워져요. 지금은 <b>${RW.puzLevel()}단계 ${RW.LVN[RW.puzLevel() - 1].ko}</b>예요.`, `It gets harder as you solve more. Now: <b>Lv ${RW.puzLevel()} ${RW.LVN[RW.puzLevel() - 1].en}</b>.`) : T(`<b>${RW.puzLevel()}단계 ${RW.LVN[RW.puzLevel() - 1].ko}</b> 퍼즐이 나와요.`, `You get <b>Lv ${RW.puzLevel()} ${RW.LVN[RW.puzLevel() - 1].en}</b> puzzles.`))}</p>
       <p style="margin:6px 0 0;font-size:.85rem;color:var(--ink2)">${rich(T('1 입문 · 2 초급 · 3 중급 · 4 상급 · 5 고수. 4~5단계는 3수 메이트와 최고의 한 수 찾기라 어른에게도 도전이에요. 3·4·5단계는 별을 +1·+2·+3개 더 받아요.', '1 Starter · 2 Easy · 3 Medium · 4 Hard · 5 Expert. Levels 4–5 have mate in 3 and best-move puzzles, a challenge for adults too. Levels 3, 4 and 5 earn +1, +2 and +3 extra stars.'))}</p>
     </div>
-    <div class="card"><h3>${ic('lock', 20)} ${tx(T('부모님 설정', 'For parents'), true)}</h3>
-      <p style="margin:0 0 10px">${rich(T('하루 놀이 시간을 정하고 비밀번호로 잠글 수 있어요.', 'Set a daily play-time limit and lock the app with a password.'))}</p>
+    <div class="card"><h3>${ic('lock', 20)} ${tx(T('부모 모드', 'Parent mode'), true)}</h3>
+      <p style="margin:0 0 10px">${rich(T('자녀와 함께 쓸 때 하루 놀이 시간을 정하고 비밀번호로 잠글 수 있어요. 혼자 쓴다면 건너뛰어도 돼요.', 'For use with a child: set a daily play-time limit and lock the app with a password. Skip it if you play alone.'))}</p>
       <p style="margin:0 0 10px;color:var(--ink2);font-size:.92rem">${tx(Lock.enabled() ? T(`하루 ${S.lock.limit}분 제한이 켜져 있어요.`, `A ${S.lock.limit}-minute daily limit is on.`) : T('지금은 꺼져 있어요.', 'Currently off.'))}</p>
-      <button class="btn lav" id="btn-parent">${ic('lock', 20)} ${tx(T('부모님 설정 열기', 'Open parent settings'), true)}</button></div>
+      <button class="btn lav" id="btn-parent">${ic('lock', 20)} ${tx(T('부모 모드 설정 열기', 'Open Parent mode settings'), true)}</button></div>
     <div class="card"><h3>${tx(T('내 기록', 'My record'), true)}</h3>
       <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${RW.total()}`, `${st.games} games · ${wins} wins · ★ ${RW.total()} stars`))}</p>
       <p style="margin:6px 0 0">${rich(T(`퍼즐 <b>${ps.solved}</b>/${ps.pool}개 풀었어요 · 한 번에 푼 퍼즐 ${ps.perfect}개`, `Puzzles solved: <b>${ps.solved}</b>/${ps.pool} · first try: ${ps.perfect}`))}</p>
@@ -6705,7 +6714,7 @@ Object.assign(RW, (() => {
           <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`))}</p>
           <div class="rwweek"><div class="rwdots">${dots}</div><small>${tx(T(`이번 주 ${wdays.length}/${RULES.week.days}일 · 목표를 이루면 ★${RULES.week.n}`, `This week ${wdays.length}/${RULES.week.days} days · goal gives ★${RULES.week.n}`))}</small></div>
           <div class="rwstreak">🔥 ${tx(T(`${S.streak.n || 0}일 연속`, `${S.streak.n || 0}-day streak`))}${RW.passes() ? ` · 🛡️ ×${RW.passes()} <small>${tx(T('휴식권', 'rest pass'))}</small>` : ''}</div></div>
-        <div class="chips rwtabs"><button class="chip" data-tab="shop" aria-pressed="${view.tab === 'shop'}">${tx(T('꾸미기 상점', 'Shop'))}</button><button class="chip" data-tab="badges" aria-pressed="${view.tab === 'badges'}">${tx(T('배지', 'Badges'))}<small class="en">${earnedBd}/${allBd}</small></button><button class="chip" data-tab="gifts" aria-pressed="${view.tab === 'gifts'}">${tx(T('부모님 선물', 'Gifts'))}${pend ? ' <span class="rwdot"></span>' : ''}</button></div>`;
+        <div class="chips rwtabs"><button class="chip" data-tab="shop" aria-pressed="${view.tab === 'shop'}">${tx(T('꾸미기 상점', 'Shop'))}</button><button class="chip" data-tab="badges" aria-pressed="${view.tab === 'badges'}">${tx(T('배지', 'Badges'))}<small class="en">${earnedBd}/${allBd}</small></button><button class="chip" data-tab="gifts" aria-pressed="${view.tab === 'gifts'}">${tx(T('선물', 'Gifts'))}${pend ? ' <span class="rwdot"></span>' : ''}</button></div>`;
       let body = '';
       if (view.tab === 'shop') body = shopHtml(r, lv);
       else if (view.tab === 'badges') body = badgesHtml(r);
@@ -6739,8 +6748,8 @@ Object.assign(RW, (() => {
     function giftsHtml(r, parentView) {
       const items = RW.menu(), me = Net.me ? Net.me() : null, req = me && me.rwReq && me.rwReq.status === 'pending' ? me.rwReq : null;
       let h = `<p class="rwnote">${tx(T('모은 별로 부모님께 선물을 신청해요. 부모님이 허락하면 별이 사용돼요.', 'Ask your parent for a reward with your stars. The stars are used when they say yes.'))}</p>`;
-      if (parentView) return h + `<div class="card"><p style="margin:0">${rich(T('부모님 프로필이에요. 선물 목록은 <b>계정 → 자녀 관리</b>에서 만들어요.', 'This is a parent profile. Make the gift list in <b>Account → Manage kids</b>.'))}</p></div>`;
-      if (!Cloud.available || !Net.user || !me) return h + `<div class="card"><p style="margin:0">${rich(T('선물 신청은 부모님 계정으로 로그인한 뒤에 쓸 수 있어요.', 'Gift requests need a signed-in parent account.'))}</p></div>`;
+      if (parentView) { const kids = Net.profs.some((x) => !x.parent); return (kids ? h : '') + `<div class="card"><p style="margin:0">${rich(kids ? T('부모 프로필이에요. 선물 목록은 <b>계정 → 자녀 관리</b>에서 만들어요.', 'This is a parent profile. Make the gift list in <b>Account → Manage kids</b>.') : T('별 선물은 <b>자녀 프로필</b>에서 쓰는 기능이에요. <b>계정</b>에서 부모 모드를 켜고 자녀를 추가해 보세요.', 'Gift rewards are for <b>kid profiles</b>. Turn on Parent mode in <b>Account</b> and add a kid.'))}</p></div>`; }
+      if (!Cloud.available || !Net.user || !me) return h + `<div class="card"><p style="margin:0">${rich(T('선물 신청은 자녀 프로필로 로그인한 뒤에 쓸 수 있어요. 부모 모드는 계정 화면에서 켜요.', 'Gift requests work with a signed-in kid profile. Parent mode is turned on in Account.'))}</p></div>`;
       if (req) h += `<div class="card rwreq">${rich(T(`<b>${esc(req.ko)}</b> 신청 중 · ★ ${req.cost}<br><small>부모님이 보고 있어요. 별은 잠시 맡겨둬요.</small>`, `Asked for <b>${esc(req.ko)}</b> · ★ ${req.cost}<br><small>Waiting for your parent. The stars are on hold.</small>`))}<div class="row" style="margin-top:8px"><button class="btn ghost sm" data-act="cancelreq">${tx(T('신청 취소', 'Cancel'))}</button></div></div>`;
       if (!items.length) h += `<div class="card"><p style="margin:0">${rich(T('아직 선물 목록이 없어요. 부모님께 목록을 만들어 달라고 해 봐요!', 'No gifts yet. Ask your parent to make a list!'))}</p></div>`;
       else h += `<div class="rwgifts">${items.map((g) => { const ok = RW.balance() >= g.cost && !req; return `<div class="card rwgift"><span class="ic">🎁</span><div class="grow"><b>${esc(g.ko)}</b><small>★ ${g.cost}${RW.balance() < g.cost ? ' · ' + tx(T(`별 ${g.cost - RW.balance()}개 더`, `${g.cost - RW.balance()} more`)) : ''}</small></div><button class="btn sm" data-act="ask" data-id="${esc(g.id)}" ${ok ? '' : 'disabled'}>${tx(T('신청', 'Ask'))}</button></div>`; }).join('')}</div>`;
