@@ -4515,7 +4515,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v12 · levels</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v13 · tidy</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4549,7 +4549,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v12 · levels</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v13 · tidy</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4832,9 +4832,18 @@ Views.home = (root) => {
       else w.innerHTML = tx(T('프로필 만들기', 'Add profile'));
     };
     bd(); Net.ui.add(bd); V.cleanup = () => Net.ui.delete(bd);
-    const wb = $('#tb-who'); if (wb) wb.onclick = () => { sfx('tap'); go(Net.user && Net.me() && S.lock.pin ? 'online' : 'account'); };
+    // top-right chip = "who am I": always the account screen (switch profile, sign out, manage kids). Friends & online is the bottom tile.
+    const wb = $('#tb-who'); if (wb) wb.onclick = () => { sfx('tap'); go('account'); };
   }
-  const dl = $('#h-daily'); if (dl) dl.onclick = async () => { sfx('tap'); await RW.ready(2500); go('lesson', { daily: true }); };
+  const dl = $('#h-daily'); if (dl) dl.onclick = async () => {
+    sfx('tap');
+    if (!RW.plAsked()) { // first daily puzzle of this profile: pick where to start (it can be changed later in Settings)
+      const k = await ask({ lion: 'wink', title: T('퍼즐은 어디서 시작할까요?', 'Where should the puzzles start?'), text: T('나중에 <b>설정</b>에서 언제든 바꿀 수 있어요. 3단계부터는 별을 더 받아요.', 'You can change this any time in <b>Settings</b>. Levels 3 and up earn extra stars.'),
+        buttons: [{ k: 'auto', label: T('처음이에요 (쉬운 것부터, 점점 어려워져요)', 'New to chess (start easy, it grows)'), cls: 'mint' }, { k: 'l3', label: T('체스를 알아요 (3단계 중급)', 'I know chess (Lv 3)'), cls: 'lav' }, { k: 'l4', label: T('잘해요·어른 (4단계 상급)', 'Strong player / adult (Lv 4)'), cls: 'pink' }] });
+      RW.setPl(k === 'l3' ? 3 : k === 'l4' ? 4 : 0);
+    }
+    await RW.ready(2500); go('lesson', { daily: true });
+  };
   let lastQ = -1;
   $('.hero', root).addEventListener('click', () => {
     let i; do { i = Math.floor(Math.random() * Content.QUOTES.length); } while (i === lastQ && Content.QUOTES.length > 1); lastQ = i;
@@ -4909,7 +4918,7 @@ Views.settings = (root) => {
     <div class="card"><h3>${ic('bulb', 20)} ${tx(T('오늘의 퍼즐 난이도', 'Daily puzzle level'), true)}</h3>
       <div class="chips">${[0, 1, 2, 3, 4, 5].map((n) => `<button class="chip" data-pl="${n}" aria-pressed="${RW.plVal() === n}">${n === 0 ? tx(T('자동', 'Auto')) : tx(T(`${n}단계`, `Lv ${n}`))}</button>`).join('')}</div>
       <p style="margin:10px 0 0;font-size:.92rem;color:var(--ink2)">${rich(RW.plVal() === 0 ? T(`푼 퍼즐이 늘수록 점점 어려워져요. 지금은 <b>${RW.puzLevel()}단계 ${RW.LVN[RW.puzLevel() - 1].ko}</b>예요.`, `It gets harder as you solve more. Now: <b>Lv ${RW.puzLevel()} ${RW.LVN[RW.puzLevel() - 1].en}</b>.`) : T(`<b>${RW.puzLevel()}단계 ${RW.LVN[RW.puzLevel() - 1].ko}</b> 퍼즐이 나와요.`, `You get <b>Lv ${RW.puzLevel()} ${RW.LVN[RW.puzLevel() - 1].en}</b> puzzles.`))}</p>
-      <p style="margin:6px 0 0;font-size:.85rem;color:var(--ink2)">${rich(T('1 입문 · 2 초급 · 3 중급 · 4 상급 · 5 고수. 4~5단계는 3수 메이트와 최고의 한 수 찾기라 어른에게도 도전이에요.', '1 Starter · 2 Easy · 3 Medium · 4 Hard · 5 Expert. Levels 4–5 have mate in 3 and best-move puzzles, a challenge for adults too.'))}</p>
+      <p style="margin:6px 0 0;font-size:.85rem;color:var(--ink2)">${rich(T('1 입문 · 2 초급 · 3 중급 · 4 상급 · 5 고수. 4~5단계는 3수 메이트와 최고의 한 수 찾기라 어른에게도 도전이에요. 3·4·5단계는 별을 +1·+2·+3개 더 받아요.', '1 Starter · 2 Easy · 3 Medium · 4 Hard · 5 Expert. Levels 4–5 have mate in 3 and best-move puzzles, a challenge for adults too. Levels 3, 4 and 5 earn +1, +2 and +3 extra stars.'))}</p>
     </div>
     <div class="card"><h3>${ic('lock', 20)} ${tx(T('부모님 설정', 'For parents'), true)}</h3>
       <p style="margin:0 0 10px">${rich(T('하루 놀이 시간을 정하고 비밀번호로 잠글 수 있어요.', 'Set a daily play-time limit and lock the app with a password.'))}</p>
@@ -5063,7 +5072,7 @@ function dailyChap() {
     const n = p.k === 'm3' ? 3 : p.k === 'm2' ? 2 : 1;
     step = { t: 'mate', n, ok: n === 3 ? p.ok : undefined, fen: p.fen, text: n === 3 ? T(`${sk}이 세 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 가장 중요해요.`, `${se} to move: checkmate in <b>three moves</b>! The first move matters most.`) : n === 2 ? T(`${sk}이 두 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 중요해요.`, `${se} to move: checkmate in <b>two moves</b>! The first move matters.`) : T(`${sk}이 한 수로 <b>체크메이트</b>를 해 보세요!`, `${se} to move: give <b>checkmate</b> in one move!`), win: T('체크메이트! 멋져요!', 'Checkmate! Wonderful!') };
   }
-  return { id: 'daily-' + d, title, steps: [step] };
+  return { id: 'daily-' + d, title, lv, steps: [step] };
 }
 Views.lesson = (root, params) => {
   const all = Content.basic.concat(Content.pro);
@@ -5241,7 +5250,7 @@ Views.lesson = (root, params) => {
     if (first) { const y = new Date(); y.setDate(y.getDate() - 1); D.n = D.last === ymd(y) ? D.n + 1 : 1; D.last = d; }
     const keys = Object.keys(D.done).sort(); if (keys.length > 60) delete D.done[keys[0]];
     touchStreak();
-    if (first) RW.earn('puzzle', { mistakes: L.mistakes });
+    if (first) RW.earn('puzzle', { mistakes: L.mistakes, lv: ch.lv });
     const rw = RW.take();
     saveNow(); sfx('win');
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
@@ -6065,7 +6074,7 @@ Views.replay = (root, params) => {
 const RWD = (() => {
   /* ---- earning rules (stars) ---- */
   const RULES = {
-    puzzle: { ok: 1, perfect: 2 },            // daily puzzle, once a day
+    puzzle: { ok: 1, perfect: 2, lvBonus: { 3: 1, 4: 2, 5: 3 } }, // daily puzzle, once a day; harder levels (3-5) earn extra stars
     game: { play: 1, win: 1, cap: 3, minPlies: 12 }, // per day cap: effort counts, not only winning
     review: { n: 1, cap: 1 },                  // analysing a finished game ("find my mistakes")
     mission: { n: 2 },                         // finish all three of today's missions
@@ -6253,7 +6262,8 @@ const RW = (() => {
       if (r.e['p' + t]) return;
       const perfect = o.mistakes === 0;
       r.m.pz = (r.m.pz || 0) + 1; if (perfect) r.m.pzp = (r.m.pzp || 0) + 1;
-      award('p' + t, perfect ? RULES.puzzle.perfect : RULES.puzzle.ok, perfect ? '퍼즐을 한 번에 풀었어요' : '오늘의 퍼즐', perfect ? 'Solved it first try' : 'Daily puzzle');
+      const bonus = (RULES.puzzle.lvBonus || {})[o.lv] || 0;
+      award('p' + t, (perfect ? RULES.puzzle.perfect : RULES.puzzle.ok) + bonus, perfect ? '퍼즐을 한 번에 풀었어요' : '오늘의 퍼즐', perfect ? 'Solved it first try' : 'Daily puzzle');
       mark('p');
     } else if (kind === 'game') {
       if (!(o.plies >= RULES.game.minPlies)) return; // very short games do not count
@@ -6467,11 +6477,14 @@ const RW = (() => {
       return { k: x.k, fen: x.fen, ok: x.ok.slice(0, 6), lv: lv >= 1 && lv <= 5 ? lv : LV_DEF[x.k] };
     } catch (e) { return null; }
   }
-  let packsReady = false; const packWaiters = [];
-  const packsDone = () => { packsReady = true; while (packWaiters.length) packWaiters.pop()(); };
+  // packsSettled: the load attempt is over (success or failure). packsReady: the packs really loaded, so it is safe to remember today's puzzle.
+  // An offline start settles without being ready, so a built-in puzzle of the wrong level is never cached for the day.
+  let packsReady = false, packsSettled = false; const packWaiters = [];
+  const packsDone = (ok) => { packsSettled = true; if (ok) packsReady = true; while (packWaiters.length) packWaiters.pop()(); };
   // resolves when the packs have loaded (or failed / timed out), so the daily puzzle is chosen from the full pool
-  const ready = (ms) => (packsReady ? Promise.resolve() : new Promise((res) => { packWaiters.push(res); setTimeout(res, ms || 2500); }));
+  const ready = (ms) => (packsSettled ? Promise.resolve() : new Promise((res) => { packWaiters.push(res); setTimeout(res, ms || 2500); }));
   async function loadPacks() {
+    let okAll = false;
     try {
       const res = await fetch('packs/index.json?t=' + Math.floor(Date.now() / 3600000), { cache: 'no-cache' });
       if (!res.ok) return; const idx = await res.json();
@@ -6488,14 +6501,17 @@ const RW = (() => {
         } catch (e) { /* a broken pack is skipped, the rest still load */ }
       }
       packs.puzzles.sort((a, b) => (a.from < b.from ? -1 : 1));
+      okAll = (idx.packs || []).length === 0 || packs.loaded > 0;
       apply(); if (V.name === 'treasure') rerender();
-    } catch (e) { /* offline or no packs: built-in content only */ } finally { packsDone(); }
+    } catch (e) { /* offline or no packs: built-in content only */ } finally { packsDone(okAll); }
   }
   const lvOf = (p) => p.lv || LV_DEF[p.k] || 1;
   const plVal = () => { const v = Math.round(+st().pl); return v >= 1 && v <= 5 ? v : 0; }; // 0 = automatic
   // automatic level grows with solved puzzles (a first-try solve counts double)
   const autoLv = () => { const r = st(), n = (r.m.pz || 0) + (r.m.pzp || 0); return n >= 150 ? 5 : n >= 90 ? 4 : n >= 50 ? 3 : n >= 20 ? 2 : 1; };
   const puzLevel = () => plVal() || autoLv();
+  // true once the profile has chosen a level (even "auto") or solved a daily puzzle; until then the first daily puzzle asks for a start level
+  const plAsked = () => { const r = st(); return (+r.plt || 0) > 0 || (r.m.pz || 0) + (r.m.pzp || 0) > 0; };
   function setPl(v) { const r = st(); v = Math.round(+v); r.pl = v >= 1 && v <= 5 ? v : 0; r.plt = Date.now(); if (S.daily) S.daily.pick = null; save(); }
   function puzzlePool(d) { const a = Puzzles.slice(); for (const pk of packs.puzzles) if (pk.from <= d) for (const p of pk.list) a.push(p); return a; }
   // today's puzzle: from the profile's level, one per day in order. Remembered for the day once the packs are loaded, so a retry,
@@ -6515,7 +6531,7 @@ const RW = (() => {
 
   function init() { st(); apply(); }
 
-  return { st, total, balance, level, need, titleOf, lessonStars, passes, earn, take, notify, celebrate, html, hasNews, owned, equip, unequip, buy, apply, itemById, allItems, allBadges, metric, menu, requestGift, cancelRequest, applyRemote, pack, merge, onDay, usePass, loadPacks, puzzleFor, puzzleCount, ready, plVal, puzLevel, autoLv, setPl, LVN, init, msn, weekId, hold, packs, lvOfTotal };
+  return { st, total, balance, level, need, titleOf, lessonStars, passes, earn, take, notify, celebrate, html, hasNews, owned, equip, unequip, buy, apply, itemById, allItems, allBadges, metric, menu, requestGift, cancelRequest, applyRemote, pack, merge, onDay, usePass, loadPacks, puzzleFor, puzzleCount, ready, plVal, plAsked, puzLevel, autoLv, setPl, LVN, init, msn, weekId, hold, packs, lvOfTotal };
 })();
 
 </script>
