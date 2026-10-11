@@ -440,7 +440,8 @@ svg.pc, svg.ic { overflow: visible; }
 .rwbar.sm { height: 8px; margin-top: 6px; }
 .rwinfo small, .rwnote { color: var(--ink2); font-size: .85rem; }
 .rwbal { font-family: var(--font-d); font-size: 1.9rem; color: var(--brand-d); line-height: 1.1; margin-top: 2px; }
-.rwbal small { font-family: var(--font-b); font-size: .85rem; }
+.rwbal { display: flex; align-items: center; gap: 10px; }
+.rwbal small { font-family: var(--font-b); font-size: .85rem; line-height: 1.2; }
 .rwnote { margin: 8px 2px; }
 .rwtoday h3 { margin-bottom: 8px; }
 .rwms { display: flex; gap: 8px; }
@@ -449,7 +450,9 @@ svg.pc, svg.ic { overflow: visible; }
 .rwms > div.on { background: color-mix(in srgb, var(--good) 18%, var(--surface)); border-color: var(--good); }
 .rwweek { margin-top: 6px; }
 .rwdots { display: flex; gap: 6px; margin-bottom: 4px; }
-.rwdots span { flex: 1; height: 30px; border-radius: 10px; background: var(--surface2); border: 2px solid var(--line); display: grid; place-items: center; font-size: .78rem; color: var(--ink2); }
+.rwdots span { flex: 1; min-width: 0; min-height: 42px; border-radius: 10px; background: var(--surface2); border: 2px solid var(--line); display: grid; place-items: center; font-size: .86rem; color: var(--ink2); }
+.rwdots span b { display: block; font-weight: 400; text-align: center; line-height: 1.1; }
+.rwdots span small.en { font-size: .62rem; margin-top: 1px; opacity: .85; }
 .rwdots span.on { background: var(--sun); border-color: var(--brand); color: var(--brand-ink); }
 .rwdots span.today { box-shadow: 0 0 0 2px var(--brand); }
 .rwstreak { margin-top: 6px; font-family: var(--font-d); color: var(--ink2); }
@@ -6661,7 +6664,7 @@ Object.assign(RW, (() => {
   const { RULES, SLOTS, PRESETS } = RWD;
   const nm = (it) => T(it.ko, it.en);
   const sumv = (o) => Object.keys(o || {}).reduce((a, k) => a + (+o[k] || 0), 0);
-  const DAYS = [T('월', 'M'), T('화', 'T'), T('수', 'W'), T('목', 'T'), T('금', 'F'), T('토', 'S'), T('일', 'S')];
+  const DAYS = [T('월', 'Mon'), T('화', 'Tue'), T('수', 'Wed'), T('목', 'Thu'), T('금', 'Fri'), T('토', 'Sat'), T('일', 'Sun')];
 
   function preview(it, sz) {
     sz = sz || 84;
@@ -6693,15 +6696,15 @@ Object.assign(RW, (() => {
       const earnedBd = RW.allBadges().filter((x) => r.bd[x.id]).length, allBd = RW.allBadges().length;
       const pend = RW.hold() > 0;
       const head = `<div class="card rwhead"><div class="rwleo">${Art.lion('cheer')}</div><div class="rwinfo">
-          <div class="rwlvl">Lv ${lv} · ${tx(RW.titleOf(lv), true)}</div>
+          <div class="rwlvl">Lv ${lv} · ${tx(RW.titleOf(lv))}</div>
           <div class="rwbar"><i style="width:${pct}%"></i></div>
-          <small>${tx(T(`다음 레벨까지 ★ ${b - tot}`, `★ ${b - tot} to next level`), true)}</small>
-          <div class="rwbal">★ ${RW.balance()} <small>${tx(T('쓸 수 있는 별', 'to spend'), true)}</small></div></div></div>
+          <small>${tx(T(`다음 레벨까지 ★ ${b - tot}`, `★ ${b - tot} to next level`))}</small>
+          <div class="rwbal">★ ${RW.balance()} <small>${tx(T('쓸 수 있는 별', 'to spend'))}</small></div></div></div>
         <div class="card rwtoday"><h3>${tx(T('오늘의 별 미션', 'Today\'s star missions'), true)}</h3>
           <div class="rwms">${ms.map(([k, e, tt]) => `<div class="${m[k] ? 'on' : ''}"><span>${m[k] ? '✅' : e}</span>${tx(tt)}</div>`).join('')}</div>
-          <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`), true)}</p>
-          <div class="rwweek"><div class="rwdots">${dots}</div><small>${tx(T(`이번 주 ${wdays.length}/${RULES.week.days}일 · 목표를 이루면 ★${RULES.week.n}`, `This week ${wdays.length}/${RULES.week.days} days · goal gives ★${RULES.week.n}`), true)}</small></div>
-          <div class="rwstreak">🔥 ${tx(T(`${S.streak.n || 0}일 연속`, `${S.streak.n || 0}-day streak`), true)}${RW.passes() ? ` · 🛡️ ×${RW.passes()} <small>${tx(T('휴식권', 'rest pass'))}</small>` : ''}</div></div>
+          <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`))}</p>
+          <div class="rwweek"><div class="rwdots">${dots}</div><small>${tx(T(`이번 주 ${wdays.length}/${RULES.week.days}일 · 목표를 이루면 ★${RULES.week.n}`, `This week ${wdays.length}/${RULES.week.days} days · goal gives ★${RULES.week.n}`))}</small></div>
+          <div class="rwstreak">🔥 ${tx(T(`${S.streak.n || 0}일 연속`, `${S.streak.n || 0}-day streak`))}${RW.passes() ? ` · 🛡️ ×${RW.passes()} <small>${tx(T('휴식권', 'rest pass'))}</small>` : ''}</div></div>
         <div class="chips rwtabs"><button class="chip" data-tab="shop" aria-pressed="${view.tab === 'shop'}">${tx(T('꾸미기 상점', 'Shop'))}</button><button class="chip" data-tab="badges" aria-pressed="${view.tab === 'badges'}">${tx(T('배지', 'Badges'))}<small class="en">${earnedBd}/${allBd}</small></button><button class="chip" data-tab="gifts" aria-pressed="${view.tab === 'gifts'}">${tx(T('부모님 선물', 'Gifts'))}${pend ? ' <span class="rwdot"></span>' : ''}</button></div>`;
       let body = '';
       if (view.tab === 'shop') body = shopHtml(r, lv);
