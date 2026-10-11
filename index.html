@@ -52,6 +52,7 @@ svg.pc, svg.ic { overflow: visible; }
 .topbar .title .t-ko { display: block; overflow: hidden; text-overflow: ellipsis; }
 .topbar .title.wrap2 .t-ko { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .topbar .title small.en { display: block; font-size: .6em; opacity: .8; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.topbar .title.wrap2 small.en { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.1; }
 .pill { background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: .9rem; box-shadow: 0 2px 0 var(--line); white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
 .pill.warn { background: var(--sun); color: var(--brand-ink); }
 .view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -446,6 +447,8 @@ svg.pc, svg.ic { overflow: visible; }
 .rwtoday h3 { margin-bottom: 8px; }
 .rwms { display: flex; gap: 8px; }
 .rwms > div { flex: 1; text-align: center; font-size: .82rem; padding: 8px 4px; border-radius: 14px; background: var(--surface2); border: 2px solid var(--line); line-height: 1.25; }
+.rwms > div[data-ms] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.rwms > div[data-ms]:active { transform: scale(.97); }
 .rwms > div span { display: block; font-size: 1.5rem; margin-bottom: 2px; }
 .rwms > div.on { background: color-mix(in srgb, var(--good) 18%, var(--surface)); border-color: var(--good); }
 .rwweek { margin-top: 6px; }
@@ -1451,7 +1454,7 @@ svg.pc, svg.ic { overflow: visible; }
       eyes = eyeDot(48, 57) + eyeDot(72, 57);
       mouth = smile;
     }
-    return `<svg class="lion" viewBox="0 0 120 120" role="img" aria-label="lion coach Leo"><g fill="#f08a24" stroke="#c4650f" stroke-width="2.4">${mane}</g>` +
+    return `<svg class="lion" viewBox="0 0 120 120" role="img" aria-label="${(typeof aria === 'function') ? aria('사자 코치 레오', 'Leo the lion coach') : '사자 코치 레오'}"><g fill="#f08a24" stroke="#c4650f" stroke-width="2.4">${mane}</g>` +
       '<circle cx="31" cy="36" r="11" fill="#ffc94d" stroke="#d99a1c" stroke-width="2.4"/><circle cx="89" cy="36" r="11" fill="#ffc94d" stroke="#d99a1c" stroke-width="2.4"/>' +
       '<circle cx="31" cy="36" r="5.5" fill="#ffd9a8"/><circle cx="89" cy="36" r="5.5" fill="#ffd9a8"/>' +
       '<circle cx="60" cy="64" r="31" fill="#ffd166" stroke="#d99a1c" stroke-width="2.6"/>' +
@@ -1598,7 +1601,7 @@ svg.pc, svg.ic { overflow: visible; }
       ],
     },
     {
-      id: 'b12', piece: 'wN', title: T('말의 점수', 'Piece Values'), blurb: T('무엇이 더 소중할까?', 'Which is worth more?'),
+      id: 'b12', piece: 'wN', title: T('말의 점수', 'Piece Values'), blurb: T('무엇이 더 소중할까요?', 'Which is worth more?'),
       steps: [
         say(START, '말마다 점수가 있어요. {wP} 폰 <b>1</b> · {wN} 나이트 <b>3</b> · {wB} 비숍 <b>3</b> · {wR} 룩 <b>5</b> · {wQ} 퀸 <b>9</b>. {wK} 킹은 점수로 못 재는 가장 소중한 말이에요.', 'Each piece has points. {wP} Pawn <b>1</b> · {wN} Knight <b>3</b> · {wB} Bishop <b>3</b> · {wR} Rook <b>5</b> · {wQ} Queen <b>9</b>. The {wK} king is priceless.', {}),
         move('7k/8/8/3q1p2/8/4N3/8/K7 w - - 0 1', '나이트로 잡을 수 있는 말이 둘이에요. <b>더 소중한 말</b>을 잡아 보세요!', 'Your knight can capture two pieces. Take the <b>more valuable</b> one!', ['e3d5'], Object.assign(W('퀸(9점)을 잡았어요! 큰 이득이에요.', 'You won the queen (9 points)! Huge gain.'), { wrong: { e3f5: T('폰은 1점뿐이에요. 퀸(9점)을 잡아 보세요!', 'A pawn is only 1 point. Take the queen (9 points)!') } })),
@@ -1730,15 +1733,15 @@ svg.pc, svg.ic { overflow: visible; }
     {
       id: 'p8', piece: 'bQ', title: T('생각하는 습관', 'Thinking Habits'), blurb: T('고수처럼 수 읽기', 'Think like a strong player'),
       steps: [
-        say(START, '수를 읽을 때는 이 순서로! <b>1) 체크(Check)할 수 있나? 2) 잡을(Capture) 수 있나? 3) 위협(Threat)할 수 있나?</b>', 'Look at moves in this order! <b>1) Can I give Check? 2) Can I Capture? 3) Can I make a Threat?</b>', {}),
+        say(START, '수를 읽을 때는 이 순서로! <b>1) 체크(Check)할 수 있나요? 2) 잡을(Capture) 수 있나요? 3) 위협(Threat)할 수 있나요?</b>', 'Look at moves in this order! <b>1) Can I give Check? 2) Can I Capture? 3) Can I make a Threat?</b>', {}),
         { t: 'quiz', fen: START, text: T('상대가 방금 수를 뒀어요. 내 수를 두기 <b>전에</b> 가장 먼저 해야 할 일은?', 'Your opponent just moved. What should you do <b>before</b> playing your move?'), choices: [
           { ko: '빨리 두기', en: 'Play quickly' },
           { ko: '상대가 뭘 노리는지 살펴보기', en: 'Check what the opponent is aiming at', ok: true },
           { ko: '좋아하는 말만 움직이기', en: 'Move my favorite piece' },
         ], win: T('맞아요! 상대의 의도를 먼저 보면 실수가 크게 줄어요.', 'Yes! Spotting the opponent\'s idea first prevents most mistakes.'), no: T('다시 생각해 봐요. 먼저 상대를 살펴야 해요.', 'Think again. Look at the opponent first.') },
         { t: 'quiz', fen: START, text: T('수를 두기 직전 마지막 점검은?', 'What is the last check before you make a move?'), choices: [
-          { ko: '내 말이 공짜로 잡히지 않을까?', en: 'Can my pieces be captured for free?', ok: true },
-          { ko: '상대가 기다려 주고 있나?', en: 'Is my opponent waiting?' },
+          { ko: '내 말이 공짜로 잡히지 않을까요?', en: 'Can my pieces be captured for free?', ok: true },
+          { ko: '상대가 기다려 주고 있나요?', en: 'Is my opponent waiting?' },
           { ko: '시계를 끄기', en: 'Turn off the clock' },
         ], win: T('정답! \'안전 확인\'은 고수도 매번 하는 습관이에요.', 'Correct! Even strong players run this safety check every move.'), no: T('내 말이 안전한지 확인해야 해요.', 'You should check that your pieces are safe.') },
         say(START, '시간이 있는 대국에서는 초반은 빠르게, 복잡한 순간에는 길게 생각하세요. 시계 규칙은 \'규칙·시계 안내\'에서 볼 수 있어요. 이제 <b>사자 대장·사자 왕</b>에게 도전해 보세요!', 'In timed games, move quickly in the opening and think longer at complicated moments. See the clock guide for details. Now challenge the <b>Lion Captain and Lion King</b>!', { goto: 'play' }),
@@ -1779,7 +1782,7 @@ svg.pc, svg.ic { overflow: visible; }
     { t: T('좋은 선수에게는 운도 따라와요.', 'A good player is always lucky.'), by: 'José Raúl Capablanca' },
     { t: T('체스는 작은 인생이에요. 생각하고, 고르고, 책임지는 놀이예요.', 'Chess is life in miniature.'), by: 'Garry Kasparov' },
     { t: T('마지막에서 두 번째 실수를 한 사람이 이겨요. 끝까지 집중!', 'The winner is the one who makes the next-to-last mistake.'), by: 'Savielly Tartakower' },
-    { t: T('수를 두기 전에 꼭 물어봐요. "상대는 뭘 하고 싶을까?"', 'Before you move, ask: "What does my friend want to do?"') },
+    { t: T('수를 두기 전에 꼭 물어봐요. "상대는 뭘 하고 싶을까요?"', 'Before you move, ask: "What does my friend want to do?"') },
     { t: T('말이 잡힐 것 같으면 먼저 지켜 주세요. 다음에 공격해도 늦지 않아요!', 'Protect your piece first. You can attack next turn!') },
     { t: T('체크! 하기 전에, 내 킹이 안전한지 먼저 봐요.', 'Before you say check, make sure your own king is safe.') },
     { t: T('실수해도 괜찮아요. 실수에서 제일 많이 배워요!', 'Mistakes are okay. We learn the most from them!') },
@@ -1863,6 +1866,8 @@ function saveNow() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 
 /* ---------- i18n ---------- */
 function icons(s) { return s.replace(/\{([wb][PNBRQK])\}/g, (m, id) => `<svg class="ic" viewBox="0 0 100 100"><use href="#${id}"/></svg>`); }
+/* plain-text label for screen readers: Korean unless the app is set to English */
+const aria = (ko, en) => (S.lang === 'en' ? en : ko);
 function tx(o, inline) {
   if (o == null) return '';
   if (typeof o === 'string') return o;
@@ -2011,7 +2016,7 @@ const Lock = {
 'use strict';
 class Board {
   constructor() {
-    this.el = h('<div class="board" role="grid" aria-label="chessboard"></div>');
+    this.el = h('<div class="board" role="grid" aria-label="' + aria('체스판', 'Chessboard') + '"></div>');
     this.view = 'w'; this.f2f = false; this.coords = true;
     this.sqEls = []; this.cache = []; this.marks = {};
     this.onTap = null; this.onDrop = null; this.canDrag = null; this.onDragStart = null; this.onCancel = null;
@@ -2249,7 +2254,7 @@ function ask(o) {
 function promoPicker(color, flipped) {
   return new Promise((res) => {
     const c = color ? 'b' : 'w';
-    const ov = openModal(`<h2>${tx(T('무엇으로 변신할까요?', 'Promote to?'))}</h2><div class="promo">${[5, 4, 3, 2].map((t) => `<button data-t="${t}" aria-label="${Coach.NM[t].en}"><svg viewBox="0 0 100 100"><use href="#${c}${PTYPE[t - 1]}"/></svg></button>`).join('')}</div>`, { dismiss: false, cls: flipped ? 'flipped' : '' });
+    const ov = openModal(`<h2>${tx(T('무엇으로 변신할까요?', 'Promote to?'))}</h2><div class="promo">${[5, 4, 3, 2].map((t) => `<button data-t="${t}" aria-label="${aria(Coach.NM[t].ko, Coach.NM[t].en)}"><svg viewBox="0 0 100 100"><use href="#${c}${PTYPE[t - 1]}"/></svg></button>`).join('')}</div>`, { dismiss: false, cls: flipped ? 'flipped' : '' });
     ov.addEventListener('click', (e) => { const b = e.target.closest('button[data-t]'); if (b) { ov.remove(); res(+b.dataset.t); } });
   });
 }
@@ -2279,10 +2284,10 @@ function setTop(o) {
   const tb = $('#topbar');
   V.back = o.back || null;
   tb.innerHTML =
-    (o.back ? `<button class="btn ghost icon" id="tb-back" aria-label="back">${ic('back')}</button>` : '') +
+    (o.back ? `<button class="btn ghost icon" id="tb-back" aria-label="${aria('뒤로', 'Back')}">${ic('back')}</button>` : '') +
     `<div class="title">${o.title ? (typeof o.title === 'object' && S.lang === 'both' ? `<span class="t-ko">${o.title.ko}</span><small class="en">${o.title.en}</small>` : tx(o.title)) : ''}</div>` + (o.right || '') +
     `<span class="pill" id="lockpill" hidden></span>` +
-    (o.settings ? `<button class="btn ghost icon" id="tb-set" aria-label="settings">${ic('gear')}</button>` : '');
+    (o.settings ? `<button class="btn ghost icon" id="tb-set" aria-label="${aria('설정', 'Settings')}">${ic('gear')}</button>` : '');
   fitTitle();
   if (o.back) $('#tb-back').onclick = () => { sfx('tap'); (typeof o.back === 'function' ? o.back : () => go(o.back))(); };
   if (o.settings) $('#tb-set').onclick = () => { sfx('tap'); go('settings'); };
@@ -2313,7 +2318,7 @@ function pinPrompt(o) {
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'del', '0', 'ok'];
     const ov = openModal(
       `<h2>${tx(o.title)}</h2><p>${tx(o.sub || '')}</p><div class="pinbox" id="pb"></div><div class="msg" id="pm" style="min-height:1.4em;color:var(--bad);font-size:.95rem"></div>` +
-      `<div class="keypad">${keys.map((k) => `<button class="btn" data-k="${k}" aria-label="${k}">${k === 'del' ? '⌫' : k === 'ok' ? '✓' : k}</button>`).join('')}</div>` +
+      `<div class="keypad">${keys.map((k) => `<button class="btn" data-k="${k}" aria-label="${k === 'del' ? aria('지우기', 'Delete') : k === 'ok' ? aria('확인', 'OK') : k}">${k === 'del' ? '⌫' : k === 'ok' ? '✓' : k}</button>`).join('')}</div>` +
       `<div class="row" style="margin-top:14px">${o.cancel === false ? '' : `<button class="btn ghost sm" data-k="cancel">${tx(T('취소', 'Cancel'))}</button>`}${o.forgot ? `<button class="btn ghost sm" data-k="forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button>` : ''}</div>`,
       { dismiss: false, top: true });
     const draw = () => { $('#pb', ov).innerHTML = Array.from({ length: Math.max(4, v.length) }, (_, i) => `<i class="${i < v.length ? 'on' : ''}"></i>`).join(''); };
@@ -4552,7 +4557,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v17 · themes</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v18 · tidy</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4585,7 +4590,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v17 · themes</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v18 · tidy</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4745,7 +4750,7 @@ async function friendInfo(f) {
   const cpuWins = d.stats ? Object.values(d.stats.wins || {}).reduce((a, b) => a + b, 0) : 0;
   const k = await ask({
     html: `${avHtml(f.avatar, 72)}<h2 style="margin-top:6px">${esc(f.nick)}</h2>${d.lv ? `<div style="color:var(--ink2);font-size:.9rem;margin-top:-2px">Lv ${d.lv} · ${tx(RW.titleOf(d.lv), true)}</div>` : ''}
-      <div class="infogrid"><div><b>★ ${d.stars || 0}</b><span>${tx(T('모은 별', 'Stars'))}</span></div><div><b>${done}/${total}</b><span>${tx(T('끝낸 단원', 'Chapters'))}</span></div><div><b>${(d.streak && d.streak.n) || 0}</b><span>${tx(T('연속 일', 'Day streak'))}</span></div><div><b>${(d.stats && d.stats.games) || 0}</b><span>${tx(T('한 대국', 'Games'))}</span></div><div><b>${cpuWins}</b><span>${tx(T('레오를 이김', 'Wins vs Leo'))}</span></div><div><b>${n.w}-${n.l}-${n.d}</b><span>${tx(T('온라인 승-패-무', 'Online W-L-D'))}</span></div></div>
+      <div class="infogrid"><div><b>★ ${d.stars || 0}</b><span>${tx(T('모은 별', 'Stars'))}</span></div><div><b>${done}/${total}</b><span>${tx(T('끝낸 단원', 'Chapters'))}</span></div><div><b>${(d.streak && d.streak.n) || 0}</b><span>${tx(T('연속 일', 'Day streak'))}</span></div><div><b>${(d.stats && d.stats.games) || 0}</b><span>${tx(T('대국 수', 'Games'))}</span></div><div><b>${cpuWins}</b><span>${tx(T('레오를 이김', 'Wins vs Leo'))}</span></div><div><b>${n.w}-${n.l}-${n.d}</b><span>${tx(T('온라인 승-패-무', 'Online W-L-D'))}</span></div></div>
       <p style="font-size:.88rem;color:var(--ink2)">${tx(T('마지막 접속: ', 'Last seen: '))}${tx(ago(d.lastActive))}</p>`,
     buttons: [{ k: 'x', label: T('닫기', 'Close'), cls: 'mint' }, { k: 'rm', label: T('친구 끊기', 'Remove friend'), cls: 'ghost' }], top: true,
   });
@@ -4778,7 +4783,7 @@ Views.manage = (root) => {
         return `<div class="card" style="margin-bottom:12px"><div class="row" style="flex-wrap:nowrap">${avHtml(p.avatar, 48)}<div class="grow"><b style="font-family:var(--font-d);font-weight:400;font-size:1.1rem">${esc(p.nick)}</b>${forced ? ` <span class="pill warn">${ic('lock', 14)} ${tx(T('잠김', 'Locked'))}</span>` : ''}<div style="font-size:.85rem;color:var(--ink2)">${tx(T('오늘', 'Today'))} ${Math.round(used / 60)}${unit(T('분', 'm'))} / ${lim}${unit(T('분', 'm'))}${p.lastActive ? ` · ${tx(ago(p.lastActive))}` : ''}</div></div></div>
           <div style="height:10px;border-radius:99px;background:var(--surface2);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct >= 100 ? 'var(--bad)' : 'var(--brand)'}"></div></div>
           <div class="row"><button class="btn mint sm" data-m="plus" data-id="${p.id}">${tx(T('+10분', '+10 min'))}</button>${forced ? `<button class="btn lav sm" data-m="unlock" data-id="${p.id}">${tx(T('잠금 풀기', 'Unlock'))}</button>` : `<button class="btn pink sm" data-m="lock" data-id="${p.id}">${tx(T('지금 잠그기', 'Lock now'))}</button>`}<button class="btn ghost sm" data-m="zero" data-id="${p.id}">${tx(T('사용시간 지우기', 'Reset today'))}</button></div>
-          <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="minus">−</button><b>${p.limit || 15}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="plus">＋</button></div></div>
+          <div class="switch"><div class="lab"><b>${tx(T('하루 제한', 'Per day'))}</b></div><div class="stepper"><button class="btn ghost icon" data-m="minus" data-id="${p.id}" aria-label="${aria('줄이기', 'Decrease')}">−</button><b>${p.limit || 15}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-m="add" data-id="${p.id}" aria-label="${aria('늘리기', 'Increase')}">＋</button></div></div>
           ${rq ? `<div class="bubble" style="margin:10px 0 0">${rich(T(`<b>${esc(p.nick)}</b>이(가) 기록 지우기를 요청했어요.`, `<b>${esc(p.nick)}</b> asked to erase progress.`))}<div class="row" style="margin-top:8px"><button class="btn pink sm" data-m="eok" data-id="${p.id}">${tx(T('허락 (지워요)', 'Allow (erase)'))}</button><button class="btn ghost sm" data-m="eno" data-id="${p.id}">${tx(T('거절', 'Decline'))}</button></div></div>` : ''}
           ${RW.kidCard(p)}
         </div>`;
@@ -4831,7 +4836,7 @@ function clockCfg(su) {
 }
 const chapDone = (id) => ((S.progress[id] || {}).stars || 0) > 0;
 const stars = (n) => `<span class="stars">${[1, 2, 3].map((i) => `<i class="${i <= n ? 'on' : ''}">★</i>`).join('')}</span>`;
-const sw = (id, label, desc, on) => `<div class="switch"><div class="lab"><b>${rich(label)}</b>${desc ? `<div style="font-size:.88rem;color:var(--ink2)">${rich(desc)}</div>` : ''}</div><button class="tg" id="${id}" role="switch" aria-checked="${!!on}" aria-label="${plain(label.en)}"></button></div>`;
+const sw = (id, label, desc, on) => `<div class="switch"><div class="lab"><b>${rich(label)}</b>${desc ? `<div style="font-size:.88rem;color:var(--ink2)">${rich(desc)}</div>` : ''}</div><button class="tg" id="${id}" role="switch" aria-checked="${!!on}" aria-label="${aria(plain(label.ko || label.en), plain(label.en))}"></button></div>`;
 const chip = (set, v, label, cur, extra) => `<button class="chip" data-set="${set}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${tx(label)}${extra ? `<small class="en">${tx(extra)}</small>` : ''}</button>`;
 function applyPrefs() {
   const r = document.documentElement;
@@ -4842,14 +4847,31 @@ function applyPrefs() {
 
 const esc2 = (x) => String(x).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 /* ---------------- Home ---------------- */
+/* today's puzzle entry (shared by the home tile and the star-shop mission tiles) */
+async function openDaily() {
+    sfx('tap');
+    if (!RW.plAsked()) { // first daily puzzle of this profile: pick where to start (it can be changed later in Settings)
+      const k = await ask({ lion: 'wink', title: T('퍼즐은 어디서 시작할까요?', 'Where should the puzzles start?'), text: T('나중에 <b>설정</b>에서 언제든 바꿀 수 있어요. 3단계부터는 별을 더 받아요.', 'You can change this any time in <b>Settings</b>. Levels 3 and up earn extra stars.'),
+        buttons: [{ k: 'auto', label: T('처음이에요 (쉬운 것부터, 점점 어려워져요)', 'New to chess (start easy, it grows)'), cls: 'mint' }, { k: 'l3', label: T('체스를 알아요 (3단계 중급)', 'I know chess (Lv 3)'), cls: 'lav' }, { k: 'l4', label: T('잘해요·어른 (4단계 상급)', 'Strong player / adult (Lv 4)'), cls: 'pink' }] });
+      RW.setPl(k === 'l3' ? 3 : k === 'l4' ? 4 : 0);
+    }
+    await RW.ready(2500);
+    if (S.daily.done[ymd()] != null) { // today's puzzle is done: offer extra practice puzzles
+      const k = await ask({ lion: 'cheer', title: T('오늘의 퍼즐은 끝냈어요!', 'Today\'s puzzle is done!'), text: T('더 풀어 볼까요? 새 퍼즐을 풀면 별을 조금 더 받아요.', 'Want more? New practice puzzles earn a few extra stars.'),
+        buttons: [{ k: 'prac', label: T('퍼즐 더 풀기', 'More puzzles'), cls: 'mint' }, { k: 'again', label: T('오늘 퍼즐 다시', 'Today\'s puzzle again'), cls: 'ghost' }, { k: 'x', label: T('닫기', 'Close'), cls: 'lav' }] });
+      if (k === 'prac') go('lesson', { practice: true, lv: RW.puzLevel() }); else if (k === 'again') go('lesson', { daily: true });
+      return;
+    }
+    go('lesson', { daily: true });
+}
 Views.home = (root) => {
   setTop({ title: T('하루체스', 'Daily Chess'), settings: true, right: Cloud.available ? '<button class="btn ghost sm who" id="tb-who"></button>' : '' });
   const all = Content.basic.concat(Content.pro);
   const bal = RW.balance();
   const greets = [
-    T('안녕! 나는 사자 코치 <b>레오</b>야. 오늘도 같이 체스 하자!', 'Hi! I am Coach <b>Leo</b>. Let us play chess together today!'),
-    T('어서 와! 오늘은 어떤 말을 배워 볼까?', 'Welcome back! Which piece shall we learn today?'),
-    T('체스는 생각하는 놀이야. 천천히 해도 괜찮아!', 'Chess is a thinking game. Take your time!'),
+    T('안녕하세요! 저는 사자 코치 <b>레오</b>예요. 오늘도 같이 체스 해요!', 'Hi! I am Coach <b>Leo</b>. Let us play chess together today!'),
+    T('어서 오세요! 오늘은 어떤 말을 배워 볼까요?', 'Welcome back! Which piece shall we learn today?'),
+    T('체스는 생각하는 놀이예요. 천천히 해도 괜찮아요!', 'Chess is a thinking game. Take your time!'),
   ];
   const g = S.game && !S.game.over ? S.game : null;
   root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g ? ' has-resume' : ''}">
@@ -4866,7 +4888,7 @@ Views.home = (root) => {
     <div class="card" style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-around">
       <div class="stat-link" data-go="treasure" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">★ ${bal}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('별 상점 ›', 'Star shop ›'))}</div></div>
       <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.streak.n}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('연속 연습 일', 'Day streak'))}</div></div>
-      <div class="stat-link" data-go="history" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.stats.games}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('한 대국 ›', 'Games ›'))}</div></div>
+      <div class="stat-link" data-go="history" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.stats.games}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('대국 기록 ›', 'Game history ›'))}</div></div>
     </div></div></div>`;
   if (Cloud.available) {
     const bd = () => {
@@ -4881,22 +4903,7 @@ Views.home = (root) => {
     // top-right chip = "who am I": always the account screen (switch profile, sign out, manage kids). Friends & online is the bottom tile.
     const wb = $('#tb-who'); if (wb) wb.onclick = () => { sfx('tap'); go('account'); };
   }
-  const dl = $('#h-daily'); if (dl) dl.onclick = async () => {
-    sfx('tap');
-    if (!RW.plAsked()) { // first daily puzzle of this profile: pick where to start (it can be changed later in Settings)
-      const k = await ask({ lion: 'wink', title: T('퍼즐은 어디서 시작할까요?', 'Where should the puzzles start?'), text: T('나중에 <b>설정</b>에서 언제든 바꿀 수 있어요. 3단계부터는 별을 더 받아요.', 'You can change this any time in <b>Settings</b>. Levels 3 and up earn extra stars.'),
-        buttons: [{ k: 'auto', label: T('처음이에요 (쉬운 것부터, 점점 어려워져요)', 'New to chess (start easy, it grows)'), cls: 'mint' }, { k: 'l3', label: T('체스를 알아요 (3단계 중급)', 'I know chess (Lv 3)'), cls: 'lav' }, { k: 'l4', label: T('잘해요·어른 (4단계 상급)', 'Strong player / adult (Lv 4)'), cls: 'pink' }] });
-      RW.setPl(k === 'l3' ? 3 : k === 'l4' ? 4 : 0);
-    }
-    await RW.ready(2500);
-    if (S.daily.done[ymd()] != null) { // today's puzzle is done: offer extra practice puzzles
-      const k = await ask({ lion: 'cheer', title: T('오늘의 퍼즐은 끝냈어요!', 'Today\'s puzzle is done!'), text: T('더 풀어 볼까요? 새 퍼즐을 풀면 별을 조금 더 받아요.', 'Want more? New practice puzzles earn a few extra stars.'),
-        buttons: [{ k: 'prac', label: T('퍼즐 더 풀기', 'More puzzles'), cls: 'mint' }, { k: 'again', label: T('오늘 퍼즐 다시', 'Today\'s puzzle again'), cls: 'ghost' }, { k: 'x', label: T('닫기', 'Close'), cls: 'lav' }] });
-      if (k === 'prac') go('lesson', { practice: true, lv: RW.puzLevel() }); else if (k === 'again') go('lesson', { daily: true });
-      return;
-    }
-    go('lesson', { daily: true });
-  };
+  const dl = $('#h-daily'); if (dl) dl.onclick = openDaily;
   let lastQ = -1;
   $('.hero', root).addEventListener('click', () => {
     let i; do { i = Math.floor(Math.random() * Content.QUOTES.length); } while (i === lastQ && Content.QUOTES.length > 1); lastQ = i;
@@ -5021,7 +5028,7 @@ Views.parent = (root) => {
       <div class="row" style="margin-top:12px"><button class="btn mint sm" id="p-plus">${tx(T('오늘 +10분', 'Today +10 min'))}</button><button class="btn ghost sm" id="p-reset">${tx(T('오늘 사용시간 지우기', 'Reset today'))}</button></div></div>
     <div class="card"><h3>${tx(T('하루 시간 제한', 'Daily limit'), true)}</h3>
       ${sw('p-on', T('시간 제한 사용', 'Use time limit'), T('시간이 다 되면 앱이 비밀번호로 잠겨요', 'When time is up the app locks with the password'), L.on && !!L.pin)}
-      <div class="switch"><div class="lab"><b>${tx(T('하루 제한 시간', 'Minutes per day'))}</b></div><div class="stepper"><button class="btn ghost icon" id="p-minus" aria-label="minus">−</button><b>${L.limit}${unit(T('분', 'm'))}</b><button class="btn ghost icon" id="p-add" aria-label="plus">＋</button></div></div>
+      <div class="switch"><div class="lab"><b>${tx(T('하루 제한 시간', 'Minutes per day'))}</b></div><div class="stepper"><button class="btn ghost icon" id="p-minus" aria-label="${aria('줄이기', 'Decrease')}">−</button><b>${L.limit}${unit(T('분', 'm'))}</b><button class="btn ghost icon" id="p-add" aria-label="${aria('늘리기', 'Increase')}">＋</button></div></div>
       <div class="row" style="margin-top:12px"><button class="btn lav sm" id="p-pin">${ic('lock', 18)} ${tx(L.pin ? T('비밀번호 바꾸기', 'Change password') : T('비밀번호 만들기', 'Create password'), true)}</button>${L.pin ? `<button class="btn pink sm" id="p-lock">${tx(T('지금 잠그기', 'Lock now'))}</button>` : ''}</div></div>
     <div class="card"><h3>${tx(T('알아 두세요', 'Good to know'), true)}</h3>
       <p style="margin:0;font-size:.92rem;color:var(--ink2)">${rich(T('이 앱의 시간 제한은 앱을 켜 놓고 쓴 시간만 재요. 더 확실한 잠금이 필요하면 기기의 <b>스크린 타임</b>도 함께 쓰세요. 브라우저 기록을 지우면 설정이 사라질 수 있어요.', 'This limit counts only the time the app is open. For a stricter lock, also use your device\'s <b>Screen Time</b>. Clearing browser data can erase these settings.'))}</p></div>
@@ -5064,7 +5071,7 @@ Views.setup = (root, params) => {
       <div class="field">${tx(T('시계 (수 읽는 시간)', 'Clock (thinking time)'), true)}</div>
       <div class="chips">${CLOCKS.map((c) => chip('clock', c.id, c.label, su.clock)).join('')}</div>
       <div style="margin-top:8px;font-size:.92rem;color:var(--ink2)">${tx(cl ? cl.tag : T('', ''))}${cfg ? ` · ${tx(T(`한 사람당 ${cfg.min}분, 한 수마다 +${cfg.inc}초`, `${cfg.min} min each, +${cfg.inc} sec per move`))}` : ''}</div>
-      ${su.clock === 'custom' ? `<div class="row" style="margin-top:10px;gap:18px"><div class="stepper"><button class="btn ghost icon" data-st="min-" aria-label="minus">−</button><b>${su.custom.min}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-st="min+" aria-label="plus">＋</button></div><div class="stepper"><button class="btn ghost icon" data-st="inc-" aria-label="minus">−</button><b>+${su.custom.inc}${unit(T('초', 's'))}</b><button class="btn ghost icon" data-st="inc+" aria-label="plus">＋</button></div></div>` : ''}
+      ${su.clock === 'custom' ? `<div class="row" style="margin-top:10px;gap:18px"><div class="stepper"><button class="btn ghost icon" data-st="min-" aria-label="${aria('줄이기', 'Decrease')}">−</button><b>${su.custom.min}${unit(T('분', 'm'))}</b><button class="btn ghost icon" data-st="min+" aria-label="${aria('늘리기', 'Increase')}">＋</button></div><div class="stepper"><button class="btn ghost icon" data-st="inc-" aria-label="${aria('줄이기', 'Decrease')}">−</button><b>+${su.custom.inc}${unit(T('초', 's'))}</b><button class="btn ghost icon" data-st="inc+" aria-label="${aria('늘리기', 'Increase')}">＋</button></div></div>` : ''}
       <div class="field">${tx(T('도우미', 'Helpers'), true)}</div><div class="card" style="padding:4px 14px">
         ${sw('s-hint', T('훈수 (이유까지 알려줘요)', 'Hints (with the reasons)'), null, su.hint)}
         ${sw('s-safety', T('안전 확인 (말을 잃을 수 있으면 물어봐요)', 'Safety check (asks before you lose a piece)'), null, su.safety)}
@@ -5586,7 +5593,7 @@ Views.game = (root, params) => {
   }
   function dockHtml(c) {
     const cc = c == null ? '' : c;
-    const bt = (a, icon, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}" data-c="${cc}" aria-label="${label.en}">${ic(icon, 20)} <span>${shortL(label)}</span></button>`;
+    const bt = (a, icon, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}" data-c="${cc}" aria-label="${aria(label.ko || label.en, label.en)}">${ic(icon, 20)} <span>${shortL(label)}</span></button>`;
     return (cfg.hint ? bt('hint', 'bulb', T('훈수', 'Hint'), 'lav') : '') + bt('danger', 'shield', T('위험?', 'Danger?'), 'mint') + (cfg.undo ? bt('undo', 'undo', T('무르기', 'Undo'), 'ghost') : '') +
       (f2f ? '' : bt('flip', 'flip', T('뒤집기', 'Flip'), 'ghost')) + (NG ? bt('hi', 'chat', T('인사', 'Hi'), 'pink') : '') + bt('menu', 'menu', T('메뉴', 'Menu'), 'ghost');
   }
@@ -6259,7 +6266,7 @@ const RWD = (() => {
   const B = (id, ico, ko, en, dko, den, m, gte) => ({ id, ico, ko, en, dko, den, m, gte });
   const BADGES = [
     B('first-lesson', '🌱', '첫걸음', 'First step', '단원을 하나 끝냈어요', 'Finished a chapter', 'chap', 1),
-    B('lessons-7', '📘', '배움이 즐거워', 'Happy learner', '단원 7개 완료', '7 chapters done', 'chap', 7),
+    B('lessons-7', '📘', '배움이 즐거워요', 'Happy learner', '단원 7개 완료', '7 chapters done', 'chap', 7),
     B('basic-all', '🎓', '기초 졸업', 'Basics graduate', '기초 과정을 모두 끝냈어요', 'Finished every basic chapter', 'basicAll', 1),
     B('three-5', '🌟', '꼼꼼한 친구', 'Careful player', '별 3개짜리 단원 5개', 'Five 3-star chapters', 'c3', 5),
     B('earn-30', '⭐', '별 모으기', 'Star collector', '별을 30개 모았어요', 'Collected 30 stars', 'earned', 30),
@@ -6279,7 +6286,7 @@ const RWD = (() => {
     B('first-win', '🥇', '첫 승리', 'First win', '컴퓨터를 처음 이겼어요', 'Beat Leo for the first time', 'wins', 1),
     B('levels-3', '🦁', '레오 도전자', 'Leo challenger', '레오의 3단계를 이겼어요', 'Beat 3 different Leo levels', 'lvwin', 3),
     B('levels-6', '👑', '레오 정복', 'Leo conqueror', '레오의 6단계 모두 이겼어요', 'Beat all 6 Leo levels', 'lvwin', 6),
-    B('tough-5', '💪', '포기하지 않아', 'Never give up', '졌어도 끝까지 5판 두었어요', 'Played on after 5 losses', 'loss', 5),
+    B('tough-5', '💪', '포기하지 않아요', 'Never give up', '졌어도 끝까지 5판 두었어요', 'Played on after 5 losses', 'loss', 5),
     B('review-5', '🔎', '복기 꿈나무', 'Review rookie', '복기로 실수를 5번 찾았어요', 'Reviewed 5 games', 'rev', 5),
     B('review-20', '🧠', '복기왕', 'Review master', '복기 20번', 'Reviewed 20 games', 'rev', 20),
     B('online-1', '🤝', '친구와 한 판', 'Game with a friend', '친구와 온라인 대국', 'Played a friend online', 'net', 1),
@@ -6728,7 +6735,7 @@ Object.assign(RW, (() => {
           <small>${tx(T(`다음 레벨까지 ★ ${b - tot}`, `★ ${b - tot} to next level`))}</small>
           <div class="rwbal">★ ${RW.balance()} <small>${tx(T('쓸 수 있는 별', 'to spend'))}</small></div></div></div>
         <div class="card rwtoday"><h3>${tx(T('오늘의 별 미션', 'Today\'s star missions'), true)}</h3>
-          <div class="rwms">${ms.map(([k, e, tt]) => `<div class="${m[k] ? 'on' : ''}"><span>${m[k] ? '✅' : e}</span>${tx(tt)}</div>`).join('')}</div>
+          <div class="rwms">${ms.map(([k, e, tt]) => `<div class="${m[k] ? 'on' : ''}" data-ms="${k}" role="button" tabindex="0"><span>${m[k] ? '✅' : e}</span>${tx(tt)}</div>`).join('')}</div>
           <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`))}</p>
           <div class="rwweek"><div class="rwdots">${dots}</div><small>${tx(T(`이번 주 ${wdays.length}/${RULES.week.days}일 · 목표를 이루면 ★${RULES.week.n}`, `This week ${wdays.length}/${RULES.week.days} days · goal gives ★${RULES.week.n}`))}</small></div>
           <div class="rwstreak">🔥 ${tx(T(`${S.streak.n || 0}일 연속`, `${S.streak.n || 0}-day streak`))}${RW.passes() ? ` · 🛡️ ×${RW.passes()} <small>${tx(T('휴식권', 'rest pass'))}</small>` : ''}</div></div>
@@ -6778,6 +6785,14 @@ Object.assign(RW, (() => {
     const redraw = () => { if (V.name === 'treasure') draw(); };
     if (typeof Net !== 'undefined') { Net.ui.add(redraw); V.cleanup = () => Net.ui.delete(redraw); if (Net.refreshMenu) Net.refreshMenu().then(redraw).catch(() => {}); }
     root.addEventListener('click', async (e) => {
+      const mt = e.target.closest('[data-ms]');
+      if (mt) {
+        sfx('tap'); const k = mt.dataset.ms;
+        if (k === 'p') { const a = await ask({ lion: 'wink', title: T('오늘의 퍼즐로 갈까요?', 'Go to today\'s puzzle?'), buttons: [{ k: 'y', label: T('네, 갈래요', 'Yes, go'), cls: 'mint' }, { k: 'n', label: T('나중에', 'Later'), cls: 'ghost' }] }); if (a === 'y') openDaily(); }
+        else if (k === 'g') { const a = await ask({ lion: 'wink', title: T('대국하러 갈까요?', 'Go play a game?'), buttons: [{ k: 'cpu', label: T('컴퓨터와 대국', 'Play Computer'), cls: 'mint' }, { k: '2p', label: T('둘이서 대국', '2 Players'), cls: 'pink' }, { k: 'n', label: T('나중에', 'Later'), cls: 'ghost' }] }); if (a === 'cpu' || a === '2p') go('setup', { mode: a }); }
+        else if (k === 'l') { const a = await ask({ lion: 'wink', title: T('배우기·복기로 갈까요?', 'Go to Learn or Review?'), buttons: [{ k: 'learn', label: T('배우기', 'Learn'), cls: 'mint' }, { k: 'history', label: T('대국 복기', 'Review games'), cls: 'lav' }, { k: 'n', label: T('나중에', 'Later'), cls: 'ghost' }] }); if (a === 'learn' || a === 'history') go(a); }
+        return;
+      }
       const b = e.target.closest('button'); if (!b || b.disabled) return;
       if (b.dataset.tab) { sfx('tap'); view.tab = b.dataset.tab; draw(); return; }
       if (b.dataset.slot && !b.dataset.act) { sfx('tap'); view.slot = b.dataset.slot; draw(); return; }
@@ -6824,7 +6839,7 @@ Object.assign(RW, (() => {
     const list = RW.menu();
     return `<div class="card"><h3>🎁 ${tx(T('별 선물 목록', 'Star gift list'), true)}</h3>
       <p style="margin:0 0 10px;font-size:.92rem;color:var(--ink2)">${tx(T('아이가 모은 별로 신청할 수 있는 선물이에요. 신청이 오면 아래 아이 카드에서 허락해요.', 'Rewards your kids can ask for with their stars. Requests show up on the kid\'s card below.'))}</p>
-      ${list.map((g, i) => `<div class="rwgift"><span class="ic">🎁</span><div class="grow"><b>${esc(g.ko)}</b><small>★ ${g.cost}</small></div><button class="btn ghost sm" data-rw="edit" data-i="${i}">${tx(T('고치기', 'Edit'))}</button><button class="btn ghost sm" data-rw="del" data-i="${i}" aria-label="delete">✕</button></div>`).join('')}
+      ${list.map((g, i) => `<div class="rwgift"><span class="ic">🎁</span><div class="grow"><b>${esc(g.ko)}</b><small>★ ${g.cost}</small></div><button class="btn ghost sm" data-rw="edit" data-i="${i}">${tx(T('고치기', 'Edit'))}</button><button class="btn ghost sm" data-rw="del" data-i="${i}" aria-label="${aria('지우기', 'Delete')}">✕</button></div>`).join('')}
       <div class="row" style="margin-top:8px"><button class="btn mint sm" data-rw="add">＋ ${tx(T('선물 추가', 'Add'))}</button>${list.length ? '' : `<button class="btn lav sm" data-rw="preset">${tx(T('추천 목록 넣기', 'Use suggestions'))}</button>`}</div></div>`;
   }
   function kidCard(p) {
