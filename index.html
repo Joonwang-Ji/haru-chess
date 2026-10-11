@@ -349,7 +349,14 @@ svg.pc, svg.ic { overflow: visible; }
 .avb[aria-pressed="true"] { border-color: var(--brand); }
 .avb .av2 { width: 100%; height: auto; aspect-ratio: 1; }
 .profs { display: flex; flex-direction: column; gap: 10px; }
-.card.prof { display: flex; align-items: center; gap: 12px; margin: 0; }
+.card.prof { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0; }
+/* v18.1: name/code column keeps a readable width; buttons drop to their own right-aligned row when the card is narrow */
+.card.prof > .grow { flex: 1 1 150px; min-width: 150px; }
+.card.prof > .grow + .btn, .card.prof > .grow + .pill { margin-left: auto; }
+.card.prof > .grow b { overflow-wrap: anywhere; }
+.card.prof > .grow > div { line-height: 1.5; }
+.card.prof > .grow small.en { display: inline; margin-left: .3em; font-size: .9em; line-height: inherit; }
+.card.prof > .grow .pill { vertical-align: middle; margin-left: 4px; padding: 2px 10px; font-size: .8rem; }
 .card.prof.cur { outline: 3px solid var(--mint-d); }
 .codebox { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); border-radius: 16px; padding: 10px 14px; font-family: var(--font-d); font-size: 1.5rem; }
 .infogrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
@@ -4557,7 +4564,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v18 · tidy</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v19 · check</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4590,7 +4597,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v18 · tidy</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v19 · check</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
