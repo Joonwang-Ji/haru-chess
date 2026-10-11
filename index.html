@@ -4515,7 +4515,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v13 · tidy</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v14 · practice</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4549,7 +4549,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length && S.lock.pin ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v13 · tidy</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v14 · practice</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4842,7 +4842,14 @@ Views.home = (root) => {
         buttons: [{ k: 'auto', label: T('처음이에요 (쉬운 것부터, 점점 어려워져요)', 'New to chess (start easy, it grows)'), cls: 'mint' }, { k: 'l3', label: T('체스를 알아요 (3단계 중급)', 'I know chess (Lv 3)'), cls: 'lav' }, { k: 'l4', label: T('잘해요·어른 (4단계 상급)', 'Strong player / adult (Lv 4)'), cls: 'pink' }] });
       RW.setPl(k === 'l3' ? 3 : k === 'l4' ? 4 : 0);
     }
-    await RW.ready(2500); go('lesson', { daily: true });
+    await RW.ready(2500);
+    if (S.daily.done[ymd()] != null) { // today's puzzle is done: offer extra practice puzzles
+      const k = await ask({ lion: 'cheer', title: T('오늘의 퍼즐은 끝냈어요!', 'Today\'s puzzle is done!'), text: T('더 풀어 볼까요? 새 퍼즐을 풀면 별을 조금 더 받아요.', 'Want more? New practice puzzles earn a few extra stars.'),
+        buttons: [{ k: 'prac', label: T('퍼즐 더 풀기', 'More puzzles'), cls: 'mint' }, { k: 'again', label: T('오늘 퍼즐 다시', 'Today\'s puzzle again'), cls: 'ghost' }, { k: 'x', label: T('닫기', 'Close'), cls: 'lav' }] });
+      if (k === 'prac') go('lesson', { practice: true, lv: RW.puzLevel() }); else if (k === 'again') go('lesson', { daily: true });
+      return;
+    }
+    go('lesson', { daily: true });
   };
   let lastQ = -1;
   $('.hero', root).addEventListener('click', () => {
@@ -4904,7 +4911,7 @@ function clockTable() {
 /* ---------------- Settings ---------------- */
 Views.settings = (root) => {
   setTop({ back: 'home', title: T('설정', 'Settings') });
-  const st = S.stats; const wins = Object.values(st.wins).reduce((a, b) => a + b, 0);
+  const st = S.stats; const wins = Object.values(st.wins).reduce((a, b) => a + b, 0); const ps = RW.pzStats();
   root.innerHTML = `<div class="scroll"><div class="wrap">
     <div class="card"><h3>${tx(T('언어', 'Language'), true)}</h3>
       <div class="chips">${chip('lang', 'ko', T('한국어', 'Korean'), S.lang)}${chip('lang', 'en', T('English', 'English'), S.lang)}${chip('lang', 'both', T('둘 다', 'Both'), S.lang)}</div>
@@ -4926,6 +4933,7 @@ Views.settings = (root) => {
       <button class="btn lav" id="btn-parent">${ic('lock', 20)} ${tx(T('부모님 설정 열기', 'Open parent settings'), true)}</button></div>
     <div class="card"><h3>${tx(T('내 기록', 'My record'), true)}</h3>
       <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${RW.total()}`, `${st.games} games · ${wins} wins · ★ ${RW.total()} stars`))}</p>
+      <p style="margin:6px 0 0">${rich(T(`퍼즐 <b>${ps.solved}</b>/${ps.pool}개 풀었어요 · 한 번에 푼 퍼즐 ${ps.perfect}개`, `Puzzles solved: <b>${ps.solved}</b>/${ps.pool} · first try: ${ps.perfect}`))}</p>
       <div class="row" style="margin-top:12px"><button class="btn lav sm" data-go="history">${tx(T('대국 기록·복기', 'Games & review'))}</button><button class="btn pink sm" id="btn-reset">${tx(T('기록 지우기', 'Erase progress'))}</button></div></div>
     <p style="text-align:center;color:var(--ink2);font-size:.85rem">${tx(T('하루체스 · 인터넷 없이도 쓸 수 있어요', 'Daily Chess · works without internet'))}</p>
   </div></div>`;
@@ -5059,12 +5067,12 @@ function leadsToMate(g, m, n) {
   return ok;
 }
 
-function dailyChap() {
-  const d = ymd(), p = RW.puzzleFor(d), w = p.fen.split(' ')[1] === 'w';
+function dailyChap(pz, prac) {
+  const d = ymd(), p = pz || RW.puzzleFor(d), w = p.fen.split(' ')[1] === 'w';
   const side = w ? T('흰색', 'White') : T('검은색', 'Black'), sk = side.ko, se = side.en;
   const kinds = { m1: T('체크메이트 1수', 'Mate in 1'), m2: T('체크메이트 2수', 'Mate in 2'), m3: T('체크메이트 3수', 'Mate in 3'), f: T('공짜 말 잡기', 'Free piece'), t: T('최고의 한 수', 'Best move') };
   const kd = kinds[p.k] || kinds.m1, lv = p.lv || 1;
-  const title = T(`오늘의 퍼즐 · ${lv}단계 · ${kd.ko}`, `Daily puzzle · Lv ${lv} · ${kd.en}`);
+  const title = prac ? T(`퍼즐 연습 · ${lv}단계 · ${kd.ko}${p.fresh ? '' : ' · 복습'}`, `Practice · Lv ${lv} · ${kd.en}${p.fresh ? '' : ' · review'}`) : T(`오늘의 퍼즐 · ${lv}단계 · ${kd.ko}`, `Daily puzzle · Lv ${lv} · ${kd.en}`);
   let step;
   if (p.k === 'f') step = { t: 'move', fen: p.fen, ok: p.ok, text: T(`지키는 말이 없는 상대 말이 있어요! <b>공짜로 잡을 수</b> 있는 말을 찾아보세요.`, 'One enemy piece is not protected! Find the piece you can <b>take for free</b>.'), win: T('잘 찾았어요! 지켜지지 않은 말은 공짜예요.', 'Well spotted! A piece nobody protects is free.'), no: T('그 수는 아니에요. 지켜지는 말을 잡으면 도로 잡힐 수 있어요. 지켜지지 않는 말을 찾아봐요.', 'Not that one. If a piece is protected, you may be captured back. Look for one that is not protected.') };
   else if (p.k === 't') step = { t: 'move', fen: p.fen, ok: p.ok, text: T(`${sk} 차례예요! 말을 얻거나 크게 유리해지는 <b>가장 좋은 한 수</b>를 찾아보세요.`, `${se} to move! Find the <b>best move</b>: it wins material or a big advantage.`), win: T('정확해요! 가장 좋은 수를 찾았어요.', 'Exactly! You found the best move.'), no: T('더 좋은 수가 있어요. 상대의 약한 곳과 내 말이 만드는 위협을 다시 살펴봐요.', 'There is a better move. Look again for weak spots and for threats you can make.') };
@@ -5072,16 +5080,18 @@ function dailyChap() {
     const n = p.k === 'm3' ? 3 : p.k === 'm2' ? 2 : 1;
     step = { t: 'mate', n, ok: n === 3 ? p.ok : undefined, fen: p.fen, text: n === 3 ? T(`${sk}이 세 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 가장 중요해요.`, `${se} to move: checkmate in <b>three moves</b>! The first move matters most.`) : n === 2 ? T(`${sk}이 두 수 안에 <b>체크메이트</b>를 해 보세요! 첫 수가 중요해요.`, `${se} to move: checkmate in <b>two moves</b>! The first move matters.`) : T(`${sk}이 한 수로 <b>체크메이트</b>를 해 보세요!`, `${se} to move: give <b>checkmate</b> in one move!`), win: T('체크메이트! 멋져요!', 'Checkmate! Wonderful!') };
   }
-  return { id: 'daily-' + d, title, lv, steps: [step] };
+  return { id: (prac ? 'prac-' : 'daily-') + d, title, lv, steps: [step] };
 }
 Views.lesson = (root, params) => {
   const all = Content.basic.concat(Content.pro);
-  const ch = params.daily ? dailyChap() : all.find((c) => c.id === params.ch);
+  if (params.practice && !params.puz) params.puz = RW.practicePick(params.lv); // kept in params, so a re-render never swaps the puzzle
+  const puz = params.practice ? params.puz : params.daily ? RW.puzzleFor(ymd()) : null;
+  const ch = puz ? dailyChap(puz, !!params.practice) : all.find((c) => c.id === params.ch);
   if (!ch) { go('learn'); return; }
   const L = { i: 0, mistakes: 0, dead: false, tok: 0, g: null, step: null, accept: false, items: null, k: 0, tapOn: false, mateN: 1, seqI: 0, done: false };
   V.cleanup = () => { L.dead = true; L.tok++; };
   const dotsHtml = () => ch.steps.map((_, i) => `<i class="${i < L.i ? 'on' : i === L.i ? 'cur' : ''}"></i>`).join('');
-  setTop({ back: params.daily ? 'home' : 'learn', title: ch.title, right: '<div class="dots" id="dots"></div>' });
+  setTop({ back: (params.daily || params.practice) ? 'home' : 'learn', title: ch.title, right: '<div class="dots" id="dots"></div>' });
   root.innerHTML = '<div class="lesson"><div class="boardwrap" id="bw"></div><div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>';
   const board = new Board();
   $('#bw', root).appendChild(board.el);
@@ -5247,6 +5257,7 @@ Views.lesson = (root, params) => {
   async function finishDaily() {
     const d = ymd(), D = S.daily, first = !D.done[d];
     D.done[d] = Math.min(L.mistakes, 9);
+    RW.record(puz, L.mistakes);
     if (first) { const y = new Date(); y.setDate(y.getDate() - 1); D.n = D.last === ymd(y) ? D.n + 1 : 1; D.last = d; }
     const keys = Object.keys(D.done).sort(); if (keys.length > 60) delete D.done[keys[0]];
     touchStreak();
@@ -5256,14 +5267,32 @@ Views.lesson = (root, params) => {
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
     const k = await ask({ lion: 'cheer', title: T('오늘의 퍼즐 완료!', 'Daily puzzle complete!'),
       html: `<div style="font-size:2.2rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div>${RW.html(rw)}<p>${rich(T(`퍼즐을 <b>${D.n}일 연속</b>으로 풀었어요! 내일 새 퍼즐이 기다려요.`, `Puzzle streak: <b>${D.n} day(s)</b>! A new puzzle comes tomorrow.`))}</p>`,
-      buttons: [{ k: 'home', label: T('홈으로', 'Home'), cls: 'mint' }, { k: 'again', label: T('다시 풀기', 'Again'), cls: 'ghost' }] });
+      buttons: [{ k: 'prac', label: T('퍼즐 더 풀기', 'More puzzles'), cls: 'mint' }, { k: 'home', label: T('홈으로', 'Home'), cls: 'lav' }, { k: 'again', label: T('다시 풀기', 'Again'), cls: 'ghost' }] });
     await RW.celebrate(rw);
     if (L.dead) return;
-    if (k === 'again') go('lesson', { daily: true }); else go('home');
+    if (k === 'again') go('lesson', { daily: true }); else if (k === 'prac') { await RW.ready(2500); go('lesson', { practice: true, lv: RW.puzLevel() }); } else go('home');
+  }
+  async function finishPractice() {
+    const fresh = !!puz.fresh, sel = puz.sel;
+    RW.record(puz, L.mistakes);
+    touchStreak(); RW.earn('practice', { mistakes: L.mistakes, fresh });
+    const rw = RW.take();
+    saveNow(); sfx('win');
+    const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
+    const note = !fresh ? T('복습이에요! 복습은 별이 없지만 실력은 쑥쑥 늘어요.', 'A review! No stars for repeats, but you get stronger.')
+      : rw.n ? (puz.left > 0 ? T(`이 단계에 새 퍼즐이 <b>${puz.left}개</b> 남았어요.`, `<b>${puz.left}</b> new puzzle(s) left at this level.`) : T('이 단계의 새 퍼즐을 다 풀었어요! 이제 복습이 나와요.', 'You solved every new puzzle at this level! Reviews come next.'))
+        : T('오늘 연습 별은 다 받았어요. 더 풀어도 좋아요!', 'You already got all of today\'s practice stars. Keep going if you like!');
+    const k = await ask({ lion: 'cheer', title: T('연습 퍼즐 완료!', 'Practice solved!'),
+      html: `<div style="font-size:2.2rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div>${RW.html(rw)}<p>${rich(note)}</p>`,
+      buttons: [{ k: 'next', label: T('다음 퍼즐', 'Next puzzle'), cls: 'mint' }, sel > 1 ? { k: 'easy', label: T('한 단계 쉽게', 'Easier'), cls: 'lav' } : null, sel < 5 ? { k: 'hard', label: T('한 단계 어렵게', 'Harder'), cls: 'pink' } : null, { k: 'home', label: T('그만하기', 'Stop'), cls: 'ghost' }].filter(Boolean) });
+    await RW.celebrate(rw);
+    if (L.dead) return;
+    if (k === 'home') go('home'); else go('lesson', { practice: true, lv: k === 'easy' ? sel - 1 : k === 'hard' ? sel + 1 : sel });
   }
   async function finish(goPlay) {
     if (L.done) return; L.done = true;
     if (params.daily) { await finishDaily(); return; }
+    if (params.practice) { await finishPractice(); return; }
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
     const prev = (S.progress[ch.id] || {}).stars || 0;
     S.progress[ch.id] = { stars: Math.max(prev, st) };
@@ -6075,6 +6104,7 @@ const RWD = (() => {
   /* ---- earning rules (stars) ---- */
   const RULES = {
     puzzle: { ok: 1, perfect: 2, lvBonus: { 3: 1, 4: 2, 5: 3 } }, // daily puzzle, once a day; harder levels (3-5) earn extra stars
+    practice: { ok: 1, perfect: 2, cap: 4 },   // extra practice puzzles: only puzzles never solved before earn stars, at most 4 per day
     game: { play: 1, win: 1, cap: 3, minPlies: 12 }, // per day cap: effort counts, not only winning
     review: { n: 1, cap: 1 },                  // analysing a finished game ("find my mistakes")
     mission: { n: 2 },                         // finish all three of today's missions
@@ -6178,6 +6208,8 @@ const RWD = (() => {
     B('puzzle-7', '🧩', '퍼즐 탐정', 'Puzzle detective', '오늘의 퍼즐 7번 풀기', 'Solved 7 daily puzzles', 'pz', 7),
     B('puzzle-30', '🔍', '퍼즐 박사', 'Puzzle doctor', '오늘의 퍼즐 30번 풀기', 'Solved 30 daily puzzles', 'pz', 30),
     B('puzzle-perfect', '💎', '한 번에 척척', 'First try!', '틀리지 않고 퍼즐 10번', '10 puzzles with no mistakes', 'pzp', 10),
+    B('practice-20', '🏋️', '연습 벌레', 'Practice bug', '새 연습 퍼즐 20개', '20 new practice puzzles', 'pr', 20),
+    B('practice-100', '🌟', '퍼즐 마라토너', 'Puzzle marathoner', '새 연습 퍼즐 100개', '100 new practice puzzles', 'pr', 100),
     B('first-game', '♟️', '첫 대국', 'First game', '대국을 한 판 끝까지 뒀어요', 'Finished a game', 'games', 1),
     B('games-10', '🎮', '열 판 완주', 'Ten games', '대국 10판', '10 games played', 'games', 10),
     B('first-win', '🥇', '첫 승리', 'First win', '컴퓨터를 처음 이겼어요', 'Beat Leo for the first time', 'wins', 1),
@@ -6211,7 +6243,7 @@ const RWD = (() => {
 'use strict';
 const RW = (() => {
   const { RULES, TITLES, ART, SLOTS } = RWD;
-  const R0 = () => ({ v: 1, e: {}, s: {}, pe: {}, pu: {}, own: {}, eq: { hat: '', face: '', neck: '', board: '', piece: '' }, eqt: 0, bd: {}, m: {}, sm: {}, lw: {}, ms: { d: '', p: 0, g: 0, l: 0, x: 0 }, wk: { id: '', days: [], x: 0 }, gifts: [], claims: [], lv: 0, pl: 0, plt: 0 });
+  const R0 = () => ({ v: 1, e: {}, s: {}, pe: {}, pu: {}, own: {}, eq: { hat: '', face: '', neck: '', board: '', piece: '' }, eqt: 0, bd: {}, m: {}, sm: {}, lw: {}, ms: { d: '', p: 0, g: 0, l: 0, x: 0 }, wk: { id: '', days: [], x: 0 }, gifts: [], claims: [], lv: 0, pl: 0, plt: 0, pp: {} });
   const packs = { items: [], badges: [], puzzles: [], loaded: 0 };
   let P = { n: 0, lines: [], pass: '' };
   let flushT = 0;
@@ -6265,6 +6297,13 @@ const RW = (() => {
       const bonus = (RULES.puzzle.lvBonus || {})[o.lv] || 0;
       award('p' + t, (perfect ? RULES.puzzle.perfect : RULES.puzzle.ok) + bonus, perfect ? '퍼즐을 한 번에 풀었어요' : '오늘의 퍼즐', perfect ? 'Solved it first try' : 'Daily puzzle');
       mark('p');
+    } else if (kind === 'practice') {
+      if (!o.fresh) return; // a repeat is for learning, not for stars
+      const perfect = o.mistakes === 0;
+      r.m.pr = (r.m.pr || 0) + 1; if (perfect) r.m.prp = (r.m.prp || 0) + 1;
+      const used = r.e['x' + t] || 0, room = Math.max(0, RULES.practice.cap - used);
+      const n = Math.min(perfect ? RULES.practice.perfect : RULES.practice.ok, room);
+      if (n > 0) award('x' + t, n, perfect ? '연습 퍼즐을 한 번에 풀었어요' : '연습 퍼즐을 풀었어요', perfect ? 'Practice puzzle, first try' : 'Practice puzzle solved', true);
     } else if (kind === 'game') {
       if (!(o.plies >= RULES.game.minPlies)) return; // very short games do not count
       let n = RULES.game.play + (o.win ? RULES.game.win : 0);
@@ -6396,11 +6435,12 @@ const RW = (() => {
   Art.lionWith = function (mood, slot, id) { const it = itemById(id); return baseLion(mood).replace(/<\/svg>$/, it ? `<g class="acc">${itemSvg(it)}</g></svg>` : '</svg>'); };
 
   /* ---------- merge / pack (cloud + other devices). Every counter is keyed per device or per event, so merging never loses or doubles stars. ---------- */
-  function pack() { const r = st(); return clone({ v: 1, e: r.e, s: r.s, pe: r.pe, pu: r.pu, own: r.own, eq: r.eq, eqt: r.eqt, bd: r.bd, m: r.m, sm: r.sm, lw: r.lw, ms: r.ms, wk: r.wk, gifts: r.gifts, claims: r.claims, lv: r.lv, pl: r.pl, plt: r.plt }); }
+  function pack() { const r = st(); return clone({ v: 1, e: r.e, s: r.s, pe: r.pe, pu: r.pu, own: r.own, eq: r.eq, eqt: r.eqt, bd: r.bd, m: r.m, sm: r.sm, lw: r.lw, ms: r.ms, wk: r.wk, gifts: r.gifts, claims: r.claims, lv: r.lv, pl: r.pl, plt: r.plt, pp: r.pp }); }
   function merge(rem) {
     if (!rem || typeof rem !== 'object') return;
     const r = st(), mx = (a, b) => { for (const k of Object.keys(b || {})) a[k] = Math.max(a[k] || 0, +b[k] || 0); };
     for (const k of ['e', 's', 'pe', 'pu', 'm', 'sm', 'lw']) mx(r[k], rem[k]);
+    for (const k of Object.keys(rem.pp || {})) { const b = rem.pp[k]; if (!Array.isArray(b)) continue; const a = r.pp[k] || [0, 0, 0, 0]; r.pp[k] = [0, 1, 2, 3].map((i) => Math.max(+a[i] || 0, +b[i] || 0)); } // per-puzzle records: every number only grows
     for (const k of Object.keys(rem.own || {})) r.own[k] = 1;
     for (const k of Object.keys(rem.bd || {})) if (!r.bd[k]) r.bd[k] = rem.bd[k];
     if ((rem.eqt || 0) > (r.eqt || 0) && rem.eq) { for (const k of Object.keys(r.eq)) r.eq[k] = typeof rem.eq[k] === 'string' ? rem.eq[k] : ''; r.eqt = rem.eqt; }
@@ -6462,7 +6502,7 @@ const RW = (() => {
     else { if (x.art && ART[x.art]) it.art = x.art; else { const sv = safeSvg(x.svg); if (!sv) return null; it.svg = sv; } }
     return it;
   }
-  const METRICS = ['chap', 'c3', 'basicAll', 'earned', 'streakMax', 'games', 'wins', 'loss', 'lvwin', 'net', 'level', 'pz', 'pzp', 'rev', 'ms', 'wk', 'buy'];
+  const METRICS = ['chap', 'c3', 'basicAll', 'earned', 'streakMax', 'games', 'wins', 'loss', 'lvwin', 'net', 'level', 'pz', 'pzp', 'pr', 'rev', 'ms', 'wk', 'buy'];
   function okBadge(x) {
     if (!x || !ID.test(x.id || '') || allBadges().some((b) => b.id === x.id) || !METRICS.includes(x.m) || !(+x.gte > 0)) return null;
     return { id: x.id, ico: clean(x.ico, 4) || '🏅', ko: clean(x.ko), en: clean(x.en || x.ko), dko: clean(x.dko, 60), den: clean(x.den || x.dko, 60), m: x.m, gte: +x.gte };
@@ -6508,7 +6548,7 @@ const RW = (() => {
   const lvOf = (p) => p.lv || LV_DEF[p.k] || 1;
   const plVal = () => { const v = Math.round(+st().pl); return v >= 1 && v <= 5 ? v : 0; }; // 0 = automatic
   // automatic level grows with solved puzzles (a first-try solve counts double)
-  const autoLv = () => { const r = st(), n = (r.m.pz || 0) + (r.m.pzp || 0); return n >= 150 ? 5 : n >= 90 ? 4 : n >= 50 ? 3 : n >= 20 ? 2 : 1; };
+  const autoLv = () => { const r = st(), n = (r.m.pz || 0) + (r.m.pzp || 0) + (r.m.pr || 0); return n >= 150 ? 5 : n >= 90 ? 4 : n >= 50 ? 3 : n >= 20 ? 2 : 1; };
   const puzLevel = () => plVal() || autoLv();
   // true once the profile has chosen a level (even "auto") or solved a daily puzzle; until then the first daily puzzle asks for a start level
   const plAsked = () => { const r = st(); return (+r.plt || 0) > 0 || (r.m.pz || 0) + (r.m.pzp || 0) > 0; };
@@ -6529,9 +6569,53 @@ const RW = (() => {
   }
   const puzzleCount = () => puzzlePool(ymd()).length;
 
+  /* ---------- per-puzzle records + practice mode ---------- */
+  // key = short hash of the position, so a record survives pack reordering. record = [solves, first-try solves, total mistakes, last day index]
+  function pkey(fen) { const s = String(fen || '').split(' ').slice(0, 4).join(' '); let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(36); }
+  const recOf = (key) => { const a = st().pp[key]; return Array.isArray(a) ? a : [0, 0, 0, 0]; };
+  function record(p, mistakes) {
+    const r = st(), k = pkey(p.fen), a = recOf(k).slice();
+    a[0]++; if (!mistakes) a[1]++; a[2] += Math.min(9, mistakes || 0); a[3] = dayIndex(ymd());
+    r.pp[k] = a;
+    const ks = Object.keys(r.pp); if (ks.length > 2000) { ks.sort((x, y) => (r.pp[x][3] || 0) - (r.pp[y][3] || 0)); for (const x of ks.slice(0, ks.length - 2000)) delete r.pp[x]; }
+    save();
+  }
+  function levelList(L, d) { // same fallback as the daily puzzle: a level with no puzzles uses the next easier one
+    const all = puzzlePool(d); let list = all.filter((p) => lvOf(p) === L);
+    for (let k = L - 1; !list.length && k >= 1; k--) list = all.filter((p) => lvOf(p) === k);
+    return list.length ? list : all;
+  }
+  // an extra puzzle at level L: never-solved ones first (random), then the shakiest ones (most mistakes per solve, longest ago).
+  // The next week of daily puzzles at the profile's own level is left alone, so practice never uses up a coming daily puzzle.
+  let lastPick = '';
+  function practicePick(L) {
+    L = Math.round(+L); if (!(L >= 1 && L <= 5)) L = puzLevel();
+    const d = ymd(), list = levelList(L, d), skip = new Set();
+    if (L === puzLevel()) for (let i = 0; i < 8; i++) { const q = list[(dayIndex(d) + i) % list.length]; if (q) skip.add(pkey(q.fen)); }
+    let cand = list.filter((q) => !skip.has(pkey(q.fen)) && pkey(q.fen) !== lastPick);
+    if (!cand.length) cand = list;
+    const fresh = cand.filter((q) => !recOf(pkey(q.fen))[0]);
+    let p;
+    if (fresh.length) p = fresh[Math.floor(Math.random() * fresh.length)];
+    else {
+      const sc = (q) => { const a = recOf(pkey(q.fen)); return a[2] / Math.max(1, a[0]); };
+      const old = (q) => recOf(pkey(q.fen))[3] || 0;
+      const top = cand.slice().sort((x, y) => (sc(y) - sc(x)) || (old(x) - old(y))).slice(0, 8);
+      p = top[Math.floor(Math.random() * top.length)];
+    }
+    lastPick = pkey(p.fen);
+    return { k: p.k, fen: p.fen, ok: p.ok, lv: lvOf(p), sel: L, fresh: fresh.length > 0, left: Math.max(0, fresh.length - (fresh.length ? 1 : 0)) };
+  }
+  function pzStats() {
+    const r = st(), inPool = new Set(puzzlePool(ymd()).map((q) => pkey(q.fen)));
+    let solved = 0, perfect = 0;
+    for (const k of Object.keys(r.pp)) { const a = r.pp[k]; if (!inPool.has(k) || !Array.isArray(a)) continue; if (a[0] > 0) solved++; if (a[1] > 0) perfect++; }
+    return { solved, perfect, pool: inPool.size, practice: r.m.pr || 0 };
+  }
+
   function init() { st(); apply(); }
 
-  return { st, total, balance, level, need, titleOf, lessonStars, passes, earn, take, notify, celebrate, html, hasNews, owned, equip, unequip, buy, apply, itemById, allItems, allBadges, metric, menu, requestGift, cancelRequest, applyRemote, pack, merge, onDay, usePass, loadPacks, puzzleFor, puzzleCount, ready, plVal, plAsked, puzLevel, autoLv, setPl, LVN, init, msn, weekId, hold, packs, lvOfTotal };
+  return { st, total, balance, level, need, titleOf, lessonStars, passes, earn, take, notify, celebrate, html, hasNews, owned, equip, unequip, buy, apply, itemById, allItems, allBadges, metric, menu, requestGift, cancelRequest, applyRemote, pack, merge, onDay, usePass, loadPacks, puzzleFor, puzzleCount, pkey, record, practicePick, pzStats, ready, plVal, plAsked, puzLevel, autoLv, setPl, LVN, init, msn, weekId, hold, packs, lvOfTotal };
 })();
 
 </script>
