@@ -513,6 +513,23 @@ svg.pc, svg.ic { overflow: visible; }
 .rwbd { background: var(--surface2); border-radius: 16px; padding: 8px 10px; display: flex; flex-direction: column; align-items: center; }
 .rwbd .ic { font-size: 2rem; line-height: 1.1; } .rwbd b { font-family: var(--font-d); font-weight: 400; } .rwbd small { color: var(--ink2); }
 .rwconfirm { display: flex; justify-content: center; margin: 4px 0 6px; }
+
+/* ---- v23: back gesture shows the previous screen, famous games ---- */
+#app.dragging { z-index: 2; }
+.underlay { position: fixed; inset: 0; z-index: 0; background: var(--bg); overflow: hidden; pointer-events: none; }
+.underlay > .snap { will-change: transform; }
+.underlay > .shade { position: absolute; inset: 0; background: rgba(20,18,44,.16); pointer-events: none; }
+.classic .cplay:disabled { opacity: .4; }
+.rctl .dbl { display: inline-flex; flex: none; align-items: center; }
+.rctl .dbl .ico-s + .ico-s { margin-left: -10px; }
+.classic .mvhead { font-family: var(--font-d); color: var(--brand-d); font-size: .95rem; margin-bottom: 2px; }
+.classic .ask { margin-top: 8px; }
+.classic .ans { margin-top: 4px; padding: 6px 10px; background: var(--surface2); border-radius: 12px; }
+.classic .more.good { color: #1f9a59; font-weight: 700; margin: 0 0 4px; }
+.classic .more.hint { color: var(--brand-d); }
+.mvb.nt { font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; }
+.chap .ct .cwho { font-size: .78rem; margin-top: 2px; }
+.chap .ct .cdone { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: .8rem; color: #1f9a59; }
 </style></head><body><div id="app"><div id="topbar" class="topbar"></div><div id="view" class="view"></div></div><div id="layer"></div>
 <script id="src-engine">
 /* Chess rules engine: board, legal moves, make/unmake, FEN, SAN, game status. */
@@ -2330,8 +2347,44 @@ const Views = {};
 const V = { name: null, params: null, cleanup: null, back: null };
 const Hooks = { pause: [], resume: [] };
 let navN = 0;
+/* still copies of the screens we came from, shown under the back gesture */
+const Snap = (() => {
+  const st = []; // [{ name, el, sc }] screens we came from, newest last
+  function take() {
+    const a = document.getElementById('app'); if (!a || !V.name) return null;
+    try {
+      const all = a.querySelectorAll('*'), sc = [];
+      for (let i = 0; i < all.length; i++) { const e = all[i]; if (e.scrollTop || e.scrollLeft) sc.push([i, e.scrollTop, e.scrollLeft]); }
+      const el = a.cloneNode(true); el.classList.remove('dragging'); el.removeAttribute('style');
+      return { name: V.name, el, sc };
+    } catch (e) { return null; }
+  }
+  // called by go() before the screen changes
+  function leave(next) {
+    if (!V.name || V.name === next) return; // rerender of the same screen
+    const k = st.findIndex((x) => x.name === next);
+    if (k >= 0) { st.length = k; return; } // going back to a screen we came from
+    const s = take(); if (!s) return;
+    st.push(s); if (st.length > 6) st.shift();
+  }
+  // the screen a back gesture will most likely land on
+  function peek(back) {
+    if (!st.length) return null;
+    if (typeof back === 'string') { for (let i = st.length - 1; i >= 0; i--) if (st[i].name === back) return st[i]; return null; }
+    return st[st.length - 1];
+  }
+  function show(s) {
+    const u = document.createElement('div'); u.className = 'underlay'; u.setAttribute('aria-hidden', 'true'); u.inert = true;
+    const inner = s.el.cloneNode(true); inner.classList.add('snap'); u.appendChild(inner); u.insertAdjacentHTML('beforeend', '<i class="shade"></i>'); document.body.appendChild(u);
+    const all = inner.querySelectorAll('*');
+    for (const [i, t, l] of s.sc) { const e = all[i]; if (e) { e.scrollTop = t; e.scrollLeft = l; } }
+    return u;
+  }
+  return { leave, peek, show };
+})();
 function go(name, params) {
   navN++;
+  Snap.leave(name);
   if (V.cleanup) { try { V.cleanup(); } catch (e) { /* ignore */ } V.cleanup = null; }
   closeAllModals();
   V.name = name; V.params = params || {}; V.back = null;
@@ -2342,7 +2395,7 @@ function go(name, params) {
 function rerender() { go(V.name, V.params); }
 function setTop(o) {
   const tb = $('#topbar');
-  V.back = o.back || null;
+  V.back = o.back || null; V.backTo = o.backTo || null;
   tb.innerHTML =
     (o.back ? `<button class="btn ghost icon" id="tb-back" aria-label="${aria('뒤로', 'Back')}">${ic('back')}</button>` : '') +
     `<div class="title">${o.title ? (typeof o.title === 'object' && S.lang === 'both' ? `<span class="t-ko">${o.title.ko}</span><small class="en">${o.title.en}</small>` : tx(o.title)) : ''}</div>` + (o.right || '') +
@@ -2473,11 +2526,22 @@ function lockTick() {
 }
 
 /* ---------- gestures: drag from the left edge = back, drag a dialog down = close (follows the finger, iOS style) ---------- */
+/* v23: the previous screen is shown underneath while dragging (a still copy taken when we left it), sliding in from the left like iOS */
 (function () {
   let g = null;
   const DISMISS = ['cancel', 'c', 'x', 'n', 'no', 'close', 'cont'];
   const app = () => document.getElementById('app');
   const reset = (el, tr) => { el.style.transition = tr || ''; el.style.transform = ''; };
+  const EASE = 'cubic-bezier(.25,.8,.3,1)';
+  // p = how far the top screen has moved (0..1); the screen underneath slides from -30% to 0 and loses its shade
+  const under = (u, p, tr) => {
+    if (!u) return; const inner = u.firstChild;
+    const shade = u.lastChild;
+    inner.style.transition = tr ? `transform ${tr}` : 'none'; shade.style.transition = tr ? `opacity ${tr}` : 'none';
+    inner.style.transform = p >= 1 ? '' : `translateX(${(-30 * (1 - p)).toFixed(2)}%)`;
+    shade.style.opacity = (1 - p).toFixed(3);
+  };
+  const clean = (k) => { const a = app(); a.classList.remove('dragging'); a.style.transition = ''; a.style.transform = ''; a.style.boxShadow = ''; if (k.u) { k.u.remove(); k.u = null; } };
   addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) { g = null; return; }
     const t = e.touches[0], tgt = e.target, now = performance.now();
@@ -2486,10 +2550,17 @@ function lockTick() {
       const ov = modal.closest('.overlay');
       if (ov.classList.contains('lockscreen') || modal.classList.contains('flipped')) { g = null; return; }
       g = { k: 'modal', x: t.clientX, y: t.clientY, modal, ov, dy: 0, ok: modal.scrollTop <= 0, lx: 0, ly: t.clientY, lt: now, v: 0 };
-    } else if (t.clientX < 22 && !Layer.querySelector('.overlay') && $('#tb-back') && !(tgt.closest && tgt.closest('.sq'))) {
-      g = { k: 'back', x: t.clientX, y: t.clientY, dx: 0, lx: t.clientX, lt: now, v: 0, lock: false };
+    } else if (t.clientX < 24 && !Layer.querySelector('.overlay') && $('#tb-back') && !(tgt.closest && tgt.closest('.sq'))) {
+      g = { k: 'back', x: t.clientX, y: t.clientY, dx: 0, lx: t.clientX, lt: now, v: 0, lock: false, u: null, raf: 0 };
     } else g = null;
   }, { passive: true });
+  const paint = () => {
+    const k = g; if (!k || k.k !== 'back') return; k.raf = 0;
+    const a = app(), p = Math.min(1, k.dx / innerWidth);
+    a.style.transform = `translateX(${k.dx}px)`;
+    a.style.boxShadow = `-10px 0 28px rgba(30,30,70,${(0.24 * (1 - p)).toFixed(3)})`;
+    under(k.u, p);
+  };
   addEventListener('touchmove', (e) => {
     if (!g) return; const t = e.touches[0], dx = t.clientX - g.x, dy = t.clientY - g.y, now = performance.now();
     if (g.k === 'modal') {
@@ -2498,11 +2569,15 @@ function lockTick() {
       g.dy = dy; g.modal.style.transition = 'none'; g.modal.style.transform = `translateY(${Math.round(dy)}px)`;
       g.ov.style.background = `rgba(28,24,60,${Math.max(0, .55 * (1 - dy / 500)).toFixed(3)})`;
     } else {
-      if (!g.lock) { if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) { g = null; return; } if (dx > 6) g.lock = true; else return; }
+      if (!g.lock) {
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) { g = null; return; }
+        if (dx <= 6) return;
+        g.lock = true; const a = app(); a.classList.add('dragging'); a.style.transition = 'none';
+        const s = Snap.peek(V.backTo || V.back); if (s) { g.u = Snap.show(s); under(g.u, 0); }
+      }
       g.v = (t.clientX - g.lx) / Math.max(1, now - g.lt); g.lx = t.clientX; g.lt = now;
-      g.dx = Math.max(0, dx); const a = app(); a.classList.add('dragging');
-      a.style.transition = 'none'; a.style.transform = `translateX(${g.dx}px)`;
-      a.style.boxShadow = `-8px 0 24px rgba(30,30,70,${(.22 * (1 - Math.min(1, g.dx / innerWidth))).toFixed(3)})`;
+      g.dx = Math.max(0, dx);
+      if (!g.raf) g.raf = requestAnimationFrame(paint);
     }
   }, { passive: true });
   const end = () => {
@@ -2517,24 +2592,35 @@ function lockTick() {
       }
       k.modal.style.transition = 'transform .28s cubic-bezier(.2,.9,.3,1.2)'; k.modal.style.transform = ''; k.ov.style.background = '';
       setTimeout(() => { k.modal.style.transition = ''; }, 300);
-    } else if (k.lock) {
-      const a = app(), commit = k.dx > innerWidth * 0.35 || (k.v > 0.6 && k.dx > 40), n0 = navN;
-      const done = () => { a.classList.remove('dragging'); a.style.transition = ''; a.style.transform = ''; a.style.boxShadow = ''; };
-      if (commit) {
-        a.style.transition = 'transform .24s cubic-bezier(.25,.8,.3,1)'; a.style.transform = `translateX(${innerWidth}px)`;
-        setTimeout(() => {
-          const b = $('#tb-back'); sfx('tap');
-          V.fromBack = true; if (b) b.click();
-          setTimeout(() => {
-            if (navN === n0) { V.fromBack = false; a.style.transition = 'none'; a.style.transform = `translateX(${innerWidth * 0.3}px)`; void a.offsetWidth; a.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)'; a.style.transform = ''; setTimeout(done, 280); } // back was refused (e.g. a confirm dialog)
-            else done();
-          }, 60);
-        }, 230);
-      } else { a.style.transition = 'transform .26s cubic-bezier(.2,.9,.3,1)'; a.style.transform = ''; setTimeout(done, 280); }
+      return;
+    }
+    if (!k.lock) return;
+    if (k.raf) { cancelAnimationFrame(k.raf); k.raf = 0; }
+    const a = app(), commit = k.dx > innerWidth * 0.35 || (k.v > 0.5 && k.dx > 30), n0 = navN;
+    // finish the slide at about the finger's speed
+    const left = commit ? innerWidth - k.dx : k.dx, ms = Math.round(Math.max(160, Math.min(320, left / Math.max(0.9, Math.abs(k.v)))));
+    const tr = `${ms}ms ${EASE}`;
+    a.style.transition = `transform ${tr}, box-shadow ${tr}`;
+    if (commit) {
+      a.style.transform = `translateX(${innerWidth}px)`; a.style.boxShadow = '-10px 0 28px rgba(30,30,70,0)'; under(k.u, 1, tr);
+      setTimeout(() => {
+        const b = $('#tb-back'); sfx('tap');
+        V.fromBack = !k.u; // with the picture underneath already in place, the new screen needs no slide-in of its own
+        if (b) b.click();
+        if (navN !== n0) { clean(k); return; } // swap: the real screen replaces the picture in the same frame
+        setTimeout(() => { // back was refused (e.g. a confirm dialog): slide this screen back
+          if (navN !== n0) { clean(k); return; }
+          V.fromBack = false; a.style.transition = `transform .28s ${EASE}, box-shadow .28s`; a.style.transform = ''; under(k.u, 0, `.28s ${EASE}`);
+          setTimeout(() => clean(k), 300);
+        }, 60);
+      }, ms);
+    } else {
+      a.style.transform = ''; under(k.u, 0, tr);
+      setTimeout(() => clean(k), ms + 20);
     }
   };
   addEventListener('touchend', end, { passive: true });
-  addEventListener('touchcancel', () => { if (!g) return; const k = g; g = null; if (k.k === 'modal') { reset(k.modal); k.ov.style.background = ''; } else { const a = app(); a.classList.remove('dragging'); reset(a); a.style.boxShadow = ''; } }, { passive: true });
+  addEventListener('touchcancel', () => { if (!g) return; const k = g; g = null; if (k.k === 'modal') { reset(k.modal); k.ov.style.background = ''; } else { if (k.raf) cancelAnimationFrame(k.raf); clean(k); } }, { passive: true });
 })();
 
 </script>
@@ -4617,7 +4703,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v22 · my games</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v23 · classics</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4650,7 +4736,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v22 · my games</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v23 · classics</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4980,6 +5066,276 @@ Views.home = (root) => {
   });
 };
 
+/* Famous games with Leo's commentary (v23). Moves are the real historical games (public domain); the commentary is our own, for children.
+   at[ply] = what Leo says after `ply` half-moves have been played (0 = start).
+   n.q/n.a  = "why?" question; the answer opens with a button.
+   n.guess  = the next move (ply+1) is a "guess the move" for the child; n.hint is shown after a miss.
+   arr = arrows [from, to, color?], hl = squares to highlight. */
+const Classics = (() => {
+  const G = [
+    {
+      id: 'legal', year: 1750, piece: 'wN', moves: 'e4 e5 Bc4 d6 Nf3 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#',
+      title: T('레갈의 덫', 'Légal\'s trap'),
+      who: T('레갈 vs 생브리 · 1750년 파리', 'Légal vs Saint-Brie · Paris 1750'),
+      blurb: T('퀸을 내주고 7수 만에 체크메이트!', 'Give up the queen, checkmate in 7 moves!'),
+      lesson: T('퀸을 잡는 것보다 <b>내 킹이 안전한지</b> 먼저 살펴봐요.', 'Before grabbing a queen, check that <b>your king is safe</b>.'),
+      at: {
+        0: { t: T('약 270년 전, 프랑스 파리의 한 카페에서 둔 대국이에요. 흰색은 레갈 선생님. 아주 짧지만 아주 유명한 <b>덫</b>이 나와요. 흰색 편에서 같이 봐요!', 'About 270 years ago, in a café in Paris. White is Monsieur Légal. It is very short, but it has a very famous <b>trap</b>. Let us watch from White\'s side!'), mood: 'happy' },
+        5: { t: T('흰색은 폰, 비숍, 나이트를 차례로 꺼냈어요. 시작할 때는 <b>말을 빨리 꺼내는 것</b>이 비결이에요.', 'White brought out a pawn, a bishop and a knight. At the start, <b>bring your pieces out quickly</b>.'), hl: ['e4', 'c4', 'f3'] },
+        6: { t: T('검은 비숍이 f3 나이트를 노려요. 나이트가 비키면 그 뒤의 d1 퀸이 잡혀요. 이것을 <b>핀</b>이라고 해요.', 'The black bishop aims at the knight on f3. If the knight moves away, the queen on d1 behind it can be taken. This is called a <b>pin</b>.'), arr: [['g4', 'd1', 'red']], hl: ['f3'] },
+        8: { t: T('이제 레갈 선생님의 깜짝 놀랄 수가 나와요. 핀에 걸린 나이트를 움직여 볼까요?', 'Now comes Légal\'s surprising move. Shall we move the pinned knight?'), guess: true, hint: T('f3 나이트가 잡을 수 있는 폰이 있어요.', 'The knight on f3 can capture a pawn.'), mood: 'wink' },
+        9: { t: T('나이트가 e5 폰을 잡았어요! 이제 검은 비숍은 흰 퀸을 잡을 수 있어요.', 'The knight took the e5 pawn! Now the black bishop can take White\'s queen.'), q: T('왜 퀸을 그냥 내줬을까요?', 'Why give away the queen?'), a: T('검은색이 퀸을 잡으면, c4 비숍과 두 나이트가 힘을 합쳐 <b>체크메이트</b>를 할 수 있어요. 퀸보다 킹이 더 중요하죠! (검은색은 퀸 대신 e5 나이트를 잡았어야 했어요.)', 'If Black takes the queen, the c4 bishop and the two knights can work together for <b>checkmate</b>. The king matters more than the queen! (Black should have taken the e5 knight instead.)'), arr: [['c4', 'f7'], ['c3', 'd5']], mood: 'think' },
+        10: { t: T('검은색이 퀸을 잡았어요. 이제 흰색 차례예요. 체크로 시작해 봐요!', 'Black took the queen. Now it is White\'s turn. Start with a check!'), guess: true, hint: T('c4 비숍으로 킹 옆의 f7 폰을 잡아요.', 'Take the f7 pawn next to the king with the c4 bishop.') },
+        12: { t: T('검은 킹은 e7로 피할 수밖에 없었어요. 마지막 한 수! 체크메이트를 찾아봐요.', 'The black king had to run to e7. One last move! Find the checkmate.'), guess: true, hint: T('c3 나이트를 d5로!', 'The c3 knight goes to d5!') },
+        13: { t: T('<b>체크메이트!</b> 비숍 하나와 나이트 둘이 검은 킹이 갈 곳을 모두 막았어요. 퀸이 없어도 이겼어요.', '<b>Checkmate!</b> One bishop and two knights cover every square the king could go to. White won without a queen.'), hl: ['e7'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'greco', year: 1620, piece: 'wB', moves: 'e4 b6 d4 Bb7 Bd3 f5 exf5 Bxg2 Qh5+ g6 fxg6 Nf6 gxh7+ Nxh5 Bg6#',
+      title: T('그레코의 비숍 메이트', 'Greco\'s bishop mate'),
+      who: T('그레코 · 1620년 이탈리아', 'Greco · Italy 1620'),
+      blurb: T('킹 앞 폰을 함부로 움직이면 생기는 일', 'What happens when the king\'s pawn wanders off'),
+      lesson: T('킹 앞의 폰(f폰)을 일찍 움직이면 킹으로 가는 <b>길이 열려요</b>.', 'Moving the pawn in front of your king (the f-pawn) early <b>opens a road</b> to your king.'),
+      at: {
+        0: { t: T('약 400년 전 이탈리아의 체스 선생님 <b>그레코</b>가 책에 남긴 대국이에요. 흰색 편에서 봐요.', 'About 400 years ago, the Italian chess teacher <b>Greco</b> wrote this game in his book. Let us watch from White\'s side.'), mood: 'happy' },
+        6: { t: T('검은색이 f폰을 두 칸 내밀었어요. 그러자 검은 킹에서 h5까지 <b>대각선 길</b>이 열렸어요!', 'Black pushed the f-pawn two squares. Now a <b>diagonal road</b> opens from the black king to h5!'), hl: ['e8', 'f7', 'g6', 'h5'], mood: 'think' },
+        8: { t: T('검은 비숍이 g2 폰을 잡고 h1 룩을 노려요. 하지만 흰색은 더 큰 것을 노려요. 열린 대각선을 이용해 봐요!', 'The black bishop took on g2 and attacks the rook on h1. But White has a bigger idea. Use the open diagonal!'), arr: [['g2', 'h1', 'red']], guess: true, hint: T('퀸으로 h5에서 체크!', 'Check with the queen from h5!') },
+        10: { t: T('검은색은 g6 폰으로 체크를 막았어요.', 'Black blocked the check with the g6 pawn.') },
+        11: { t: T('흰 폰이 g6를 잡았어요.', 'White\'s pawn took on g6.'), q: T('이 폰은 다음에 무엇을 노릴까요?', 'What does this pawn want to do next?'), a: T('h7을 잡으면 폰이 비키면서 h5 퀸의 길이 다시 열려요. 그러면 퀸이 킹을 체크해요. 이렇게 비키면서 하는 체크를 <b>발견 체크</b>라고 해요.', 'If it takes on h7, it steps out of the way and the queen on h5 sees the king again. That is a check made by moving away, called a <b>discovered check</b>.'), arr: [['g6', 'h7']], mood: 'think' },
+        12: { t: T('검은 나이트가 f6로 나와 흰 퀸을 공격해요. 퀸이 위험해요! 그런데 흰색은 퀸을 지키지 않아요.', 'The black knight came to f6 and attacks White\'s queen. The queen is in danger! But White does not save it.'), arr: [['f6', 'h5', 'red']], guess: true, hint: T('g6 폰으로 h7을 잡아요. 비키면서 체크!', 'Take on h7 with the g6 pawn. A check by moving away!') },
+        13: { t: T('<b>발견 체크!</b> 폰이 비키자 퀸이 킹을 체크해요. 검은색은 체크를 피하려고 퀸을 잡아요.', '<b>Discovered check!</b> The pawn moved away and the queen gives check. Black takes the queen to stop it.'), arr: [['h5', 'e8', 'red']] },
+        14: { t: T('검은색이 흰 퀸을 잡았어요. 그런데 흰색에게는 비숍이 있어요!', 'Black took White\'s queen. But White still has a bishop!'), guess: true, hint: T('d3 비숍을 g6로!', 'The d3 bishop goes to g6!') },
+        15: { t: T('<b>체크메이트!</b> g6 비숍이 열린 대각선으로 킹을 잡았어요. 처음에 f폰을 움직여서 생긴 길이에요.', '<b>Checkmate!</b> The bishop on g6 uses the open diagonal. That road opened when Black moved the f-pawn.'), arr: [['g6', 'e8', 'red']], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'reti', year: 1910, piece: 'wQ', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Qd3 e5 dxe5 Qa5+ Bd2 Qxe5 O-O-O Nxe4 Qd8+ Kxd8 Bg5+ Kc7 Bd8#',
+      title: T('레티의 퀸 선물', 'Réti\'s queen gift'),
+      who: T('레티 vs 타르타코워 · 1910년 빈', 'Réti vs Tartakower · Vienna 1910'),
+      blurb: T('퀸을 내주고 양방 체크로 11수 만에 끝!', 'A queen sacrifice and a double check: over in 11 moves!'),
+      lesson: T('킹이 가운데에 오래 있으면 위험해요. <b>캐슬링</b>을 늦추지 마세요.', 'A king that stays in the middle is in danger. Do not wait too long to <b>castle</b>.'),
+      at: {
+        0: { t: T('1910년 오스트리아 빈에서 리하르트 <b>레티</b>(흰색)가 둔 대국이에요. 11수 만에 끝나요!', 'Vienna, 1910. Richard <b>Réti</b> plays White. It is over in just 11 moves!'), mood: 'happy' },
+        9: { t: T('흰 퀸이 d3에 나와 e4 나이트를 지켜요. 퀸이 <b>d줄</b>에 있다는 것을 기억해 두세요!', 'White\'s queen comes to d3 to protect the e4 knight. Remember: the queen is on the <b>d-file</b>!'), arr: [['d3', 'e4']], hl: ['d3'] },
+        12: { t: T('검은 퀸이 체크! 그러면서 e5 폰도 노려요. 체크하면서 다른 것도 노리는 수예요.', 'Black\'s queen gives check, and also aims at the e5 pawn. A check that attacks something else too.'), arr: [['a5', 'e1', 'red'], ['a5', 'e5']] },
+        15: { t: T('흰색은 e4 나이트를 지키지 않고 퀸 쪽으로 캐슬링했어요.', 'White did not protect the e4 knight. Instead White castled to the queen side.'), q: T('왜 나이트를 지키지 않았을까요?', 'Why not protect the knight?'), a: T('캐슬링으로 룩이 <b>d1</b>에 왔어요. 룩과 퀸이 같은 d줄에서 검은 킹을 겨냥해요. 나이트는 미끼였어요!', 'Castling brought the rook to <b>d1</b>. The rook and queen now line up on the d-file toward the black king. The knight was bait!'), arr: [['d1', 'd8']], mood: 'think' },
+        16: { t: T('검은 나이트가 e4 나이트를 잡았어요. 검은색이 좋아 보이죠? 그런데… 퀸을 아주 대담한 곳에 둬 봐요!', 'Black took the knight on e4. Black looks fine, right? But... put the queen somewhere very bold!'), guess: true, hint: T('퀸을 검은 킹 바로 옆 d8로!', 'Queen to d8, right next to the black king!'), mood: 'wink' },
+        17: { t: T('퀸이 d8에서 체크! 검은 킹이 퀸을 잡을 수 있어요.', 'The queen checks from d8! The black king can take it.'), q: T('왜 퀸을 그냥 줬을까요?', 'Why give the queen away?'), a: T('킹이 퀸을 잡으면 <b>d줄</b>로 나오게 돼요. 그 줄에는 d1 룩이 있죠. d2 비숍만 비키면 룩이 체크하게 돼요!', 'Taking the queen brings the king onto the <b>d-file</b>, where the d1 rook waits. If the d2 bishop steps aside, the rook gives check!'), arr: [['d1', 'd8', 'red']], mood: 'think' },
+        18: { t: T('킹이 퀸을 잡았어요. 이제 비숍이 비키면서 체크해 봐요!', 'The king took the queen. Now move the bishop away with check!'), guess: true, hint: T('d2 비숍을 g5로!', 'The d2 bishop goes to g5!') },
+        19: { t: T('<b>양방 체크!</b> 룩과 비숍이 동시에 체크해요. 두 곳에서 오는 체크는 막을 수도 잡을 수도 없어서 킹이 피하는 수밖에 없어요.', '<b>Double check!</b> The rook and the bishop check at the same time. You cannot block or capture two checks, so the king must run.'), arr: [['d1', 'd8', 'red'], ['g5', 'd8', 'red']] },
+        20: { t: T('킹이 c7로 피했어요. 끝낼 수 있어요!', 'The king ran to c7. You can finish it!'), guess: true, hint: T('g5 비숍을 d8로!', 'The g5 bishop goes to d8!') },
+        21: { t: T('<b>체크메이트!</b> 비숍이 체크하고, 룩이 d줄을 막아요. 검은 킹은 자기 말들에 둘러싸여 갈 곳이 없어요.', '<b>Checkmate!</b> The bishop gives check and the rook guards the d-file. The black king is boxed in by its own pieces.'), arr: [['d8', 'c7', 'red']], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'opera', year: 1858, piece: 'wR', moves: 'e4 e5 Nf3 d6 d4 Bg4 dxe5 Bxf3 Qxf3 dxe5 Bc4 Nf6 Qb3 Qe7 Nc3 c6 Bg5 b5 Nxb5 cxb5 Bxb5+ Nbd7 O-O-O Rd8 Rxd7 Rxd7 Rd1 Qe6 Bxd7+ Nxd7 Qb8+ Nxb8 Rd8#',
+      title: T('모피의 오페라 대국', 'Morphy\'s Opera Game'),
+      who: T('모피 vs 두 귀족 · 1858년 파리', 'Morphy vs two noblemen · Paris 1858'),
+      blurb: T('말을 빨리 꺼내면 어떻게 되는지 보여 주는 교과서', 'The textbook game on bringing your pieces out'),
+      lesson: T('<b>말을 빨리 꺼내고, 캐슬링하고, 줄을 열어요.</b> 말이 많아도 집에 있으면 싸울 수 없어요.', '<b>Bring pieces out, castle, open lines.</b> Pieces that stay at home cannot help.'),
+      at: {
+        0: { t: T('1858년 파리의 <b>오페라 극장</b>! 폴 모피(흰색)는 공연을 보면서, 두 귀족이 힘을 합친 검은색과 대국했어요. 체스 선생님들이 가장 많이 보여 주는 대국이에요.', 'Paris, 1858, at the <b>opera house</b>! Paul Morphy (White) played during the show against two noblemen playing Black together. Chess teachers show this game more than any other.'), mood: 'happy' },
+        8: { t: T('검은 비숍이 f3 나이트와 바꿨어요. 흰 퀸이 일찍 나왔지만, 대신 검은색은 비숍이 하나 줄었어요.', 'Black traded the bishop for the f3 knight. White\'s queen comes out early, and Black has one bishop fewer.') },
+        13: { t: T('흰 퀸이 b3로 왔어요.', 'White\'s queen goes to b3.'), q: T('퀸과 c4 비숍이 함께 노리는 칸은 어디일까요?', 'Which square do the queen and the c4 bishop attack together?'), a: T('<b>f7</b>이에요! 킹 옆의 약한 칸이죠. 게다가 퀸은 b7 폰도 노려요. 한 번에 두 곳을 노리는 수예요.', 'It is <b>f7</b>, the weak square next to the king! The queen also attacks b7. One move, two threats.'), arr: [['b3', 'f7', 'red'], ['c4', 'f7', 'red'], ['b3', 'b7']], mood: 'think' },
+        14: { t: T('검은 퀸이 e7에서 f7을 지켰어요. 그런데 퀸이 f8 비숍의 길을 막아 버렸어요. 검은 말들이 집에 갇혔어요.', 'Black\'s queen guards f7 from e7. But now it blocks the f8 bishop. Black\'s pieces are stuck at home.'), hl: ['f8', 'h8', 'b8'] },
+        17: { t: T('비숍이 g5로! f6 나이트가 움직이면 뒤의 e7 퀸이 잡혀요. 이것이 <b>핀</b>이에요.', 'Bishop to g5! If the f6 knight moves, the queen on e7 behind it is lost. That is a <b>pin</b>.'), arr: [['g5', 'e7', 'red']], hl: ['f6'] },
+        19: { t: T('모피는 나이트로 b5 폰을 잡았어요. 검은 폰이 나이트를 잡을 수 있어요.', 'Morphy took the b5 pawn with his knight. A black pawn can take it.'), q: T('왜 나이트를 내줬을까요?', 'Why give away a knight?'), a: T('나이트를 주고 <b>줄을 열어</b> 검은 킹을 빨리 공격하려고요. 검은 말들은 아직 집에 있어서 킹을 도우러 오지 못해요.', 'To <b>open lines</b> and attack the black king fast. Black\'s pieces are still at home and cannot come to help.'), mood: 'think' },
+        21: { t: T('체크! 검은 나이트가 d7로 와서 막았어요.', 'Check! A black knight blocks on d7.'), arr: [['b5', 'e8', 'red']] },
+        23: { t: T('캐슬링! 흰 킹은 안전해지고, 룩은 d줄로 와서 d7 나이트를 노려요. d7 나이트는 움직이면 킹이 체크당하니 꼼짝 못 해요.', 'Castling! White\'s king is safe and the rook comes to the d-file, aiming at the d7 knight. That knight cannot move, or the king would be in check.'), arr: [['d1', 'd7']], hl: ['d7'] },
+        24: { t: T('검은 룩이 d8로 와서 d7을 지켜요. 이번엔 모피처럼 과감하게 둬 볼까요?', 'Black\'s rook comes to d8 to guard d7. Shall we be as bold as Morphy?'), guess: true, hint: T('d1 룩으로 d7을 잡아요!', 'Take on d7 with the d1 rook!'), mood: 'wink' },
+        26: { t: T('룩을 바꿨어요. 이제 남은 룩도 d줄로 데려와요.', 'Rooks traded. Now bring the other rook to the d-file.'), arr: [['h1', 'd1']] },
+        28: { t: T('흰색은 b5 비숍으로 d7 룩을 잡으며 체크할 수 있어요.', 'White can take the d7 rook with the b5 bishop, with check.'), arr: [['b5', 'd7']] },
+        30: { t: T('나이트가 비숍을 잡았어요. 이제 모피의 가장 유명한 수! 퀸을 내주며 체크해 봐요.', 'The knight took the bishop. Now Morphy\'s most famous move: check by giving up the queen!'), guess: true, hint: T('퀸을 b8로!', 'Queen to b8!'), mood: 'wink' },
+        31: { t: T('퀸으로 b8에서 체크! 나이트가 퀸을 잡을 수밖에 없어요.', 'Check from b8! The knight has to take the queen.'), q: T('왜 퀸을 줬을까요?', 'Why give the queen?'), a: T('d7 나이트가 퀸을 잡으러 가면 <b>d줄이 비어요</b>. 그러면 d1 룩이 끝까지 달려갈 수 있어요!', 'When the d7 knight takes the queen, the <b>d-file is empty</b>. Then the d1 rook can run all the way!'), arr: [['d1', 'd8', 'red']], mood: 'think' },
+        32: { t: T('마지막 한 수예요!', 'The final move!'), guess: true, hint: T('d1 룩을 d8로!', 'The d1 rook goes to d8!') },
+        33: { t: T('<b>체크메이트!</b> 모피는 퀸을 내주고 비숍과 룩으로 이겼어요. 검은 h8 룩과 f8 비숍은 끝까지 <b>한 번도</b> 움직이지 못했어요.', '<b>Checkmate!</b> Morphy gave up his queen and won with a bishop and a rook. Black\'s h8 rook and f8 bishop <b>never moved</b> the whole game.'), hl: ['h8', 'f8'], arr: [['g5', 'd8'], ['d1', 'd8', 'red']], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'lasker', year: 1912, piece: 'wK', moves: 'd4 e6 Nf3 f5 Nc3 Nf6 Bg5 Be7 Bxf6 Bxf6 e4 fxe4 Nxe4 b6 Ne5 O-O Bd3 Bb7 Qh5 Qe7 Qxh7+ Kxh7 Nxf6+ Kh6 Neg4+ Kg5 h4+ Kf4 g3+ Kf3 Be2+ Kg2 Rh2+ Kg1 Kd2#',
+      title: T('킹 사냥', 'The king hunt'),
+      who: T('에드워드 라스커 vs 토마스 · 1912년 런던', 'Edward Lasker vs Thomas · London 1912'),
+      blurb: T('검은 킹이 h7에서 g1까지 끌려가요!', 'The black king is chased from h7 all the way to g1!'),
+      lesson: T('킹을 지키는 폰과 말이 없으면 킹은 <b>사냥</b>당해요. 공격할 때는 <b>체크</b>로 쫓아요.', 'A king without guards gets <b>hunted</b>. When attacking, chase it with <b>checks</b>.'),
+      at: {
+        0: { t: T('1912년 영국 런던. 에드워드 <b>라스커</b>(흰색)의 대국이에요. 체스 역사에서 가장 신나는 <b>킹 사냥</b>을 볼 거예요!', 'London, 1912. Edward <b>Lasker</b> plays White. Get ready for the most exciting <b>king hunt</b> in chess history!'), mood: 'happy' },
+        16: { t: T('검은색이 캐슬링해서 킹이 g8에 있어요. 킹 앞 h7 폰을 잘 보세요.', 'Black castled, so the king is on g8. Keep an eye on the h7 pawn in front of it.'), hl: ['g8', 'h7'] },
+        19: { t: T('흰 퀸이 h5로! d3 비숍과 함께 h7을 노려요.', 'White\'s queen goes to h5! Together with the d3 bishop it aims at h7.'), arr: [['h5', 'h7', 'red'], ['d3', 'h7', 'red']] },
+        20: { t: T('검은 퀸은 e7로 갔어요. 이제 깜짝 놀랄 수! h7 폰을 퀸으로 잡아 봐요. 킹이 퀸을 잡을 수 있지만 괜찮아요!', 'Black\'s queen went to e7. Now the shocker! Take h7 with the queen. The king can take it, and that is fine!'), guess: true, hint: T('h5 퀸으로 h7을!', 'Queen from h5 takes h7!'), mood: 'wink' },
+        21: { t: T('퀸을 내줬어요! 검은 킹이 퀸을 잡을 수밖에 없어요.', 'The queen is given away! The black king has to take it.'), q: T('무엇을 노리는 걸까요?', 'What is the idea?'), a: T('킹을 h7로 끌어냈어요. 이제 e4 나이트가 비키면서 체크하면 d3 비숍도 함께 체크해요. <b>양방 체크</b>가 준비됐어요!', 'The king is pulled out to h7. When the e4 knight moves away with check, the d3 bishop checks too. A <b>double check</b> is ready!'), arr: [['d3', 'h7', 'red']], mood: 'think' },
+        23: { t: T('<b>양방 체크!</b> 나이트와 비숍이 함께 체크해요. 킹이 앞으로 나올 수밖에 없어요.', '<b>Double check!</b> The knight and bishop both give check. The king must step forward.'), arr: [['f6', 'h7', 'red'], ['d3', 'h7', 'red']] },
+        24: { t: T('킹이 h6로 나왔어요. 이제 계속 <b>체크</b>로 쫓아가요!', 'The king came out to h6. Now keep chasing it with <b>checks</b>!'), guess: true, hint: T('e5 나이트를 g4로! 체크예요.', 'The e5 knight to g4. Check!') },
+        26: { t: T('킹이 g5로 더 나왔어요. 이번엔 폰도 사냥에 함께해요.', 'The king is out on g5. Now the pawns join the hunt.'), arr: [['h4', 'g5', 'red']] },
+        28: { t: T('킹이 f4까지 왔어요. g폰도 체크!', 'The king reached f4. The g-pawn checks too!') },
+        30: { t: T('킹이 f3에 와서 흰 진영 한가운데에 들어왔어요.', 'The king is on f3, right in the middle of White\'s camp.'), hl: ['f3'] },
+        32: { t: T('킹이 g2까지! 룩으로 체크해요.', 'The king reached g2! Check with the rook.'), arr: [['h1', 'h2']] },
+        34: { t: T('검은 킹이 흰색의 첫 줄, g1까지 왔어요! 이제 끝내 볼까요? 이번엔 <b>흰 킹</b>을 움직여요!', 'The black king reached g1, on White\'s back row! Let us finish it. This time move <b>White\'s king</b>!'), guess: true, hint: T('흰 킹이 d2로 비키면 a1 룩의 길이 열려요.', 'If White\'s king steps to d2, the a1 rook\'s road opens.'), mood: 'wink' },
+        35: { t: T('<b>체크메이트!</b> 흰 킹이 비키자 a1 룩이 g1 킹을 잡았어요. 검은 킹은 h7에서 g1까지 끌려왔어요. (캐슬링 O-O-O도 체크메이트였어요!)', '<b>Checkmate!</b> White\'s king stepped aside and the a1 rook checks the king on g1. The black king was dragged from h7 to g1. (Castling O-O-O was also mate!)'), arr: [['a1', 'g1', 'red']], mood: 'cheer' },
+      },
+    },
+  ];
+  // SAN -> move list, using the app's own rules engine
+  function line(c) {
+    if (c._l) return c._l;
+    const g = new Chess(); g.track = false; const fens = [g.fen()], mvs = [], sans = [];
+    for (const s of c.moves.split(' ')) {
+      const legal = g.legal(); const strip = (x) => x.replace(/[+#]/g, '');
+      const m = legal.find((x) => strip(g.san(x, legal)) === strip(s));
+      if (!m) throw new Error('classic ' + c.id + ': bad move ' + s);
+      sans.push(g.san(m, legal)); mvs.push(m); g.make(m); fens.push(g.fen());
+    }
+    c._l = { fens, mvs, sans, N: mvs.length };
+    return c._l;
+  }
+  const get = (id) => G.find((c) => c.id === id);
+  const done = (id) => { try { return !!RW.st().e['c:' + id]; } catch (e) { return false; } };
+  return { G, line, get, done };
+})();
+
+/* ---------------- Famous games with Leo's commentary (v23) ---------------- */
+Views.classic = (root, params) => {
+  const c = Classics.get(params.id);
+  if (!c) { go('learn'); return; }
+  const { fens, mvs, sans, N } = Classics.line(c);
+  const C = { i: 0, max: 0, dead: false, tok: 0, auto: 0, open: {}, res: {}, miss: 0, hint: 0, alt: null, fin: false };
+  const stop = () => { if (C.auto) { clearTimeout(C.auto); C.auto = 0; } };
+  V.cleanup = () => { C.dead = true; C.tok++; stop(); };
+  setTop({ back: 'learn', title: c.title });
+  root.innerHTML = `<div class="lesson replay classic"><div class="rdate">${unit(c.who)} · <span id="rpos"></span></div><div class="boardwrap" id="bw"></div>
+    <div class="rctl"><button class="btn ghost sm" data-a="first" aria-label="${aria('처음', 'Start')}"><span class="dbl">${ic('back', 18)}${ic('back', 18)}</span></button><button class="btn ghost sm" data-a="prev" aria-label="${aria('이전', 'Back')}">${ic('back', 18)}</button><button class="btn mint sm cplay" data-a="go" id="cplay" aria-label="${aria('계속 보기', 'Play on')}">${ic('play', 18)}</button><button class="btn ghost sm" data-a="next" aria-label="${aria('다음', 'Next')}">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last" aria-label="${aria('끝', 'End')}"><span class="dbl">${ic('next', 18)}${ic('next', 18)}</span></button></div>
+    <div class="rmoves" id="rmv"></div>
+    <div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>`;
+  const board = new Board(); $('#bw', root).appendChild(board.el); board.setCoords(S.coords); board.setView('w');
+  const lionEl = $('#lion', root), txt = $('#txt', root), acts = $('#acts', root), mv = $('#rmv', root);
+  let cur = null; // the position on the board (a Chess), so the child can play the guess move
+  const input = new MoveInput(board, { getGame: () => cur, canMove: () => guessing(), onMove: (m) => tryGuess(m) });
+  const say = (html, mood) => {
+    lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = html;
+    const names = sqLinks(txt), tk = C.tok;
+    if (names.length && names.length <= 6) setTimeout(() => { if (!C.dead && tk === C.tok) board.flash(names.map(sqIdx)); }, 250);
+  };
+  const B = (a, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}">${label}</button>`;
+  const note = (i) => c.at[i] || null;
+  const guessing = () => { const n = note(C.i); return !!(n && n.guess && C.i < N && C.res[C.i] == null); };
+  const guessN = Object.keys(c.at).filter((k) => c.at[k].guess).length;
+  const moveNo = (i) => `${(i >> 1) + 1}.${i & 1 ? '..' : ''} ${sans[i]}`; // i = index of the move (0-based)
+
+  function renderMoves() {
+    let s = '';
+    for (let i = 0; i < Math.min(N, C.max); i++) {
+      if ((i & 1) === 0) s += `<span class="mn">${(i >> 1) + 1}.</span>`;
+      s += `<button class="mvb${note(i + 1) ? ' nt' : ''}" data-m="${i + 1}">${esc(sans[i])}</button>`;
+    }
+    if (C.max > 0 && C.max < N) s += '<span class="mn">…</span>';
+    mv.innerHTML = s;
+  }
+  function show(anim) {
+    const i = C.i; C.tok++;
+    if (i > C.max) { C.max = i; renderMoves(); }
+    cur = new Chess(fens[i]); cur.track = false; input.refresh();
+    board.setPosition(cur);
+    const last = i > 0 ? mvs[i - 1] : null;
+    if (anim && last) board.animate(last.f, last.t);
+    const n = note(i);
+    board.mark({ last: last ? [last.f, last.t] : [], chk: cur.inCheck() ? cur.k[cur.turn] : null, sel: null, dots: [], caps: [], hl: n && n.hl ? n.hl.map(sqIdx) : [], bad: [], hf: [], ht: [] });
+    board.setArrows(n && n.arr ? n.arr.map(([a, b, col]) => [sqIdx(a), sqIdx(b), col]) : []);
+    $('#rpos', root).textContent = i + ' / ' + N;
+    $$('.mvb', mv).forEach((b) => b.classList.toggle('cur', +b.dataset.m === i));
+    const cb = $('.mvb.cur', mv); if (cb) { const r1 = cb.getBoundingClientRect(), r0 = mv.getBoundingClientRect(); mv.scrollLeft += (r1.left + r1.width / 2) - (r0.left + r0.width / 2); } // only sideways: never scroll the board away
+    if (guessing()) { const lz = $('.lesson', root); if (lz && board.el.getBoundingClientRect().top < 0) lz.scrollTop = 0; }
+    text();
+  }
+  function text() {
+    const i = C.i, n = note(i), head = i > 0 ? `<div class="mvhead">${esc(moveNo(i - 1))}</div>` : '';
+    let a = '';
+    const cp = $('#cplay', root); if (cp) cp.disabled = i === N || guessing();
+    if (i === N) { finish(); return; }
+    if (guessing()) {
+      C.miss = C.miss || 0;
+      let h = head + rich(n.t) + `<div class="more">${rich(T('흰색 차례! 다음 수를 <b>직접 둬</b> 보세요.', 'White to move! <b>Play</b> the next move yourself.'))}</div>`;
+      if (C.hint) h += `<div class="more hint">${ic('bulb', 16)} ${rich(n.hint)}</div>`;
+      say(h, n.mood || 'wink');
+      a = (C.hint ? '' : B('hint', ic('bulb', 18) + ' ' + tx(T('힌트', 'Hint'), true), 'lav')) + B('reveal', tx(T('정답 보기', 'Show me'), true), 'ghost') + B('speak', ic('speaker', 18), 'ghost');
+      acts.innerHTML = a; return;
+    }
+    let h = head + praise(i);
+    if (n) {
+      h += rich(n.t);
+      if (n.q) h += `<div class="ask">${ic('bulb', 16)} <b>${rich(n.q)}</b></div>` + (C.open[i] ? `<div class="ans">${rich(n.a)}</div>` : '');
+    } else h += rich(T('계속 보면서 말들이 어디로 가는지 살펴봐요.', 'Keep watching where the pieces go.'));
+    say(h, n ? (n.q && !C.open[i] ? 'think' : n.mood || 'happy') : 'happy');
+    if (n && n.q && !C.open[i]) a += B('why', tx(T('레오의 생각 듣기', 'Hear Leo\'s idea'), true), 'sun');
+    a += B('go', ic('play', 18) + ' ' + tx(i === 0 ? T('시작', 'Start') : T('계속', 'Continue'), true), 'mint');
+    if (n) a += B('speak', ic('speaker', 18), 'ghost');
+    acts.innerHTML = a;
+  }
+  // a word of praise right after the child played the game's move
+  function praise(i) {
+    if (C.alt != null && C.alt === i - 1) return `<div class="more good">${rich(T(`그 수도 체크메이트예요! (실제 대국의 수: <b>${sans[i - 1]}</b>)`, `Your move is checkmate too! In the game, <b>${sans[i - 1]}</b> was played.`))}</div>`;
+    if (C.res[i - 1] === 1) return `<div class="more good">${rich(T('맞혔어요! 이 대국에서 둔 바로 그 수예요.', 'You got it! That is the move from the game.'))}</div>`;
+    if (C.res[i - 1] === 2) return `<div class="more good">${rich(T('좋아요! 끝까지 찾아냈어요.', 'Nice! You found it.'))}</div>`;
+    return '';
+  }
+  function finish() {
+    const first = !RW.st().e['c:' + c.id];
+    const got = Object.values(C.res).filter((v) => v === 1).length;
+    const n = note(N);
+    say(`<div class="mvhead">${esc(moveNo(N - 1))}</div>${praise(N)}${n ? rich(n.t) : ''}<div class="ask">${ic('book', 16)} <b>${rich(T('오늘의 교훈', 'Today\'s lesson'))}</b></div><div class="ans">${rich(c.lesson)}</div>` +
+      (guessN ? `<div class="more">${rich(T(`다음 수 맞히기: <b>${got} / ${guessN}</b> (한 번에 맞힌 수)`, `Guess the move: <b>${got} / ${guessN}</b> (first try)`))}</div>` : ''), 'cheer');
+    const nx = Classics.G[(Classics.G.indexOf(c) + 1) % Classics.G.length];
+    acts.innerHTML = B('again', ic('refresh', 18) + ' ' + tx(T('처음부터', 'Watch again'), true), 'ghost') + B('nextgame', ic('next', 18) + ' ' + tx(T('다음 명국', 'Next game'), true), 'mint') + (n ? B('speak', ic('speaker', 18), 'ghost') : '');
+    if (!C.fin) {
+      C.fin = true; sfx('win'); touchStreak();
+      if (first) { RW.earn('classic', { id: c.id }); RW.notify(); }
+    }
+    C.nx = nx.id;
+  }
+  function goTo(k, anim) { stop(); C.hint = 0; C.miss = 0; C.alt = null; C.i = Math.max(0, Math.min(N, k)); show(anim); if (anim && C.i > 0) sfx(mvs[C.i - 1].c ? 'cap' : 'move'); }
+  // play on until Leo has something to say (TV style)
+  function play() {
+    stop();
+    const step = () => {
+      C.auto = 0; if (C.dead || C.i >= N || guessing()) return;
+      goTo(C.i + 1, true);
+      if (C.i < N && !note(C.i)) C.auto = setTimeout(step, 900);
+    };
+    step();
+  }
+  function tryGuess(m) {
+    const i = C.i, want = mvs[i];
+    if (m.f === want.f && m.t === want.t && (m.pr || 0) === (want.pr || 0)) {
+      C.res[i] = C.miss ? 2 : 1; sfx('good'); goTo(i + 1, false); board.animate(m.f, m.t); return;
+    }
+    // another checkmate where the game had one (e.g. castling in the king hunt) also counts
+    if (/#$/.test(sans[i])) {
+      const g = new Chess(fens[i]); g.track = false; g.make(m);
+      if (g.status().reason === 'mate') { C.res[i] = C.miss ? 2 : 1; sfx('good'); goTo(i + 1, true); C.alt = i; text(); return; }
+    }
+    C.miss++; sfx('bad'); board.shake(); show();
+    if (C.miss >= 2 && !C.hint) { C.hint = 1; text(); }
+    if (C.miss >= 3) board.mark({ hf: [want.f] });
+    toast(C.miss >= 2 ? T('힌트를 보고 다시 해 봐요!', 'Read the hint and try again!') : T('음… 이 대국에서는 다른 수를 뒀어요. 다시 해 볼까요?', 'Hmm, a different move was played here. Try again?'));
+  }
+  root.addEventListener('click', (e) => {
+    const sn = e.target.closest('.sqn'); if (sn) { board.flash([sqIdx(sn.dataset.sq)]); return; }
+    const m = e.target.closest('[data-m]'); if (m) { goTo(+m.dataset.m); return; }
+    const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
+    if (a === 'first') goTo(0);
+    else if (a === 'prev') goTo(C.i - 1);
+    else if (a === 'next') { if (guessing()) C.res[C.i] = 0; goTo(C.i + 1, true); }
+    else if (a === 'last') { for (const k of Object.keys(c.at)) if (c.at[k].guess && C.res[k] == null) C.res[k] = 0; goTo(N); }
+    else if (a === 'go') { sfx('tap'); play(); }
+    else if (a === 'why') { sfx('tap'); C.open[C.i] = 1; text(); }
+    else if (a === 'hint') { sfx('tap'); C.hint = 1; text(); board.mark({ hf: [mvs[C.i].f] }); }
+    else if (a === 'reveal') { sfx('tap'); C.res[C.i] = 0; const n = note(C.i); board.setArrows([[mvs[C.i].f, mvs[C.i].t, '#2fb36b']]); setTimeout(() => { if (!C.dead && C.res[C.i] === 0) goTo(C.i + 1, true); }, 900); acts.innerHTML = ''; void n; }
+    else if (a === 'speak') { const n = note(C.i); if (!n) return; speak(guessing() ? n.t : C.i === N ? T(`${n.t.ko} ${c.lesson.ko}`, `${n.t.en} ${c.lesson.en}`) : n.q && C.open[C.i] ? T(`${n.t.ko} ${n.q.ko} ${n.a.ko}`, `${n.t.en} ${n.q.en} ${n.a.en}`) : n.q ? T(`${n.t.ko} ${n.q.ko}`, `${n.t.en} ${n.q.en}`) : n.t); }
+    else if (a === 'again') { sfx('tap'); C.res = {}; C.open = {}; C.fin = false; C.max = 0; renderMoves(); goTo(0); }
+    else if (a === 'nextgame') { sfx('tap'); go('classic', { id: C.nx }); }
+  });
+  renderMoves();
+  show();
+};
+
 /* ---------------- Learn map ---------------- */
 Views.learn = (root) => {
   setTop({ back: 'home', title: T('배우기', 'Learn') });
@@ -4992,8 +5348,12 @@ Views.learn = (root) => {
     <div class="sec">${tx(T('기초 과정', 'Basic course'), true)}</div><div class="chapters">${Content.basic.map((c) => card(c, false)).join('')}</div>
     <div class="sec">${tx(T('고수 훈련', 'Advanced training'), true)} ${proOpen ? '' : ic('lock', 16)}</div>
     ${proOpen ? '' : `<div class="bubble" style="margin:0 0 12px 0">${rich(T('기초 과정을 모두 끝내면 열려요!', 'Opens after you finish the basic course!'))}</div>`}
-    <div class="chapters">${Content.pro.map((c) => card(c, !proOpen)).join('')}</div></div></div>`;
+    <div class="chapters">${Content.pro.map((c) => card(c, !proOpen)).join('')}</div>
+    <div class="sec">${tx(T('명국 해설', 'Famous games'), true)}</div>
+    <div class="bubble" style="margin:0 0 12px 0">${rich(T('옛날 체스 고수들의 유명한 대국을 레오가 TV처럼 해설해요. 중간중간 <b>다음 수 맞히기</b>도 있어요!', 'Leo explains famous games from chess history, like on TV. You can <b>guess the next move</b> along the way!'))}</div>
+    <div class="chapters">${Classics.G.map((g) => `<button class="chap ${Classics.done(g.id) ? 'done' : ''}" data-cl="${g.id}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${g.piece}"/></svg></span><span class="ct"><b>${tx(g.title)}</b><span>${tx(g.blurb)}</span><span class="cwho">${unit(g.who)}</span>${Classics.done(g.id) ? `<span class="cdone">${ic('check', 16)} ${unit(T('다 봤어요', 'Watched'))}</span>` : ''}</span></button>`).join('')}</div></div></div>`;
   root.addEventListener('click', async (e) => {
+    const cl = e.target.closest('[data-cl]'); if (cl) { sfx('tap'); go('classic', { id: cl.dataset.cl }); return; }
     const b = e.target.closest('[data-ch]'); if (!b) return; sfx('tap');
     if (b.dataset.locked === '1') {
       const k = await ask({ lion: 'think', title: T('아직 잠겨 있어요', 'Still locked'), text: T('기초 과정을 모두 끝내면 열려요. 이미 체스를 아는 친구는 바로 열 수 있어요!', 'Finish the basic course to open it. If you already know chess, you can open it now!'), buttons: [{ k: 'open', label: T('이미 알아요, 열기', 'I know chess, open'), cls: 'mint' }, { k: 'no', label: T('닫기', 'Close'), cls: 'ghost' }] });
@@ -5573,7 +5933,7 @@ Views.game = (root, params) => {
     G.clk = startClk ? { base: startClk.base, inc: startClk.inc, t: startClk.t.slice(), run: -1, last: Date.now() } : { base: b, inc: cfg.clock.inc, t: [b, b], run: -1, last: Date.now() };
   }
 
-  setTop({ back: () => { persist(); go(NG ? 'online' : 'home'); }, title: NG ? T('온라인 대국', 'Online game') : cfg.mode === 'cpu' ? T('컴퓨터와 대국', 'Play Computer') : T('둘이서 대국', '2 Players') });
+  setTop({ backTo: NG ? 'online' : 'home', back: () => { persist(); go(NG ? 'online' : 'home'); }, title: NG ? T('온라인 대국', 'Online game') : cfg.mode === 'cpu' ? T('컴퓨터와 대국', 'Play Computer') : T('둘이서 대국', '2 Players') });
   const f2f = cfg.f2f;
   root.innerHTML = f2f
     ? `<div class="game f2f"><div class="seat rot"><div class="pbar" id="pbT"></div><div class="msg"><div class="bubble" id="msgT"></div></div><div class="dock" id="dockT"></div></div>
@@ -6343,7 +6703,7 @@ Views.replay = (root, params) => {
   const view = E.mode === '2p' ? 'w' : E.me === 1 ? 'b' : 'w';
   const PD = new Date(E.t);
   root.innerHTML = `<div class="lesson replay"><div class="rdate">${unit(dayLabel(PD))} · ${unit(timeLabel(PD))}<span class="rst" id="rst"></span></div><div class="boardwrap" id="bw"></div>
-    <div class="rctl"><button class="btn ghost sm" data-a="first">${ic('back', 18)}${ic('back', 18)}</button><button class="btn ghost sm" data-a="prev">${ic('back', 18)}</button><span id="rpos" class="rpos"></span><button class="btn ghost sm" data-a="next">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last">${ic('next', 18)}${ic('next', 18)}</button></div>
+    <div class="rctl"><button class="btn ghost sm" data-a="first"><span class="dbl">${ic('back', 18)}${ic('back', 18)}</span></button><button class="btn ghost sm" data-a="prev">${ic('back', 18)}</button><span id="rpos" class="rpos"></span><button class="btn ghost sm" data-a="next">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last"><span class="dbl">${ic('next', 18)}${ic('next', 18)}</span></button></div>
     <div class="rmoves" id="rmv"></div>
     <div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>`;
   const board = new Board(); $('#bw', root).appendChild(board.el); board.setCoords(S.coords); board.setView(view);
@@ -6418,7 +6778,7 @@ Views.replay = (root, params) => {
     board.setArrows([]);
     $('#rpos', root).textContent = i + ' / ' + N;
     $$('.mvb', mv).forEach((b) => b.classList.toggle('cur', +b.dataset.m === i));
-    const cur = $('.mvb.cur', mv); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
+    const cur = $('.mvb.cur', mv); if (cur) { const r1 = cur.getBoundingClientRect(), r0 = mv.getBoundingClientRect(); mv.scrollLeft += (r1.left + r1.width / 2) - (r0.left + r0.width / 2); }
     let a = '';
     if (R.an && (R.count[1] || R.count[2] || R.count[3])) a = B('nextbad', tx(T('다음 실수 ›', 'Next mistake ›'), true), 'lav');
     const pz = MyPz.ofGame(E.id);
@@ -6468,6 +6828,7 @@ const RWD = (() => {
     practice: { ok: 1, perfect: 2, cap: 4 },   // extra practice puzzles: only puzzles never solved before earn stars, at most 4 per day
     game: { play: 1, win: 1, cap: 3, minPlies: 12 }, // per day cap: effort counts, not only winning
     review: { n: 1, cap: 1 },                  // analysing a finished game ("find my mistakes")
+    classic: { n: 2 },                         // watching a famous game to the end, once per game
     mission: { n: 2 },                         // finish all three of today's missions
     week: { days: 4, n: 3 },                   // practise on 4 different days in a week
     lvWin: 2,                                  // first win against each computer level
@@ -6676,6 +7037,9 @@ const RW = (() => {
     } else if (kind === 'review') {
       r.m.rev = (r.m.rev || 0) + 1;
       if (!(r.e['r' + t])) award('r' + t, RULES.review.n, '복기로 실수를 찾았어요', 'Reviewed a game');
+      mark('l');
+    } else if (kind === 'classic') {
+      if (!r.e['c:' + o.id]) award('c:' + o.id, RULES.classic.n, '명국 해설을 끝까지 봤어요', 'Watched a famous game');
       mark('l');
     } else if (kind === 'gift') {
       award('g:' + o.id, o.n, '부모님이 주신 칭찬 별', 'A praise star from your parent');
