@@ -173,7 +173,13 @@ svg.pc, svg.ic { overflow: visible; }
 @keyframes pulse { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
 .sq .dot { position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(110, 86, 190, .5); pointer-events: none; }
 .sq .ring { position: absolute; inset: 5%; border-radius: 50%; border: 5px solid rgba(110, 86, 190, .55); pointer-events: none; }
-.sq .co { position: absolute; font-size: clamp(8px, 1.9cqw, 13px); font-family: var(--font-d); opacity: .65; pointer-events: none; color: #5b4b78; }
+.sq .co { position: absolute; font-size: clamp(9px, 2.5cqw, 15px); font-weight: 700; font-family: var(--font-d); opacity: .85; pointer-events: none; color: #5b4b78; }
+.sq.flash::after { content: ''; position: absolute; inset: 4%; border-radius: 18%; box-shadow: inset 0 0 0 3px #f59e2e, 0 0 12px 2px rgba(245, 158, 46, .75); animation: sqflash .5s ease-in-out 4 alternate; pointer-events: none; z-index: 3; }
+@keyframes sqflash { from { opacity: .2; } to { opacity: 1; } }
+.sq .sqtag { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); background: #3b2f57; color: #fff; font: 700 clamp(11px, 2.8cqw, 16px)/1.15 var(--font-d); padding: 1px 6px; border-radius: 8px; z-index: 6; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.sqn { color: var(--brand-d); font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.rdate .rst { margin-left: 6px; color: var(--brand-d); font-weight: 700; }
+.hrow .an-run { color: var(--brand-d); font-weight: 700; }
 .sq .co.f { right: 3px; bottom: 1px; }
 .sq .co.r { left: 3px; top: 1px; }
 .sq.l .co { color: #6a7f8f; }
@@ -1860,6 +1866,7 @@ const DEFAULTS = {
   daily: { done: {}, n: 0, last: '' },
   rw: { v: 1 },
   cloud: { pid: '', saved: {}, done: [], use: {}, ur: {}, rs: {}, kid: false, dev: '' },
+  anFrom: 0, // games played after this time are analysed automatically (older ones: only the newest few)
 };
 function merge(base, extra) {
   if (!extra || typeof extra !== 'object') return base;
@@ -1974,7 +1981,7 @@ const AIC = {
 /* ---------- date helpers & streak ---------- */
 function ymd(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 const dayIndex = (d) => { const p = String(d || ymd()).split('-').map(Number); return Math.floor(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000); };
-function addHistory(e) { S.history.unshift(e); if (S.history.length > 30) S.history.length = 30; if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory(); }
+function addHistory(e) { S.history.unshift(e); if (S.history.length > 30) S.history.length = 30; if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory(); if (typeof AutoAn !== 'undefined') setTimeout(() => AutoAn.start(), 1500); }
 function touchStreak() {
   const t = ymd();
   if (S.streak.last === t) return;
@@ -2130,16 +2137,34 @@ class Board {
     }));
   }
   shake() { this.el.classList.remove('shake'); void this.el.offsetWidth; this.el.classList.add('shake'); }
+  // glow a few squares and show their names for a moment (lesson text names a square, or a long press)
+  flash(list, ms) {
+    ms = ms || 2000;
+    for (const sq of list) {
+      const el = this.sqEls[sq]; if (!el) continue;
+      el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+      clearTimeout(el._ft); el._ft = setTimeout(() => el.classList.remove('flash'), ms);
+      this.tag(sq, ms);
+    }
+  }
+  tag(sq, ms) {
+    const el = this.sqEls[sq]; if (!el) return;
+    let t = el.querySelector('.sqtag'); if (!t) { t = document.createElement('b'); t.className = 'sqtag'; el.appendChild(t); }
+    t.textContent = sqName(sq); clearTimeout(t._t); t._t = setTimeout(() => t.remove(), ms || 1300);
+  }
   bind() {
     const el = this.el; let down = null, drag = null;
     el.addEventListener('pointerdown', (e) => {
       const se = e.target.closest('.sq'); if (!se) return;
       down = { sq: +se.dataset.sq, x: e.clientX, y: e.clientY, id: e.pointerId };
+      const dn = down; clearTimeout(this.lpT);
+      this.lpT = setTimeout(() => { if (down === dn && !drag) { dn.lp = true; this.tag(dn.sq, 1400); } }, 480); // long press: show the square's name
       try { el.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
       e.preventDefault();
     });
     el.addEventListener('pointermove', (e) => {
       if (!down || e.pointerId !== down.id) return;
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 9) clearTimeout(this.lpT);
       if (!drag && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 9 && this.canDrag && this.canDrag(down.sq)) {
         const r = this.sqEls[down.sq].getBoundingClientRect();
         const p = this.sqEls[down.sq].querySelector('svg.pc');
@@ -2153,7 +2178,7 @@ class Board {
     });
     const end = (e, cancel) => {
       if (!down || e.pointerId !== down.id) return;
-      const d = down, dr = drag; down = null; drag = null;
+      const d = down, dr = drag; down = null; drag = null; clearTimeout(this.lpT);
       if (dr) {
         dr.g.remove(); this.sqEls[d.sq].classList.remove('lift');
         if (cancel) return;
@@ -2162,11 +2187,28 @@ class Board {
           const to = +te.dataset.sq;
           if (to !== d.sq) { if (this.onDrop) this.onDrop(d.sq, to); } else if (this.onTap) this.onTap(d.sq, true);
         } else if (this.onCancel) this.onCancel();
-      } else if (!cancel && this.onTap) this.onTap(d.sq, false);
+      } else if (!cancel && !d.lp && this.onTap) this.onTap(d.sq, false);
     };
     el.addEventListener('pointerup', (e) => end(e, false));
     el.addEventListener('pointercancel', (e) => end(e, true));
   }
+}
+
+/* Square names ("e4") inside coach text: wrapped in <span class="sqn"> so the board can glow them and a tap shows them again. */
+const SQ_RE = /(^|[^A-Za-z0-9])([a-h][1-8])(?![A-Za-z0-9])/g;
+function sqLinks(root) {
+  const out = [], nodes = [], tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while ((n = tw.nextNode())) if (/[a-h][1-8]/.test(n.nodeValue) && !(n.parentElement && n.parentElement.closest('button,.sqn'))) nodes.push(n);
+  for (const t of nodes) {
+    const v = t.nodeValue, frag = document.createDocumentFragment(); let m, last = 0, hit = false; SQ_RE.lastIndex = 0;
+    while ((m = SQ_RE.exec(v))) {
+      const st = m.index + m[1].length; frag.appendChild(document.createTextNode(v.slice(last, st)));
+      const sp = document.createElement('span'); sp.className = 'sqn'; sp.dataset.sq = m[2]; sp.textContent = m[2]; frag.appendChild(sp);
+      out.push(m[2]); last = st + 2; hit = true;
+    }
+    if (hit) { frag.appendChild(document.createTextNode(v.slice(last))); t.parentNode.replaceChild(frag, t); }
+  }
+  return [...new Set(out)];
 }
 
 /* Selection + move input on top of a Board. */
@@ -4575,7 +4617,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v21 · history</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v22 · my games</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4608,7 +4650,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v21 · history</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v22 · my games</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -4891,8 +4933,8 @@ Views.home = (root) => {
     T('어서 오세요! 오늘은 어떤 말을 배워 볼까요?', 'Welcome back! Which piece shall we learn today?'),
     T('체스는 생각하는 놀이예요. 천천히 해도 괜찮아요!', 'Chess is a thinking game. Take your time!'),
   ];
-  const g = S.game && !S.game.over ? S.game : null;
-  root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g ? ' has-resume' : ''}">
+  const g = S.game && !S.game.over ? S.game : null, dueN = MyPz.due().length;
+  root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g || dueN ? ' has-resume' : ''}">
     <div class="hero home-hero">${Art.lion('happy')}<div class="bubble"><div>${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div></div>
     <div class="menu">
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
@@ -4903,6 +4945,7 @@ Views.home = (root) => {
       <button class="btn tile lav half" data-go="guide"><span class="ico">${ic('clock', 28)}</span>${tx(T('규칙·시계', 'Rules'))}</button>
     </div>
     ${g ? `<div class="resume-bar"><span>${tx(T('하던 대국이 있어요', 'A game is waiting'), true)}</span><button class="btn mint sm" id="resume">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
+    ${dueN ? `<div class="resume-bar"><span>${tx(T(`내 대국에서 나온 문제 ${dueN}개`, `${dueN} puzzle(s) from my games`), true)}</span><button class="btn sun sm" id="mypz">${ic('bulb', 18)} ${tx(T('풀기', 'Solve'), true)}</button></div>` : ''}
     <div class="card" style="margin-top:16px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-around">
       <div class="stat-link" data-go="treasure" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">★ ${bal}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('별 상점 ›', 'Star shop ›'))}</div></div>
       <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.streak.n}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('연속 연습 일', 'Day streak'))}</div></div>
@@ -4933,6 +4976,7 @@ Views.home = (root) => {
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]'); if (b) { sfx('tap'); go(b.dataset.go, { mode: b.dataset.mode }); }
     if (e.target.closest('#resume')) { sfx('tap'); go('game', { resume: true }); }
+    if (e.target.closest('#mypz')) { sfx('tap'); const p = MyPz.due()[0]; if (p) go('lesson', { mine: p.i }); }
   });
 };
 
@@ -5005,6 +5049,7 @@ Views.settings = (root) => {
     <div class="card"><h3>${tx(T('내 기록', 'My record'), true)}</h3>
       <p style="margin:0">${rich(T(`대국 ${st.games}판 · 승리 ${wins}번 · 모은 별 ★ ${RW.total()}`, `${st.games} games · ${wins} wins · ★ ${RW.total()} stars`))}</p>
       <p style="margin:6px 0 0">${rich(T(`퍼즐 <b>${ps.solved}</b>/${ps.pool}개 풀었어요 · 한 번에 푼 퍼즐 ${ps.perfect}개`, `Puzzles solved: <b>${ps.solved}</b>/${ps.pool} · first try: ${ps.perfect}`))}</p>
+      ${Cloud.available && Net.ready && !(Net.user && Net.me()) ? `<p class="bubble" style="margin:12px 0 0;font-size:.92rem">${rich(T('지금은 기록이 <b>이 기기에만</b> 저장돼요. 로그인하면 서버에 저장돼서 기기를 바꿔도 이어져요.', 'Right now your progress is saved <b>on this device only</b>. Sign in to keep it on the server and continue on other devices.'))}</p><div class="row" style="margin-top:8px"><button class="btn mint sm" data-go="account">${tx(T('로그인하기', 'Sign in'))}</button></div>` : ''}
       <div class="row" style="margin-top:12px"><button class="btn lav sm" data-go="history">${tx(T('대국 기록·복기', 'Games & review'))}</button><button class="btn pink sm" id="btn-reset">${tx(T('기록 지우기', 'Erase progress'))}</button></div></div>
     <p style="text-align:center;color:var(--ink2);font-size:.85rem">${tx(T('하루체스 · 인터넷 없이도 쓸 수 있어요', 'Daily Chess · works without internet'))}</p>
   </div></div>`;
@@ -5170,21 +5215,40 @@ function dailyChap(pz, prac) {
   }
   return { id: (prac ? 'prac-' : 'daily-') + d, title, lv, steps: [step] };
 }
+// a puzzle from the player's own game: the position before a mistake, the better move is the answer
+function mineChap(p) {
+  const w = p.f.split(' ')[1] === 'w', side = w ? T('흰색', 'White') : T('검은색', 'Black');
+  let ps = ''; try { const g = new Chess(p.f); g.track = false; const m = g.findUci(p.p); ps = m ? g.san(m) : ''; } catch (e) { ps = ''; }
+  const when = dayLabel(new Date(p.t || Date.now()));
+  const step = { t: 'move', fen: p.f, ok: [p.o], mine: p, ps,
+    text: T(`${when.ko} 대국에서 나온 장면이에요. 그때 둔 수는 <b>${esc(ps)}</b>였는데, 더 좋은 수가 있었어요. ${side.ko} 차례예요. 찾아보세요!`, `A position from your game (${when.en}). You played <b>${esc(ps)}</b>, but there was a better move. ${side.en} to move. Find it!`),
+    win: T('정확해요! 이번엔 가장 좋은 수를 찾았어요.', 'Exactly! This time you found the best move.'),
+    no: T('그 수보다 더 좋은 수가 있어요. 상대 말이 지켜지는지, 내 말이 위험한지 살펴봐요.', 'There is a better move. Check which enemy pieces are unprotected and whether your pieces are in danger.') };
+  return { id: 'mine-' + p.i, title: T('내 대국 복습', 'From my games'), lv: 0, steps: [step] };
+}
 Views.lesson = (root, params) => {
   const all = Content.basic.concat(Content.pro);
+  const myp = params.mine ? MyPz.get(params.mine) : null;
+  if (params.mine && !myp) { go('home'); return; }
   if (params.practice && !params.puz) params.puz = RW.practicePick(params.lv); // kept in params, so a re-render never swaps the puzzle
-  const puz = params.practice ? params.puz : params.daily ? RW.puzzleFor(ymd()) : null;
-  const ch = puz ? dailyChap(puz, !!params.practice) : all.find((c) => c.id === params.ch);
+  const puz = myp ? null : params.practice ? params.puz : params.daily ? RW.puzzleFor(ymd()) : null;
+  const ch = myp ? mineChap(myp) : puz ? dailyChap(puz, !!params.practice) : all.find((c) => c.id === params.ch);
   if (!ch) { go('learn'); return; }
   const L = { i: 0, mistakes: 0, dead: false, tok: 0, g: null, step: null, accept: false, items: null, k: 0, tapOn: false, mateN: 1, seqI: 0, done: false };
   V.cleanup = () => { L.dead = true; L.tok++; };
   const dotsHtml = () => ch.steps.map((_, i) => `<i class="${i < L.i ? 'on' : i === L.i ? 'cur' : ''}"></i>`).join('');
-  setTop({ back: (params.daily || params.practice) ? 'home' : 'learn', title: ch.title, right: '<div class="dots" id="dots"></div>' });
+  setTop({ back: (params.daily || params.practice || params.mine) ? 'home' : 'learn', title: ch.title, right: '<div class="dots" id="dots"></div>' });
   root.innerHTML = '<div class="lesson"><div class="boardwrap" id="bw"></div><div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>';
   const board = new Board();
   $('#bw', root).appendChild(board.el);
   const lionEl = $('#lion', root), txt = $('#txt', root), acts = $('#acts', root);
-  const say = (o, mood, extra) => { lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = rich(o) + (extra || ''); };
+  // square names in the coach's words glow on the board (not in "find the square" steps, which would give the answer away)
+  const say = (o, mood, extra, noGlow) => {
+    lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = rich(o) + (extra || '');
+    if (noGlow) return;
+    const names = sqLinks(txt), tk = L.tok;
+    if (names.length && names.length <= 6) setTimeout(() => { if (!L.dead && tk === L.tok) board.flash(names.map(sqIdx)); }, 250);
+  };
   const B = (a, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}">${label}</button>`;
   const speakBtn = () => B('speak', ic('speaker', 18), 'ghost');
   const hintBtn = () => B('hint', ic('bulb', 18) + ' ' + tx(T('힌트', 'Hint'), true), 'lav');
@@ -5249,13 +5313,13 @@ Views.lesson = (root, params) => {
     else if (s.t === 'mate') { L.mateN = s.n || 1; L.accept = true; mi.refresh(); say(s.text, 'think'); acts.innerHTML = hintBtn() + speakBtn(); }
     else if (s.t === 'seq') { L.seqI = 0; L.accept = true; mi.refresh(); say(s.text, 'happy'); showSeqHint(); acts.innerHTML = speakBtn(); }
     else if (s.t === 'quiz') {
-      say(s.text, 'think');
+      say(s.text, 'think', '', true);
       acts.classList.add('col');
       acts.innerHTML = s.choices.map((c, idx) => `<button class="btn sm lav ch" data-q="${idx}">${tx(c, false)}</button>`).join('');
     }
   }
 
-  function showTapItem() { const it = L.items[L.k]; say(it.text, 'think'); acts.innerHTML = speakBtn(); }
+  function showTapItem() { const it = L.items[L.k]; say(it.text, 'think', '', true); acts.innerHTML = speakBtn(); }
   function onTapSq(s) {
     if (!L.tapOn) return;
     sfx('tap');
@@ -5271,7 +5335,7 @@ Views.lesson = (root, params) => {
     } else {
       L.mistakes++; board.shake(); sfx('bad'); board.mark({ bad: [s] });
       const tok = L.tok; setTimeout(() => { if (!L.dead && tok === L.tok) board.mark({ bad: [] }); }, 700);
-      say(T(`그건 <b>${sqName(s)}</b> 칸이에요. 다시 찾아봐요!`, `That is <b>${sqName(s)}</b>. Try again!`), 'oops', '<div class="more">' + rich(it.text) + '</div>');
+      say(T(`그건 <b>${sqName(s)}</b> 칸이에요. 다시 찾아봐요!`, `That is <b>${sqName(s)}</b>. Try again!`), 'oops', '<div class="more">' + rich(it.text) + '</div>', true); board.tag(s, 1300);
     }
   }
 
@@ -5286,8 +5350,23 @@ Views.lesson = (root, params) => {
     if (s.t === 'move') {
       if (okMatch(s.ok, g, m)) {
         const tk = Array.isArray(s.ok) && Array.isArray(s.th) ? s.th[s.ok.indexOf(g.uci(m))] : '', tm = tk && THEMES[tk];
+        const more = s.mine ? mineMore(s) : tm ? '<div class="more">' + rich(tm) + '</div>' : '';
         L.accept = false; doMove(m); sfx('good');
-        say(s.win || T('좋아요!', 'Good!'), 'cheer', tm ? '<div class="more">' + rich(tm) + '</div>' : ''); acts.innerHTML = nextBtn();
+        say(s.win || T('좋아요!', 'Good!'), 'cheer', more); acts.innerHTML = nextBtn();
+      } else if (s.mine) {
+        // a puzzle from the player's own game has one stored answer; another move that is just as good also counts
+        const u = g.uci(m);
+        if (u === s.mine.p) { reject(T('그건 그때 둔 수예요! 이번엔 더 좋은 수를 찾아봐요.', 'That is the move you played then! Find a better one this time.')); return; }
+        L.accept = false; say(T('레오가 그 수를 살펴보고 있어요…', 'Leo is checking that move…'), 'think', '', true);
+        g.make(m); const fen2 = g.fen(), st2 = g.status(); g.unmake();
+        let alt = null;
+        if (st2.over) alt = st2.reason === 'mate' ? 3000 : 0;
+        else { try { const r = await AIC.analyze(fen2, 700, 7); alt = r ? -Analyzer.pack(r)[0] : null; } catch (e) { alt = null; } }
+        if (L.dead || tok !== L.tok) return;
+        if (alt != null && alt >= s.mine.s - 60) {
+          doMove(m); sfx('good');
+          say(T('좋아요! 이 수도 정답이에요. 레오가 찾은 수만큼 좋은 수예요.', 'Good! This counts too: it is as good as the move Leo found.'), 'cheer', mineMore(s)); acts.innerHTML = nextBtn();
+        } else { L.accept = true; reject(s.no); }
       } else {
         const u = g.uci(m);
         reject((s.wrong && s.wrong[u]) || s.no || T('아쉬워요! 다시 한 번 생각해 봐요.', 'Not quite! Think once more.'));
@@ -5331,6 +5410,11 @@ Views.lesson = (root, params) => {
     }
   }
 
+  function mineMore(s) {
+    let bs = ''; try { const g = new Chess(s.fen); g.track = false; const m = g.findUci(s.mine.o); bs = m ? g.san(m) : ''; } catch (e) { bs = ''; }
+    const why = Analyzer.why(s.fen, s.mine.o, s.mine.s);
+    return `<div class="more">${rich(T(`그때 둔 수: <b>${esc(s.ps)}</b> → 레오가 찾은 수: <b>${esc(bs)}</b>`, `You played <b>${esc(s.ps)}</b> → Leo's move: <b>${esc(bs)}</b>`))}</div>${why.length ? `<ul class="why">${why.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>` : ''}`;
+  }
   function hint() {
     const s = L.step, g = L.g;
     if (!L.accept || (s.t !== 'move' && s.t !== 'mate')) return;
@@ -5378,8 +5462,24 @@ Views.lesson = (root, params) => {
     if (L.dead) return;
     if (k === 'home') go('home'); else go('lesson', { practice: true, lv: k === 'easy' ? sel - 1 : k === 'hard' ? sel + 1 : sel });
   }
+  async function finishMine() {
+    const p = myp, fresh = !(p.c > 0);
+    MyPz.done(p.i, L.mistakes);
+    touchStreak(); RW.earn('practice', { mistakes: L.mistakes, fresh });
+    const rw = RW.take();
+    saveNow(); sfx('win');
+    const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1, left = MyPz.due().length;
+    const note = L.mistakes ? T('이 문제는 이틀 뒤에 다시 나와요. 그때는 한 번에 풀어 봐요!', 'This one comes back in two days. Try to solve it first time then!') : T('한 번에 풀었어요! 이 문제는 목록에서 빠져요.', 'First try! This one leaves the list.');
+    const k = await ask({ lion: 'cheer', title: T('내 대국 복습 완료!', 'Review puzzle solved!'),
+      html: `<div style="font-size:2.2rem;display:flex;justify-content:center" class="pop-star">${stars(st)}</div>${RW.html(rw)}<p>${rich(note)}</p>${left ? `<p>${rich(T(`남은 문제가 <b>${left}개</b> 있어요.`, `<b>${left}</b> more to solve.`))}</p>` : ''}`,
+      buttons: [left ? { k: 'next', label: T('다음 문제', 'Next one'), cls: 'mint' } : null, S.history.some((e) => e.id === p.g) ? { k: 'game', label: T('그 대국 보기', 'See that game'), cls: 'lav' } : null, { k: 'home', label: T('홈으로', 'Home'), cls: 'ghost' }].filter(Boolean) });
+    await RW.celebrate(rw);
+    if (L.dead) return;
+    if (k === 'next') { const n = MyPz.due()[0]; if (n) go('lesson', { mine: n.i }); else go('home'); } else if (k === 'game') go('replay', { id: p.g }); else go('home');
+  }
   async function finish(goPlay) {
     if (L.done) return; L.done = true;
+    if (params.mine) { await finishMine(); return; }
     if (params.daily) { await finishDaily(); return; }
     if (params.practice) { await finishPractice(); return; }
     const st = L.mistakes === 0 ? 3 : L.mistakes <= 2 ? 2 : 1;
@@ -5404,6 +5504,7 @@ Views.lesson = (root, params) => {
   }
 
   root.addEventListener('click', (e) => {
+    const sn = e.target.closest('.sqn'); if (sn) { board.flash([sqIdx(sn.dataset.sq)]); return; }
     const b = e.target.closest('[data-a],[data-q]'); if (!b) return;
     sfx('tap');
     if (b.dataset.q != null) {
@@ -6025,6 +6126,173 @@ Views.game = (root, params) => {
 
 </script>
 <script>
+/* Game analysis shared by the review screen and the background queue, plus puzzles made from the player's own mistakes. */
+'use strict';
+const Analyzer = (() => {
+  const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  function line(E) {
+    const fens = [START], sans = [], mvs = [];
+    const g = new Chess(START); g.track = false;
+    for (const u of E.mv || []) { const m = g.findUci(u); if (!m) break; sans.push(g.san(m)); mvs.push({ f: m.f, t: m.t, c: m.c, u }); g.make(m); fens.push(g.fen()); }
+    return { fens, sans, mvs, N: mvs.length };
+  }
+  const mineFn = (E) => (i) => E.mode === '2p' || E.me === (i & 1);
+  // loss of move i (0-based) from the mover's view; an[k] = [score for the side to move, best uci]
+  function loss(an, i) {
+    const a = an[i][0], b = an[i + 1][0];
+    if (a > 900 && -b > 500) return 0;
+    if (a < -900) return 0;
+    return Math.max(0, a + b);
+  }
+  const pack = (r) => [Math.round(Math.abs(r.score) > 25000 ? (r.score > 0 ? 3000 : -3000) : Math.max(-1500, Math.min(1500, r.score))), r.uci || ''];
+  // first pass at depth 7, then the likely mistakes again with more time so shallow-search noise does not blame a good move
+  async function run(E, o) {
+    o = o || {};
+    const { fens, N } = line(E), mine = mineFn(E), res = [];
+    const stop = () => (o.stop ? o.stop() : false), prog = (ph, k, n) => { if (o.prog) o.prog(ph, k, n); };
+    for (let k = 0; k <= N; k++) {
+      if (stop()) return null;
+      prog(1, k, N + 1);
+      const g = new Chess(fens[k]); g.track = false; const st = g.status();
+      if (st.over) res.push([st.reason === 'mate' ? -3000 : 0, '']);
+      else { let r = null; try { r = await AIC.analyze(fens[k], 420, 7); } catch (e) { r = null; } if (!r) return null; res.push(pack(r)); }
+    }
+    const cand = [];
+    for (let i = 0; i < N; i++) if (mine(i)) { const l = loss(res, i); if (l >= 80) cand.push([l, i]); }
+    cand.sort((a, b) => b[0] - a[0]);
+    const todo = cand.slice(0, 10).map((x) => x[1]).sort((a, b) => a - b);
+    for (let q = 0; q < todo.length; q++) {
+      if (stop()) return null;
+      prog(2, q + 1, todo.length);
+      const i = todo[q];
+      for (const k of [i, i + 1]) {
+        const g = new Chess(fens[k]); g.track = false; if (g.status().over) continue;
+        let r = null; try { r = await AIC.analyze(fens[k], 1000, 9); } catch (e) { r = null; }
+        if (r) res[k] = pack(r);
+      }
+    }
+    return res;
+  }
+  // why a move is good: the coach's reasons (fork, capture, check ...), without its generic fallback
+  function why(fen, uci, cp) {
+    try {
+      const g = new Chess(fen); g.track = false; const m = g.findUci(uci); if (!m) return [];
+      const r = Coach.explain(g, m, { cp: cp || 0, mate: 0, pv: [] });
+      return r ? r.reasons.filter((x) => !/^여러 수 앞을/.test(x.ko)).slice(0, 2).map((x) => T(x.ko, x.en)) : [];
+    } catch (e) { return []; }
+  }
+  return { START, line, mineFn, loss, pack, run, why };
+})();
+
+/* Background analysis: every finished game is analysed automatically (one at a time, paused during a live game).
+   Older games from before v22: only the newest five. The review screen can ask for a game first. */
+const AutoAn = (() => {
+  let cur = null, want = '', tok = 0, running = false, prog = { ph: 0, k: 0, n: 0 };
+  const subs = new Set();
+  const emit = () => { for (const f of [...subs]) { try { f(); } catch (e) { /* ignore */ } } };
+  const busyGame = () => V.name === 'game' && S.game && !S.game.over;
+  const eligible = (E) => !!E && !E.an && (E.anx || 0) < 2 && Array.isArray(E.mv) && E.mv.length >= 2;
+  function pick() {
+    const list = S.history.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
+    if (want) { const w = list.find((e) => e.id === want); if (eligible(w)) return w; want = ''; }
+    const from = S.anFrom || 0;
+    return list.find((e, i) => eligible(e) && ((e.t || 0) >= from || i < 5)) || null;
+  }
+  async function loop() {
+    if (running) return; running = true;
+    if (!S.anFrom) { S.anFrom = Date.now(); save(); }
+    try {
+      AIC.init();
+      for (;;) {
+        const E = pick(); if (!E) break;
+        const fg = want === E.id; // the review screen is waiting for this game
+        if (!AIC.w && !fg) break; // no worker: never slow the screen down for a background job
+        if (busyGame() && !fg) { await sleep(4000); continue; }
+        const my = ++tok; cur = E; prog = { ph: 1, k: 0, n: E.mv.length + 1 }; emit();
+        const res = await Analyzer.run(E, {
+          stop: () => my !== tok || !S.history.includes(E) || (busyGame() && want !== E.id),
+          prog: (ph, k, n) => { prog = { ph, k, n }; emit(); },
+        });
+        cur = null;
+        if (res && S.history.includes(E)) {
+          E.an = res; delete E.anx; save();
+          if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory();
+          const n = MyPz.fromGame(E);
+          if (n && V.name === 'home') rerender();
+        } else if (!res && my === tok && S.history.includes(E) && !busyGame()) E.anx = (E.anx || 0) + 1;
+        if (want === E.id) want = '';
+        emit();
+        await sleep(300);
+      }
+    } finally { running = false; cur = null; emit(); }
+  }
+  function ask(id) {
+    const E = S.history.find((e) => e.id === id); if (!E || E.an) return;
+    if (E.anx) delete E.anx;
+    want = id; if (cur && cur.id !== id) tok++; // stop the background game; it is picked up again later
+    loop();
+  }
+  return { start: loop, ask, cur: () => cur, prog: () => prog, sub(f) { subs.add(f); return () => subs.delete(f); } };
+})();
+setTimeout(() => { try { AutoAn.start(); } catch (e) { /* ignore */ } }, 6000);
+setInterval(() => { try { AutoAn.start(); } catch (e) { /* ignore */ } }, 60000);
+
+/* "From my games" puzzles: the 1-2 biggest mistakes of each analysed game (vs computer / online, never 2-player).
+   Kept in rw.mp (latest 30), so they follow the profile to other devices.
+   entry = { i: id, f: fen, o: best uci, s: best score, p: the move played then, g: game id, t: game time, x: solved first try, n: due day, c: tries } */
+const MyPz = (() => {
+  const MAX = 30;
+  const list = () => { const r = RW.st(); if (!Array.isArray(r.mp)) r.mp = []; return r.mp; };
+  const today = () => dayIndex(ymd());
+  const open = () => list().filter((p) => !p.x);
+  const due = () => open().filter((p) => (p.n || 0) <= today()).sort((a, b) => (a.n || 0) - (b.n || 0) || (b.t || 0) - (a.t || 0));
+  const get = (id) => list().find((p) => p.i === id) || null;
+  function trim() { const a = list(); if (a.length <= MAX) return; a.sort((x, y) => (x.x || 0) - (y.x || 0) || (y.t || 0) - (x.t || 0)); a.length = MAX; }
+  function fromGame(E) {
+    if (!E || E.mode === '2p' || !Array.isArray(E.an)) return 0;
+    const { fens, N } = Analyzer.line(E), mine = Analyzer.mineFn(E), an = E.an, have = new Set(list().map((p) => p.i)), c = [];
+    for (let i = 6; i < N; i++) { // skip the first moves of the opening
+      if (!mine(i) || !an[i] || !an[i + 1] || !an[i][1] || an[i][1] === E.mv[i]) continue;
+      const l = Analyzer.loss(an, i), sc = an[i][0];
+      if (!((l >= 150 && sc >= 60) || (l >= 200 && sc >= 0))) continue; // a real mistake, and a good move existed (not just "lose less")
+      const g = new Chess(fens[i]); g.track = false; const bm = g.status().over ? null : g.findUci(an[i][1]); if (!bm) continue;
+      g.make(bm); const chk = g.inCheck(); g.unmake();
+      if (!(bm.c || chk || sc >= 150)) continue; // the better move must win something; a quiet "any move is fine" position makes a poor puzzle
+      c.push({ l, i });
+    }
+    c.sort((a, b) => b.l - a.l);
+    let n = 0; const used = new Set();
+    for (const { i } of c) {
+      if (used.size >= 2) break;
+      if (used.has(an[i][1])) continue; // the same missed move on several turns in a row: one puzzle is enough
+      used.add(an[i][1]);
+      const id = E.id + ':' + i; if (have.has(id)) continue;
+      list().push({ i: id, f: fens[i], o: an[i][1], s: an[i][0], p: E.mv[i], g: E.id, t: E.t || Date.now(), x: 0, n: 0, c: 0 }); n++;
+    }
+    if (n) { trim(); save(); }
+    return n;
+  }
+  function done(id, mistakes) {
+    const p = get(id); if (!p) return;
+    p.c = (p.c || 0) + 1;
+    if (!mistakes) p.x = 1; else p.n = today() + 2; // missed: comes back in two days
+    save();
+  }
+  function merge(a) {
+    const L = list();
+    for (const q of a) {
+      if (!q || typeof q.i !== 'string' || typeof q.f !== 'string' || typeof q.o !== 'string') continue;
+      const p = L.find((x) => x.i === q.i);
+      if (!p) L.push({ i: q.i, f: q.f, o: q.o, s: +q.s || 0, p: String(q.p || ''), g: String(q.g || ''), t: +q.t || 0, x: q.x ? 1 : 0, n: +q.n || 0, c: +q.c || 0 });
+      else { p.x = Math.max(p.x || 0, q.x ? 1 : 0); p.n = Math.max(p.n || 0, +q.n || 0); p.c = Math.max(p.c || 0, +q.c || 0); }
+    }
+    trim();
+  }
+  const ofGame = (gid) => open().filter((p) => p.g === gid);
+  return { list, open, due, get, fromGame, done, merge, ofGame };
+})();
+</script>
+<script>
 /* Game history list + replay with mistake analysis. */
 'use strict';
 const RES_TXT = (e) => {
@@ -6048,30 +6316,33 @@ Views.history = (root) => {
   const row = (e) => {
     const r = RES_TXT(e), d = new Date(e.t);
     const who = e.mode === '2p' ? T('둘이서', '2 Players') : e.mode === 'cpu' ? T(`레오 (레벨 ${e.lv})`, `Leo (level ${e.lv})`) : T(`${e.opp} (온라인)`, `${e.opp} (online)`);
-    return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${unit(timeLabel(d))} · ${Math.ceil(e.mv.length / 2)}${unit(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : ''}</small></span><span>›</span></button>`;
+    return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${unit(timeLabel(d))} · ${Math.ceil(e.mv.length / 2)}${unit(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : AutoAn.cur() && AutoAn.cur().id === e.id ? ' · <span class="an-run">' + tx(T('분석 중…', 'analyzing…')) + '</span>' : ''}</small></span><span>›</span></button>`;
   };
-  root.innerHTML = `<div class="scroll"><div class="wrap">${list.length
-    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 저장돼요. 로그인하면 다른 기기에서도 볼 수 있어요. 눌러서 다시 보고 <b>실수</b>를 찾아봐요.', 'The last 30 games are saved. Sign in to see them on other devices too. Tap one to replay it and find <b>mistakes</b>.'))}</p><div class="hlist">${list.map((e, i) => (i === 0 || dayKey(new Date(e.t)) !== dayKey(new Date(list[i - 1].t)) ? `<div class="hday">${unit(dayLabel(new Date(e.t)))}</div>` : '') + row(e)).join('')}</div>`
+  const dueN = MyPz.due().length;
+  root.innerHTML = `<div class="scroll"><div class="wrap">${dueN ? `<div class="resume-bar" style="margin:0 0 12px"><span>${tx(T(`내 대국에서 나온 문제 ${dueN}개`, `${dueN} puzzle(s) from my games`), true)}</span><button class="btn sun sm" id="h-mypz">${ic('bulb', 18)} ${tx(T('풀기', 'Solve'), true)}</button></div>` : ''}${list.length
+    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 저장돼요. 로그인하면 다른 기기에서도 볼 수 있어요. 대국이 끝나면 레오가 저절로 <b>실수</b>를 찾아 둬요.', 'The last 30 games are saved. Sign in to see them on other devices too. After each game Leo finds the <b>mistakes</b> by himself.'))}</p><div class="hlist">${list.map((e, i) => (i === 0 || dayKey(new Date(e.t)) !== dayKey(new Date(list[i - 1].t)) ? `<div class="hday">${unit(dayLabel(new Date(e.t)))}</div>` : '') + row(e)).join('')}</div>`
     : `<div class="card" style="text-align:center"><div style="width:90px;margin:0 auto">${Art.lion('happy')}</div><p>${rich(T('아직 기록이 없어요. 대국을 한 판 하고 오면 여기에 저장돼요!', 'No games yet. Play a game and it will be saved here!'))}</p></div>`}</div></div>`;
-  root.addEventListener('click', (e) => { const b = e.target.closest('[data-id]'); if (b) { sfx('tap'); go('replay', { id: b.dataset.id }); } });
+  root.addEventListener('click', (e) => {
+    if (e.target.closest('#h-mypz')) { sfx('tap'); const p = MyPz.due()[0]; if (p) go('lesson', { mine: p.i }); return; }
+    const b = e.target.closest('[data-id]'); if (b) { sfx('tap'); go('replay', { id: b.dataset.id }); }
+  });
+  let lastRun = AutoAn.cur() ? AutoAn.cur().id : '';
+  const off = AutoAn.sub(() => { if (V.name !== 'history') { off(); return; } const c = AutoAn.cur() ? AutoAn.cur().id : ''; if (c !== lastRun) { lastRun = c; off(); rerender(); } });
+  V.cleanup = () => off();
 };
 
 Views.replay = (root, params) => {
   const E = S.history.find((x) => x.id === params.id);
   if (!E) { go('history'); return; }
-  const R = { i: 0, dead: false, tok: 0, an: E.an || null, busy: false, flags: [] };
-  V.cleanup = () => { R.dead = true; R.tok++; };
+  const R = { i: 0, dead: false, tok: 0, an: E.an || null, flags: [] };
+  let offAn = () => {};
+  V.cleanup = () => { R.dead = true; R.tok++; offAn(); };
   setTop({ back: 'history', title: T('복기', 'Review') });
-  const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-  // positions
-  const fens = [START_FEN], sans = [], mvs = [];
-  { const g = new Chess(START_FEN); g.track = false;
-    for (const u of E.mv) { const m = g.findUci(u); if (!m) break; sans.push(g.san(m)); mvs.push({ f: m.f, t: m.t, c: m.c, u }); g.make(m); fens.push(g.fen()); } }
-  const N = mvs.length;
-  const mine = (i) => E.mode === '2p' || E.me === (i & 1);
+  const { fens, sans, mvs, N } = Analyzer.line(E);
+  const mine = Analyzer.mineFn(E);
   const view = E.mode === '2p' ? 'w' : E.me === 1 ? 'b' : 'w';
   const PD = new Date(E.t);
-  root.innerHTML = `<div class="lesson replay"><div class="rdate">${unit(dayLabel(PD))} · ${unit(timeLabel(PD))}</div><div class="boardwrap" id="bw"></div>
+  root.innerHTML = `<div class="lesson replay"><div class="rdate">${unit(dayLabel(PD))} · ${unit(timeLabel(PD))}<span class="rst" id="rst"></span></div><div class="boardwrap" id="bw"></div>
     <div class="rctl"><button class="btn ghost sm" data-a="first">${ic('back', 18)}${ic('back', 18)}</button><button class="btn ghost sm" data-a="prev">${ic('back', 18)}</button><span id="rpos" class="rpos"></span><button class="btn ghost sm" data-a="next">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last">${ic('next', 18)}${ic('next', 18)}</button></div>
     <div class="rmoves" id="rmv"></div>
     <div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>`;
@@ -6083,13 +6354,7 @@ Views.replay = (root, params) => {
 
   /* ----- analysis ----- */
   const sc = (i) => R.an[i][0];
-  function loss(i) { // loss of move i (0-based), from mover's view
-    const a = sc(i), b = sc(i + 1);
-    const l = a + b;
-    if (a > 900 && -b > 500) return 0;
-    if (a < -900) return 0;
-    return Math.max(0, l);
-  }
+  const loss = (i) => Analyzer.loss(R.an, i);
   function computeFlags() {
     R.flags = new Array(N).fill(0); R.count = [0, 0, 0, 0];
     for (let i = 0; i < N; i++) {
@@ -6112,52 +6377,27 @@ Views.replay = (root, params) => {
     else if (best && best.c && !(mvs[i].c)) lines.push(T(`잡을 수 있었던 상대 말: <b>${Coach.NM[best.c & 7].ko}</b>`, `You could have captured the <b>${Coach.NM[best.c & 7].en}</b>.`));
     if (!lines.length) lines.push(T('더 좋은 수가 있었어요.', 'There was a better move.'));
     // why the better move is better: reuse the coach's reasons (fork, capture, check ...), skipping its generic fallback
-    let why = [];
-    try {
-      if (best) {
-        const gb = new Chess(fens[i]); gb.track = false; const bm = gb.findUci(R.an[i][1]);
-        const r = bm ? Coach.explain(gb, bm, { cp: sc(i), mate: 0, pv: [] }) : null;
-        if (r) why = r.reasons.filter((x) => !/^여러 수 앞을/.test(x.ko)).slice(0, 2).map((x) => T(x.ko, x.en));
-      }
-    } catch (e) { why = []; }
+    const why = best ? Analyzer.why(fens[i], R.an[i][1], sc(i)) : [];
     return { lines, best, bestSan, why };
   }
-  const pack = (r) => [Math.round(Math.abs(r.score) > 25000 ? (r.score > 0 ? 3000 : -3000) : Math.max(-1500, Math.min(1500, r.score))), r.uci || ''];
-  async function analyze() {
-    if (R.busy) return; R.busy = true; const tok = ++R.tok;
-    const res = [];
-    acts.innerHTML = B('cancel', tx(T('멈추기', 'Stop'), true), 'ghost');
-    for (let k = 0; k <= N; k++) {
-      if (R.dead || tok !== R.tok) { R.busy = false; if (!R.dead) show(); return; }
-      say(T(`레오가 수를 살펴보고 있어요… <b>${k}/${N + 1}</b>`, `Leo is checking the moves… <b>${k}/${N + 1}</b>`), 'wink', `<div class="prog"><i style="width:${Math.round(k / (N + 1) * 100)}%"></i></div>`);
-      const g = new Chess(fens[k]); g.track = false;
-      const st = g.status();
-      if (st.over) res.push([st.reason === 'mate' ? -3000 : 0, '']);
-      else {
-        let r = null; try { r = await AIC.analyze(fens[k], 420, 7); } catch (e) { r = null; }
-        if (!r) { R.busy = false; show(); return; }
-        res.push(pack(r));
-      }
-    }
-    // second look: re-check the moves that look like mistakes with more thinking time, so shallow-search noise does not blame a good move
-    R.an = res; const cand = [];
-    for (let i = 0; i < N; i++) if (mine(i)) { const l = loss(i); if (l >= 80) cand.push([l, i]); }
-    cand.sort((a, b) => b[0] - a[0]);
-    const todo = cand.slice(0, 10).map((x) => x[1]).sort((a, b) => a - b);
-    for (let q = 0; q < todo.length; q++) {
-      if (R.dead || tok !== R.tok) { R.busy = false; R.an = E.an || null; if (!R.dead) show(); return; }
-      const i = todo[q];
-      say(T(`레오가 헷갈리는 수를 한 번 더 확인해요… <b>${q + 1}/${todo.length}</b>`, `Leo double-checks the tricky moves… <b>${q + 1}/${todo.length}</b>`), 'think', `<div class="prog"><i style="width:${Math.round((q + 1) / todo.length * 100)}%"></i></div>`);
-      for (const k of [i, i + 1]) {
-        const g = new Chess(fens[k]); g.track = false; if (g.status().over) continue;
-        let r = null; try { r = await AIC.analyze(fens[k], 1000, 9); } catch (e) { r = null; }
-        if (r) res[k] = pack(r);
-      }
-    }
-    const firstTime = !E.an;
-    R.an = res; E.an = res; R.busy = false; save(); if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory();
-    computeFlags(); renderMoves(); show(true);
-    if (firstTime && !R.dead) { RW.earn('review'); RW.notify(); }
+  // the analysis runs by itself in the background; this screen only asks for its game first and shows progress
+  function seen() { if (!E.rv) { E.rv = 1; save(); RW.earn('review'); RW.notify(); } }
+  function status() {
+    const el = $('#rst', root); if (!el) return;
+    if (R.an) { el.textContent = ''; return; }
+    const c = AutoAn.cur(), p = AutoAn.prog();
+    if (c && c.id === E.id) el.textContent = ' · ' + unit(T(`레오가 살펴보는 중 ${p.n ? Math.round((p.ph === 1 ? p.k / p.n * 0.75 : 0.75 + p.k / p.n * 0.25) * 100) : 0}%`, `Leo is checking ${p.n ? Math.round((p.ph === 1 ? p.k / p.n * 0.75 : 0.75 + p.k / p.n * 0.25) * 100) : 0}%`));
+    else if ((E.anx || 0) >= 2) el.textContent = ' · ' + unit(T('지금은 분석할 수 없어요', 'Cannot analyse now'));
+    else el.textContent = ' · ' + unit(T('분석 준비 중…', 'Getting ready…'));
+  }
+  function waitAn() {
+    if (R.an) { seen(); return; }
+    offAn = AutoAn.sub(() => {
+      if (R.dead) { offAn(); return; }
+      if (E.an) { offAn(); R.an = E.an; computeFlags(); renderMoves(); seen(); status(); if (R.i === 0) show(true); else show(); return; }
+      status();
+    });
+    AutoAn.ask(E.id); status();
   }
 
   /* ----- rendering ----- */
@@ -6179,12 +6419,10 @@ Views.replay = (root, params) => {
     $('#rpos', root).textContent = i + ' / ' + N;
     $$('.mvb', mv).forEach((b) => b.classList.toggle('cur', +b.dataset.m === i));
     const cur = $('.mvb.cur', mv); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
-    let a = B('analyze', ic('bulb', 18) + ' ' + tx(T('실수 찾기', 'Find mistakes'), true), 'lav');
-    if (R.an) {
-      a = B('nextbad', tx(T('다음 실수 ›', 'Next mistake ›'), true), 'lav');
-      if (!R.count[2] && !R.count[3] && !R.count[1]) a = '';
-    }
-    if (R.busy) return;
+    let a = '';
+    if (R.an && (R.count[1] || R.count[2] || R.count[3])) a = B('nextbad', tx(T('다음 실수 ›', 'Next mistake ›'), true), 'lav');
+    const pz = MyPz.ofGame(E.id);
+    if (pz.length) a += B('mypz', ic('bulb', 18) + ' ' + tx(T(`이 대국 문제 ${pz.length}개`, `${pz.length} puzzle(s)`), true), 'sun');
     if (R.an && i > 0 && R.flags[i - 1] && mine(i - 1)) {
       const k = R.flags[i - 1], ex = explain(i - 1);
       const lab = { 3: T('큰 실수', 'Blunder'), 2: T('실수', 'Mistake'), 1: T('아쉬운 수', 'Inaccuracy') }[k];
@@ -6196,7 +6434,7 @@ Views.replay = (root, params) => {
       const tot = R.count[0] + R.count[1] + R.count[2] + R.count[3], good = tot ? Math.round((R.count[0] / tot) * 100) : 100;
       say(T(`내가 둔 ${tot}수 중 <b>${R.count[0]}수</b>가 좋은 수였어요 (${good}%).<br>큰 실수 ${R.count[3]} · 실수 ${R.count[2]} · 아쉬운 수 ${R.count[1]}`, `Of your ${tot} moves, <b>${R.count[0]}</b> were good (${good}%).<br>Blunders ${R.count[3]} · Mistakes ${R.count[2]} · Inaccuracies ${R.count[1]}`), R.count[3] + R.count[2] ? 'happy' : 'cheer');
     } else if (R.an && i > 0 && mine(i - 1)) say(T(`<b>${sans[i - 1]}</b> — 좋은 수예요!`, `<b>${sans[i - 1]}</b> — a good move!`), 'happy');
-    else if (i === 0) say(R.an ? T('◀ ▶ 로 넘기거나 수를 눌러 보세요. 빨간 표시가 실수예요.', 'Step with ◀ ▶ or tap a move. Marks show mistakes.') : T('◀ ▶ 로 한 수씩 다시 봐요. <b>실수 찾기</b>를 누르면 레오가 살펴봐 줘요.', 'Step through with ◀ ▶. Tap <b>Find mistakes</b> and Leo will check.'), 'wink');
+    else if (i === 0) say(R.an ? T('◀ ▶ 로 넘기거나 수를 눌러 보세요. 빨간 표시가 실수예요.', 'Step with ◀ ▶ or tap a move. Marks show mistakes.') : T('◀ ▶ 로 한 수씩 다시 봐요. 레오가 <b>실수</b>를 찾고 있어요. 조금만 기다려 주세요.', 'Step through with ◀ ▶. Leo is looking for <b>mistakes</b>. Please wait a moment.'), 'wink');
     else say(T(`<b>${sans[i - 1]}</b>`, `<b>${sans[i - 1]}</b>`), 'happy');
     acts.innerHTML = a;
   }
@@ -6205,8 +6443,7 @@ Views.replay = (root, params) => {
     const m = e.target.closest('[data-m]'); if (m) { goTo(+m.dataset.m); return; }
     const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
     if (a === 'first') goTo(0); else if (a === 'prev') goTo(R.i - 1); else if (a === 'next') goTo(R.i + 1); else if (a === 'last') goTo(N);
-    else if (a === 'analyze') { sfx('tap'); analyze(); }
-    else if (a === 'cancel') { R.tok++; }
+    else if (a === 'mypz') { sfx('tap'); const p = MyPz.ofGame(E.id)[0]; if (p) go('lesson', { mine: p.i }); }
     else if (a === 'nextbad') {
       sfx('tap');
       let j = R.i; for (let t = 0; t < N; t++) { j = (j % N) + 1; if (R.flags[j - 1] >= 1 && mine(j - 1) && R.flags[j - 1] >= 2) { goTo(j); return; } }
@@ -6217,6 +6454,7 @@ Views.replay = (root, params) => {
   if (R.an) computeFlags();
   renderMoves();
   show();
+  waitAn();
 };
 
 </script>
@@ -6366,7 +6604,7 @@ const RWD = (() => {
 'use strict';
 const RW = (() => {
   const { RULES, TITLES, ART, SLOTS } = RWD;
-  const R0 = () => ({ v: 1, e: {}, s: {}, pe: {}, pu: {}, own: {}, eq: { hat: '', face: '', neck: '', board: '', piece: '' }, eqt: 0, bd: {}, m: {}, sm: {}, lw: {}, ms: { d: '', p: 0, g: 0, l: 0, x: 0 }, wk: { id: '', days: [], x: 0 }, gifts: [], claims: [], lv: 0, pl: 0, plt: 0, pp: {} });
+  const R0 = () => ({ v: 1, e: {}, s: {}, pe: {}, pu: {}, own: {}, eq: { hat: '', face: '', neck: '', board: '', piece: '' }, eqt: 0, bd: {}, m: {}, sm: {}, lw: {}, ms: { d: '', p: 0, g: 0, l: 0, x: 0 }, wk: { id: '', days: [], x: 0 }, gifts: [], claims: [], lv: 0, pl: 0, plt: 0, pp: {}, mp: [] });
   const packs = { items: [], badges: [], puzzles: [], loaded: 0 };
   let P = { n: 0, lines: [], pass: '' };
   let flushT = 0;
@@ -6558,7 +6796,7 @@ const RW = (() => {
   Art.lionWith = function (mood, slot, id) { const it = itemById(id); return baseLion(mood).replace(/<\/svg>$/, it ? `<g class="acc">${itemSvg(it)}</g></svg>` : '</svg>'); };
 
   /* ---------- merge / pack (cloud + other devices). Every counter is keyed per device or per event, so merging never loses or doubles stars. ---------- */
-  function pack() { const r = st(); return clone({ v: 1, e: r.e, s: r.s, pe: r.pe, pu: r.pu, own: r.own, eq: r.eq, eqt: r.eqt, bd: r.bd, m: r.m, sm: r.sm, lw: r.lw, ms: r.ms, wk: r.wk, gifts: r.gifts, claims: r.claims, lv: r.lv, pl: r.pl, plt: r.plt, pp: r.pp }); }
+  function pack() { const r = st(); return clone({ v: 1, e: r.e, s: r.s, pe: r.pe, pu: r.pu, own: r.own, eq: r.eq, eqt: r.eqt, bd: r.bd, m: r.m, sm: r.sm, lw: r.lw, ms: r.ms, wk: r.wk, gifts: r.gifts, claims: r.claims, lv: r.lv, pl: r.pl, plt: r.plt, pp: r.pp, mp: r.mp }); }
   function merge(rem) {
     if (!rem || typeof rem !== 'object') return;
     const r = st(), mx = (a, b) => { for (const k of Object.keys(b || {})) a[k] = Math.max(a[k] || 0, +b[k] || 0); };
@@ -6578,6 +6816,7 @@ const RW = (() => {
     for (const c of rem.claims || []) if (!r.claims.some((x) => x.at === c.at)) r.claims.push(c);
     r.claims.sort((a, b) => b.at - a.at); r.claims.length = Math.min(r.claims.length, 20);
     r.lv = Math.max(r.lv || 0, rem.lv || 0);
+    if (Array.isArray(rem.mp) && typeof MyPz !== 'undefined') MyPz.merge(rem.mp);
     apply();
   }
 
