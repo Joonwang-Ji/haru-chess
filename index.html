@@ -417,6 +417,9 @@ svg.pc, svg.ic { overflow: visible; }
 .hrow { display: flex !important; align-items: center; gap: 12px; justify-content: flex-start; text-align: left; padding: 10px 14px; border-radius: 18px; }
 .hrow .hmain { flex: 1; min-width: 0; display: flex; flex-direction: column; font-weight: 400; }
 .hrow small { color: var(--ink2); }
+.hday { margin: 10px 2px 0; font-size: .85rem; font-weight: 700; color: var(--ink2); }
+.hday:first-child { margin-top: 0; }
+.rdate { text-align: center; font-size: .85rem; color: var(--ink2); padding: 2px 0 4px; }
 .hres { flex: none; min-width: 4.2em; text-align: center; border-radius: 999px; padding: 3px 8px; font-size: .85rem; background: var(--surface2); }
 .hres.win { background: color-mix(in srgb, var(--good) 30%, var(--surface)); }
 .hres.loss { background: #ffd9de; color: #a3182f; }
@@ -437,6 +440,7 @@ svg.pc, svg.ic { overflow: visible; }
 .tile .dchk { font-size: .78rem; opacity: .85; display: block; }
 .stat-link { cursor: pointer; }
 .has-resume .tile.half{min-height:52px}
+@media (max-width: 360px) { .tile.half, .has-resume .tile.half { flex-direction: column; gap: 2px; padding: 8px 6px; font-size: .95rem; text-align: center; min-height: 72px; } .tile.half .ico { width: 26px; height: 26px; } }
 
 
 /* ---------- rewards: star shop, badges, gifts ---------- */
@@ -4571,7 +4575,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v20 · tactics</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v21 · history</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4604,7 +4608,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v20 · tactics</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v21 · history</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -6029,16 +6033,25 @@ const RES_TXT = (e) => {
   if (e.mode === '2p') return { c: 'win', t: w === 0 ? T('흰색 승', 'White won') : T('검은색 승', 'Black won') };
   return w === e.me ? { c: 'win', t: T('승리', 'Win') } : { c: 'loss', t: T('패배', 'Loss') };
 };
+const DOW_KO = '일월화수목금토', DOW_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayKey = (d) => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+const dayLabel = (d) => { // 오늘 / 어제 / 10월 12일 (월) — the year only when it is not this year
+  const now = new Date(), k = dayKey(d); if (k === dayKey(now)) return T('오늘', 'Today');
+  const y = new Date(now); y.setDate(y.getDate() - 1); if (k === dayKey(y)) return T('어제', 'Yesterday');
+  const yr = d.getFullYear() !== now.getFullYear();
+  return T(`${yr ? d.getFullYear() + '년 ' : ''}${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW_KO[d.getDay()]})`, `${DOW_EN[d.getDay()]}, ${MON_EN[d.getMonth()]} ${d.getDate()}${yr ? ', ' + d.getFullYear() : ''}`);
+};
+const timeLabel = (d) => { const h = d.getHours(), m = String(d.getMinutes()).padStart(2, '0'), h12 = h % 12 || 12; return T(`${h < 12 ? '오전' : '오후'} ${h12}:${m}`, `${h12}:${m} ${h < 12 ? 'AM' : 'PM'}`); };
 Views.history = (root) => {
   setTop({ back: 'home', title: T('내 대국 기록', 'My games') });
-  const list = S.history;
+  const list = S.history.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
   const row = (e) => {
     const r = RES_TXT(e), d = new Date(e.t);
     const who = e.mode === '2p' ? T('둘이서', '2 Players') : e.mode === 'cpu' ? T(`레오 (레벨 ${e.lv})`, `Leo (level ${e.lv})`) : T(`${e.opp} (온라인)`, `${e.opp} (online)`);
-    return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${d.getMonth() + 1}/${d.getDate()} · ${Math.ceil(e.mv.length / 2)}${tx(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : ''}</small></span><span>›</span></button>`;
+    return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${unit(timeLabel(d))} · ${Math.ceil(e.mv.length / 2)}${unit(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : ''}</small></span><span>›</span></button>`;
   };
   root.innerHTML = `<div class="scroll"><div class="wrap">${list.length
-    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 저장돼요. 로그인하면 다른 기기에서도 볼 수 있어요. 눌러서 다시 보고 <b>실수</b>를 찾아봐요.', 'The last 30 games are saved. Sign in to see them on other devices too. Tap one to replay it and find <b>mistakes</b>.'))}</p><div class="hlist">${list.map(row).join('')}</div>`
+    ? `<p style="color:var(--ink2);margin:0 0 10px;font-size:.92rem">${rich(T('최근 30판까지 저장돼요. 로그인하면 다른 기기에서도 볼 수 있어요. 눌러서 다시 보고 <b>실수</b>를 찾아봐요.', 'The last 30 games are saved. Sign in to see them on other devices too. Tap one to replay it and find <b>mistakes</b>.'))}</p><div class="hlist">${list.map((e, i) => (i === 0 || dayKey(new Date(e.t)) !== dayKey(new Date(list[i - 1].t)) ? `<div class="hday">${unit(dayLabel(new Date(e.t)))}</div>` : '') + row(e)).join('')}</div>`
     : `<div class="card" style="text-align:center"><div style="width:90px;margin:0 auto">${Art.lion('happy')}</div><p>${rich(T('아직 기록이 없어요. 대국을 한 판 하고 오면 여기에 저장돼요!', 'No games yet. Play a game and it will be saved here!'))}</p></div>`}</div></div>`;
   root.addEventListener('click', (e) => { const b = e.target.closest('[data-id]'); if (b) { sfx('tap'); go('replay', { id: b.dataset.id }); } });
 };
@@ -6057,7 +6070,8 @@ Views.replay = (root, params) => {
   const N = mvs.length;
   const mine = (i) => E.mode === '2p' || E.me === (i & 1);
   const view = E.mode === '2p' ? 'w' : E.me === 1 ? 'b' : 'w';
-  root.innerHTML = `<div class="lesson replay"><div class="boardwrap" id="bw"></div>
+  const PD = new Date(E.t);
+  root.innerHTML = `<div class="lesson replay"><div class="rdate">${unit(dayLabel(PD))} · ${unit(timeLabel(PD))}</div><div class="boardwrap" id="bw"></div>
     <div class="rctl"><button class="btn ghost sm" data-a="first">${ic('back', 18)}${ic('back', 18)}</button><button class="btn ghost sm" data-a="prev">${ic('back', 18)}</button><span id="rpos" class="rpos"></span><button class="btn ghost sm" data-a="next">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last">${ic('next', 18)}${ic('next', 18)}</button></div>
     <div class="rmoves" id="rmv"></div>
     <div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>`;

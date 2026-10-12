@@ -20,5 +20,6 @@
 - v18: `puzzles-lv1b.json`, `puzzles-lv2b.json` (각 100개, `from` 2026-10-12)를 추가했습니다. 모든 퍼즐은 엔진으로 만들고 앱 규칙 엔진으로 다시 검증했습니다.
 - v20: `puzzles-lv3b.json`(58) `puzzles-lv4b.json`(60) `puzzles-lv5b.json`(55)를 추가했습니다 (`from` 2026-10-13). 레벨 3 = 2수 메이트 35 + 최선의 한 수 23, 레벨 4·5 = 3수 메이트 각 45 + 최선의 한 수 15·10. 사람처럼 실수하는 엔진 자기대국(약한 쪽·강한 쪽)에서 뽑았고, 정답이 하나뿐인 위치만 남긴 뒤 앱 규칙 엔진으로 다시 검증했습니다.
 - v20: 기존 `puzzles-lv2~5.json`의 "최선의 한 수" 중 23개는 막연한 `advantage`/`material`/`checkwin`/`trade` 대신 구체적인 `fork`(포크)·`pin`(핀)·`skewer`(스큐어)·`discover`(발견 공격) 태그로 바꿨습니다.
+- v21: `puzzles-lv3c.json`(56) `puzzles-lv4c.json`(55) `puzzles-lv5c.json`(53)를 추가했습니다 (`from` 2026-10-14). 모두 "최선의 한 수"(`t`)이고, 자기대국 1,200판에서 새로 채굴해 앱 규칙 엔진으로 재검증했습니다. 레벨은 태그로 정했습니다(체크·교환=3, 포크·핀·발견=4, 재료 획득=5).
 - `th` 키: fork pin skewer discover hang trade sac checkwin promo defmate escape material advantage
 
