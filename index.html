@@ -570,6 +570,10 @@ svg.pc, svg.ic { overflow: visible; }
 }
 .mvb.nt { font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; }
 .chap .ct .cwho { font-size: .78rem; margin-top: 2px; }
+.chap .ct .clv { display: inline-block; margin-right: 6px; padding: 0 7px; border-radius: 99px; font-size: .74rem; font-weight: 700; vertical-align: 1px; background: #dff5e8; color: #1f7a48; }
+.chap .ct .clv.l2 { background: #fff1c9; color: #8a6200; }
+.chap .ct .clv.l3 { background: #ffe0dc; color: #b23a2a; }
+.classic .crate { margin-top: 6px; } .classic .crate .stars { font-size: 1.35rem; vertical-align: -3px; } .classic .crate small { color: var(--ink2); margin-left: 4px; }
 .chap .ct .cdone { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: .8rem; color: #1f9a59; }
 .learn .cont { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: var(--brand); color: var(--brand-ink); border-radius: 24px; padding: 8px 14px 8px 8px; box-shadow: 0 5px 0 var(--brand-d); margin: 4px 0 14px; }
 .learn .cont:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--brand-d); }
@@ -4776,7 +4780,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v27 · numbered arrows</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v28 · traps</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4809,7 +4813,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v27 · numbered arrows</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v28 · traps</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5164,7 +5168,74 @@ function mvText(fen, mv) {
 const Classics = (() => {
   const G = [
     {
-      id: 'legal', year: 1750, piece: 'wN', moves: 'e4 e5 Bc4 d6 Nf3 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#',
+      id: 'fool', lv: 1, side: 'b', piece: 'bQ', moves: 'f3 e5 g4 Qh4#',
+      title: T('바보의 메이트', 'Fool\'s mate'),
+      who: T('가장 빠른 체크메이트 · 단 2수', 'The fastest checkmate · just 2 moves'),
+      blurb: T('검은색 편! 2수 만에 끝나는 대국', 'Play Black! A game over in 2 moves'),
+      lesson: T('시작할 때 <b>킹 옆의 폰</b>(f폰·g폰)은 함부로 움직이지 않아요.', 'At the start, do not push <b>the pawns next to your king</b> (the f- and g-pawns) carelessly.'),
+      at: {
+        0: { t: T('체스에서 가장 빨리 끝나는 체크메이트예요. 이번에는 <b>검은색 편</b>이에요. 보드가 뒤집혀서 검은 말이 아래에 있어요!', 'The fastest checkmate in chess. This time you are <b>Black</b>. The board is turned around, so the black pieces are at the bottom!'), mood: 'happy' },
+        1: { t: T('흰색이 f폰을 한 칸 올렸어요. 흰 킹 옆에 <b>작은 틈</b>이 생겼어요.', 'White moved the f-pawn up one square. A <b>small gap</b> opened next to the white king.'), hl: ['e1', 'f2'], mood: 'think' },
+        2: { t: T('검은색은 e폰을 두 칸 올렸어요. 이제 검은 퀸이 대각선으로 나갈 <b>길이 열렸어요</b>.', 'Black pushed the e-pawn two squares. Now the black queen has an <b>open road</b> along the diagonal.'), arr: [['d8', 'h4', '']] },
+        3: { t: T('흰색이 g폰까지 올렸어요. 흰 킹으로 가는 길이 활짝 열렸어요! 검은 퀸으로 체크메이트를 찾아봐요.', 'White pushed the g-pawn too. The road to the white king is wide open! Find checkmate with the black queen.'), guess: true, hint: T('d8 퀸이 대각선을 따라 h4까지 가요.', 'The d8 queen slides along the diagonal to h4.'), mood: 'wink' },
+        4: { t: T('<b>체크메이트!</b> 흰 킹은 도망갈 칸이 없고, 막을 말도 없어요. 단 2수 만에 끝났어요!', '<b>Checkmate!</b> The white king has nowhere to go and nothing can block. Over in just 2 moves!'), arr: [['h4', 'e1', 'red']], hl: ['e1'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'scholar', lv: 1, piece: 'wQ', moves: 'e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#',
+      title: T('학자의 메이트', 'Scholar\'s mate'),
+      who: T('4수 만에 끝나는 유명한 공격', 'A famous 4-move attack'),
+      blurb: T('퀸과 비숍이 힘을 합쳐 f7을 노려요', 'Queen and bishop team up against f7'),
+      lesson: T('f7은 <b>킹만 지키는 약한 칸</b>이에요. 상대 퀸이 h5에 오면 g폰을 한 칸 올려 퀸의 길을 막아요!', 'f7 is a <b>weak square only the king guards</b>. If the enemy queen comes to h5, push your g-pawn one square to block its road!'),
+      at: {
+        0: { t: T('처음 체스를 배우는 친구들이 가장 많이 당하는 덫이에요. 흰색 편에서 봐요!', 'The trap that new players fall into most often. Let us watch from White\'s side!'), mood: 'happy' },
+        3: { t: T('흰 비숍이 c4로 나와서 <b>f7</b> 폰을 노려요. f7은 검은 킹만 지키는 약한 칸이에요.', 'The white bishop comes to c4 and aims at the <b>f7</b> pawn. Only the black king guards f7, so it is a weak square.'), arr: [['c4', 'f7', '']], hl: ['f7'], mood: 'think' },
+        4: { t: T('이제 퀸도 f7을 노리게 해 볼까요? 퀸을 꺼내 봐요!', 'Now can the queen aim at f7 too? Bring out the queen!'), guess: true, hint: T('d1 퀸이 대각선을 따라 h5까지 가요.', 'The d1 queen slides along the diagonal to h5.'), mood: 'wink' },
+        5: { t: T('이제 f7을 ① 퀸과 ② 비숍이 함께 노려요. 검은색은 꼭 막아야 해요!', 'Now ① the queen and ② the bishop both aim at f7. Black must defend!'), arr: [['h5', 'f7', 'red', '1'], ['c4', 'f7', 'red', '2']] },
+        6: { t: T('검은색은 나이트로 퀸을 쫓아내려 했어요. 하지만 f7을 지키지 않았어요! 체크메이트를 찾아봐요.', 'Black tried to chase the queen with a knight, but did not guard f7! Find checkmate.'), guess: true, hint: T('h5 퀸으로 f7 폰을 잡아요. c4 비숍이 퀸을 지켜 줘요.', 'Take the f7 pawn with the h5 queen. The c4 bishop protects it.'), mood: 'wink' },
+        7: { t: T('<b>체크메이트!</b> 검은 킹이 퀸을 잡고 싶어도, c4 비숍이 지키고 있어서 잡을 수 없어요.', '<b>Checkmate!</b> The black king would like to take the queen, but the c4 bishop protects it.'), arr: [['c4', 'f7', '']], hl: ['e8'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'shilling', lv: 1, side: 'b', piece: 'bN', moves: 'e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+ Be2 Nf3#',
+      title: T('공짜 폰의 덫', 'The free-pawn trap'),
+      who: T('블랙번의 덫 · 1800년대 영국', 'Blackburne\'s trap · England, 1800s'),
+      blurb: T('검은색 편! 공짜로 보이는 폰을 조심해요', 'Play Black! Beware of a pawn that looks free'),
+      lesson: T('상대가 <b>공짜로 말을 내주면</b> 먼저 "왜?" 하고 생각해 봐요.', 'When someone gives you a piece <b>for free</b>, first ask yourself "why?"'),
+      at: {
+        0: { t: T('이번에도 <b>검은색 편</b>이에요. 검은색이 일부러 폰을 내주는 덫이에요. 흰색이 덥석 잡으면 어떻게 될까요?', 'You are <b>Black</b> again. Black leaves a pawn on purpose. What happens if White grabs it?'), mood: 'happy' },
+        6: { t: T('검은 나이트가 d4로 뛰었어요. 그래서 e5 폰을 지키는 말이 없어졌어요. 흰 나이트가 잡을 수 있어요!', 'The black knight jumped to d4, so nothing guards the e5 pawn anymore. The white knight can take it!'), arr: [['f3', 'e5', 'red']], hl: ['e5'], mood: 'think' },
+        7: { t: T('흰 나이트가 e5 폰을 덥석 잡았어요. 이제 덫이 움직일 차례! 퀸을 꺼내 볼까요?', 'The white knight grabbed the e5 pawn. Now the trap springs! Bring out the queen?'), guess: true, hint: T('d8 퀸이 대각선을 따라 g5까지 가요.', 'The d8 queen slides along the diagonal to g5.'), mood: 'wink' },
+        8: { t: T('검은 퀸이 ① e5 나이트와 ② g2 폰을 한꺼번에 노려요!', 'The black queen attacks ① the e5 knight and ② the g2 pawn at the same time!'), arr: [['g5', 'e5', 'red', '1'], ['g5', 'g2', 'red', '2']], q: T('흰색이 하나를 지키면 어떻게 될까요?', 'What if White saves one of them?'), a: T('하나를 지키면 다른 하나를 잡을 수 있어요. 한 번에 <b>두 개를 노리면</b> 상대가 둘 다 지키기 어려워요.', 'Then Black takes the other one. When you <b>attack two things at once</b>, it is hard to save both.') },
+        9: { t: T('흰 나이트는 f7 폰까지 잡고 h8 룩을 노려요. 하지만 검은색 공격이 더 빨라요! 폰을 잡아 볼까요?', 'The white knight took f7 too and aims at the h8 rook. But Black\'s attack is faster! Take a pawn?'), guess: true, hint: T('g5 퀸으로 g2 폰을 잡아요.', 'Take the g2 pawn with the g5 queen.'), mood: 'wink' },
+        10: { t: T('퀸이 g2 폰을 잡고 h1 룩을 노려요!', 'The queen took g2 and now attacks the h1 rook!'), arr: [['g2', 'h1', 'red']] },
+        11: { t: T('흰 룩은 f1로 피했어요. 이번에는 검은 퀸이 e4 폰을 잡으며 <b>체크</b>를 해요.', 'The white rook ran to f1. Now the black queen takes the e4 pawn with <b>check</b>.'), arr: [['g2', 'e4', 'red']] },
+        13: { t: T('흰색은 비숍을 e2로 내려 체크를 막았어요. 그런데 흰 킹 주변 칸이 흰 말로 꽉 찼어요. 나이트로 체크메이트를 찾아봐요!', 'White blocked the check with the bishop on e2. But now the squares around the white king are full of White\'s own pieces. Find checkmate with a knight!'), guess: true, hint: T('d4 나이트가 f3으로 뛰어요.', 'The d4 knight jumps to f3.'), mood: 'wink' },
+        14: { t: T('<b>체크메이트!</b> 흰 킹 옆 칸을 흰 말들이 막고 있어서 킹이 꼼짝 못 해요. 폰 하나 얻으려다 대국을 졌어요.', '<b>Checkmate!</b> White\'s own pieces block every square next to the king. White lost the game for one pawn.'), arr: [['f3', 'e1', 'red']], hl: ['e1'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'englund', lv: 1, side: 'b', piece: 'bB', moves: 'd4 e5 dxe5 Nc6 Nf3 Qe7 Bf4 Qb4+ Bd2 Qxb2 Bc3 Bb4 Qd2 Bxc3 Qxc3 Qc1#',
+      title: T('엥글룬트의 덫', 'The Englund trap'),
+      who: T('엥글룬트 갬빗 · 1900년대 스웨덴', 'Englund Gambit · Sweden, 1900s'),
+      blurb: T('검은색 편! 퀸이 흰 진영을 휩쓸어요', 'Play Black! The queen sweeps into White\'s camp'),
+      lesson: T('퀸과 비숍이 다 떠나면 <b>뒷줄(1번 줄)</b>이 텅 비어서 위험해요.', 'When the queen and bishop both leave, the <b>back row</b> is empty and dangerous.'),
+      at: {
+        0: { t: T('이번에도 <b>검은색 편</b>! 검은색이 폰 하나를 먼저 내주고 시작하는 덫이에요.', 'You are <b>Black</b> again! In this trap Black gives away a pawn first.'), mood: 'happy' },
+        3: { t: T('흰 폰이 e5 폰을 잡았어요. 이렇게 일부러 폰을 내주는 것을 <b>갬빗</b>이라고 해요.', 'White\'s pawn took on e5. Giving away a pawn on purpose like this is called a <b>gambit</b>.'), hl: ['e5'] },
+        6: { t: T('검은 퀸이 e7로 나와 e5 폰을 노려요.', 'The black queen comes to e7 and aims at the e5 pawn.'), arr: [['e7', 'e5', 'red']] },
+        7: { t: T('흰 비숍이 f4로 나와 e5 폰을 지켜요. 그런데 비숍이 떠나서 b2 폰을 지키는 말이 없어요! 퀸으로 체크해 볼까요?', 'The white bishop comes to f4 to guard e5. But now nothing guards the b2 pawn! Can you give check with the queen?'), guess: true, hint: T('e7 퀸이 대각선을 따라 b4까지 가요.', 'The e7 queen slides along the diagonal to b4.'), mood: 'wink' },
+        8: { t: T('체크! 퀸은 ① 킹과 ② b2 폰을 한꺼번에 노려요.', 'Check! The queen attacks ① the king and ② the b2 pawn at the same time.'), arr: [['b4', 'e1', 'red', '1'], ['b4', 'b2', 'red', '2']] },
+        9: { t: T('흰 비숍이 d2로 돌아와 체크를 막았어요. 이제 폰을 잡아요!', 'The white bishop came back to d2 to block the check. Now grab the pawn!'), guess: true, hint: T('b4 퀸으로 b2 폰을 잡아요.', 'Take the b2 pawn with the b4 queen.'), mood: 'wink' },
+        10: { t: T('퀸이 b2 폰을 잡고 a1 룩을 노려요!', 'The queen took b2 and now attacks the a1 rook!'), arr: [['b2', 'a1', 'red']] },
+        11: { t: T('흰 비숍이 c3으로 와서 검은 퀸을 쫓아요.', 'The white bishop comes to c3 to chase the black queen.'), arr: [['c3', 'b2', 'red']] },
+        12: { t: T('검은 비숍도 나왔어요. 이제 ① 비숍과 ② 퀸이 함께 c3 비숍을 노려요.', 'The black bishop comes out too. Now ① the bishop and ② the queen both attack the c3 bishop.'), arr: [['b4', 'c3', 'red', '1'], ['b2', 'c3', 'red', '2']] },
+        15: { t: T('흰 퀸이 c3에서 비숍을 잡았어요. 그런데 흰색의 <b>1번 줄</b>을 보세요. 퀸이 떠나서 텅 비었어요! 체크메이트를 찾아봐요.', 'The white queen took back on c3. But look at White\'s <b>back row</b>: the queen left and it is empty! Find checkmate.'), guess: true, hint: T('b2 퀸이 대각선으로 c1까지 가요.', 'The b2 queen moves diagonally to c1.'), hl: ['c1', 'd1'], mood: 'wink' },
+        16: { t: T('<b>체크메이트!</b> 흰 킹은 d2로도 갈 수 없고, 막을 말도 없어요.', '<b>Checkmate!</b> The white king cannot even go to d2, and nothing can block.'), arr: [['c1', 'e1', 'red']], hl: ['e1'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'legal', lv: 2, year: 1750, piece: 'wN', moves: 'e4 e5 Bc4 d6 Nf3 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#',
       title: T('레갈의 덫', 'Légal\'s trap'),
       who: T('레갈 vs 생브리 · 1750년 파리', 'Légal vs Saint-Brie · Paris 1750'),
       blurb: T('퀸을 내주고 7수 만에 체크메이트!', 'Give up the queen, checkmate in 7 moves!'),
@@ -5181,7 +5252,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'greco', year: 1620, piece: 'wB', moves: 'e4 b6 d4 Bb7 Bd3 f5 exf5 Bxg2 Qh5+ g6 fxg6 Nf6 gxh7+ Nxh5 Bg6#',
+      id: 'greco', lv: 2, year: 1620, piece: 'wB', moves: 'e4 b6 d4 Bb7 Bd3 f5 exf5 Bxg2 Qh5+ g6 fxg6 Nf6 gxh7+ Nxh5 Bg6#',
       title: T('그레코의 비숍 메이트', 'Greco\'s bishop mate'),
       who: T('그레코 · 1620년 이탈리아', 'Greco · Italy 1620'),
       blurb: T('킹 앞 폰을 함부로 움직이면 생기는 일', 'What happens when the king\'s pawn wanders off'),
@@ -5199,7 +5270,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'reti', year: 1910, piece: 'wQ', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Qd3 e5 dxe5 Qa5+ Bd2 Qxe5 O-O-O Nxe4 Qd8+ Kxd8 Bg5+ Kc7 Bd8#',
+      id: 'reti', lv: 2, year: 1910, piece: 'wQ', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nf6 Qd3 e5 dxe5 Qa5+ Bd2 Qxe5 O-O-O Nxe4 Qd8+ Kxd8 Bg5+ Kc7 Bd8#',
       title: T('레티의 퀸 선물', 'Réti\'s queen gift'),
       who: T('레티 vs 타르타코워 · 1910년 빈', 'Réti vs Tartakower · Vienna 1910'),
       blurb: T('퀸을 내주고 양방 체크로 11수 만에 끝!', 'A queen sacrifice and a double check: over in 11 moves!'),
@@ -5218,7 +5289,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'opera', year: 1858, piece: 'wR', moves: 'e4 e5 Nf3 d6 d4 Bg4 dxe5 Bxf3 Qxf3 dxe5 Bc4 Nf6 Qb3 Qe7 Nc3 c6 Bg5 b5 Nxb5 cxb5 Bxb5+ Nbd7 O-O-O Rd8 Rxd7 Rxd7 Rd1 Qe6 Bxd7+ Nxd7 Qb8+ Nxb8 Rd8#',
+      id: 'opera', lv: 3, year: 1858, piece: 'wR', moves: 'e4 e5 Nf3 d6 d4 Bg4 dxe5 Bxf3 Qxf3 dxe5 Bc4 Nf6 Qb3 Qe7 Nc3 c6 Bg5 b5 Nxb5 cxb5 Bxb5+ Nbd7 O-O-O Rd8 Rxd7 Rxd7 Rd1 Qe6 Bxd7+ Nxd7 Qb8+ Nxb8 Rd8#',
       title: T('모피의 오페라 대국', 'Morphy\'s Opera Game'),
       who: T('모피 vs 두 귀족 · 1858년 파리', 'Morphy vs two noblemen · Paris 1858'),
       blurb: T('말을 빨리 꺼내면 어떻게 되는지 보여 주는 교과서', 'The textbook game on bringing your pieces out'),
@@ -5242,7 +5313,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'lasker', year: 1912, piece: 'wK', moves: 'd4 e6 Nf3 f5 Nc3 Nf6 Bg5 Be7 Bxf6 Bxf6 e4 fxe4 Nxe4 b6 Ne5 O-O Bd3 Bb7 Qh5 Qe7 Qxh7+ Kxh7 Nxf6+ Kh6 Neg4+ Kg5 h4+ Kf4 g3+ Kf3 Be2+ Kg2 Rh2+ Kg1 Kd2#',
+      id: 'lasker', lv: 3, year: 1912, piece: 'wK', moves: 'd4 e6 Nf3 f5 Nc3 Nf6 Bg5 Be7 Bxf6 Bxf6 e4 fxe4 Nxe4 b6 Ne5 O-O Bd3 Bb7 Qh5 Qe7 Qxh7+ Kxh7 Nxf6+ Kh6 Neg4+ Kg5 h4+ Kf4 g3+ Kf3 Be2+ Kg2 Rh2+ Kg1 Kd2#',
       title: T('킹 사냥', 'The king hunt'),
       who: T('에드워드 라스커 vs 토마스 · 1912년 런던', 'Edward Lasker vs Thomas · London 1912'),
       blurb: T('검은 킹이 h7에서 g1까지 끌려가요!', 'The black king is chased from h7 all the way to g1!'),
@@ -5264,7 +5335,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'immortal', year: 1851, piece: 'wB', moves: 'e4 e5 f4 exf4 Bc4 Qh4+ Kf1 b5 Bxb5 Nf6 Nf3 Qh6 d3 Nh5 Nh4 Qg5 Nf5 c6 g4 Nf6 Rg1 cxb5 h4 Qg6 h5 Qg5 Qf3 Ng8 Bxf4 Qf6 Nc3 Bc5 Nd5 Qxb2 Bd6 Bxg1 e5 Qxa1+ Ke2 Na6 Nxg7+ Kd8 Qf6+ Nxf6 Be7#',
+      id: 'immortal', lv: 3, year: 1851, piece: 'wB', moves: 'e4 e5 f4 exf4 Bc4 Qh4+ Kf1 b5 Bxb5 Nf6 Nf3 Qh6 d3 Nh5 Nh4 Qg5 Nf5 c6 g4 Nf6 Rg1 cxb5 h4 Qg6 h5 Qg5 Qf3 Ng8 Bxf4 Qf6 Nc3 Bc5 Nd5 Qxb2 Bd6 Bxg1 e5 Qxa1+ Ke2 Na6 Nxg7+ Kd8 Qf6+ Nxf6 Be7#',
       title: T('불멸의 대국', 'The Immortal Game'),
       who: T('안데르센 vs 키제리츠키 · 1851년 런던', 'Anderssen vs Kieseritzky · London 1851'),
       blurb: T('퀸과 룩 두 개를 내주고 작은 말 셋으로 메이트!', 'Gives up the queen and both rooks, then mates with three small pieces!'),
@@ -5289,7 +5360,7 @@ const Classics = (() => {
       },
     },
     {
-      id: 'century', year: 1956, piece: 'bN', side: 'b', moves: 'Nf3 Nf6 c4 g6 Nc3 Bg7 d4 O-O Bf4 d5 Qb3 dxc4 Qxc4 c6 e4 Nbd7 Rd1 Nb6 Qc5 Bg4 Bg5 Na4 Qa3 Nxc3 bxc3 Nxe4 Bxe7 Qb6 Bc4 Nxc3 Bc5 Rfe8+ Kf1 Be6 Bxb6 Bxc4+ Kg1 Ne2+ Kf1 Nxd4+ Kg1 Ne2+ Kf1 Nc3+ Kg1 axb6 Qb4 Ra4 Qxb6 Nxd1 h3 Rxa2 Kh2 Nxf2 Re1 Rxe1 Qd8+ Bf8 Nxe1 Bd5 Nf3 Ne4 Qb8 b5 h4 h5 Ne5 Kg7 Kg1 Bc5+ Kf1 Ng3+ Ke1 Bb4+ Kd1 Bb3+ Kc1 Ne2+ Kb1 Nc3+ Kc1 Rc2#',
+      id: 'century', lv: 3, year: 1956, piece: 'bN', side: 'b', moves: 'Nf3 Nf6 c4 g6 Nc3 Bg7 d4 O-O Bf4 d5 Qb3 dxc4 Qxc4 c6 e4 Nbd7 Rd1 Nb6 Qc5 Bg4 Bg5 Na4 Qa3 Nxc3 bxc3 Nxe4 Bxe7 Qb6 Bc4 Nxc3 Bc5 Rfe8+ Kf1 Be6 Bxb6 Bxc4+ Kg1 Ne2+ Kf1 Nxd4+ Kg1 Ne2+ Kf1 Nc3+ Kg1 axb6 Qb4 Ra4 Qxb6 Nxd1 h3 Rxa2 Kh2 Nxf2 Re1 Rxe1 Qd8+ Bf8 Nxe1 Bd5 Nf3 Ne4 Qb8 b5 h4 h5 Ne5 Kg7 Kg1 Bc5+ Kf1 Ng3+ Ke1 Bb4+ Kd1 Bb3+ Kc1 Ne2+ Kb1 Nc3+ Kc1 Rc2#',
       title: T('세기의 대국', 'The Game of the Century'),
       who: T('도널드 번 vs 피셔 · 1956년 뉴욕', 'Donald Byrne vs Fischer · New York 1956'),
       blurb: T('13살 피셔가 퀸을 내주고 이긴 대국 (검은색 편)', '13‑year‑old Fischer gives up his queen and wins (Black\'s side)'),
@@ -5332,7 +5403,9 @@ const Classics = (() => {
   }
   const get = (id) => G.find((c) => c.id === id);
   const done = (id) => { try { return !!RW.st().e['c:' + id]; } catch (e) { return false; } };
-  return { G, line, get, done };
+  const stars = (id) => { try { return Math.min(3, +RW.st().e['c:' + id] || 0); } catch (e) { return 0; } }; // best rating = stars earned (1 watched, 2 all guesses found, 3 all on the first try)
+  const LV = { 1: T('쉬움', 'Easy'), 2: T('보통', 'Medium'), 3: T('어려움', 'Hard') };
+  return { G, line, get, done, stars, LV };
 })();
 
 /* ---------------- Famous games with Leo's commentary (v23) ---------------- */
@@ -5444,17 +5517,21 @@ Views.classic = (root, params) => {
     return '';
   }
   function finish() {
-    const first = !RW.st().e['c:' + c.id];
+    const had = Classics.stars(c.id);
     const got = Object.values(C.res).filter((v) => v === 1).length, got2 = Object.values(C.res).filter((v) => v === 2).length, skip = guessN - got - got2;
     const n = note(N);
+    const rate = !guessN || got === guessN ? 3 : got + got2 === guessN ? 2 : 1, best = Math.max(had, rate);
+    const tip = rate < 3 ? (rate === 2 ? T('맞히기를 <b>모두 한 번에</b> 맞히면 별 3개예요!', 'Get every guess <b>on the first try</b> for 3 stars!') : T('맞히기를 <b>모두</b> 찾으면 별 2개, 모두 한 번에 맞히면 별 3개예요!', 'Find <b>every</b> guess for 2 stars, all on the first try for 3!')) : null;
     say(`${praise(N)}${n ? rich(n.t) : ''}<div class="ask">${ic('book', 16)} <b>${rich(T('오늘의 교훈', 'Today\'s lesson'))}</b></div><div class="ans">${rich(c.lesson)}</div>` +
       (guessN ? `<div class="more">${rich(T(`다음 수 맞히기: <b>${got + got2} / ${guessN}</b> 맞혔어요 (한 번에 ${got}개)`, `Guess the move: <b>${got + got2} / ${guessN}</b> found (${got} on the first try)`))}</div>` : '') +
-      (guessN && skip ? `<div class="more">${rich(T('건너뛴 문제는 <b>처음부터</b>를 눌러 다시 맞혀 볼 수 있어요.', 'Tap <b>Again</b> to try the skipped guesses.'))}</div>` : ''), 'cheer');
+      `<div class="more crate">${stars(rate)}${best > rate ? ` <small>${unit(T(`최고 기록 별 ${best}개`, `Best: ${best} stars`))}</small>` : ''}</div>` +
+      (guessN && skip ? `<div class="more">${rich(T('건너뛴 문제는 <b>처음부터</b>를 눌러 다시 맞혀 볼 수 있어요.', 'Tap <b>Again</b> to try the skipped guesses.'))}</div>` : '') +
+      (tip && best < 3 ? `<div class="more">${rich(tip)}</div>` : ''), 'cheer');
     const nx = Classics.G[(Classics.G.indexOf(c) + 1) % Classics.G.length];
     acts.innerHTML = B('again', lb('refresh', T('처음부터', 'Again')), 'ghost') + B('nextgame', lb('next', T('다음 명국', 'Next')), 'mint');
     if (!C.fin) {
       C.fin = true; sfx('win'); touchStreak();
-      if (first) { RW.earn('classic', { id: c.id }); RW.notify(); }
+      if (rate > had) { RW.earn('classic', { id: c.id, stars: rate }); RW.notify(); }
     }
     C.nx = nx.id;
   }
@@ -5520,7 +5597,8 @@ Views.learn = (root) => {
   const left = { basic: Content.basic.length - nB, pro: Content.pro.length - nP, cl: Classics.G.length - nC };
   const L = { tab: left[S.learnTab] > 0 ? S.learnTab : home }; // the last tab the child picked, unless everything there is finished
   const card = (c, locked) => `<button class="chap ${chapDone(c.id) ? 'done' : ''} ${locked ? 'locked' : ''}" data-ch="${c.id}" data-locked="${locked ? 1 : 0}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${c.piece}"/></svg></span><span class="ct"><b>${tx(c.title)}</b><span>${tx(c.blurb)}</span>${locked ? ic('lock', 16) : stars((S.progress[c.id] || {}).stars || 0)}${next && next.id === c.id ? `<span class="pill warn start">${tx(T('여기부터!', 'Start here!'), true)}</span>` : ''}</span></button>`;
-  const clCard = (g) => `<button class="chap ${Classics.done(g.id) ? 'done' : ''}" data-cl="${g.id}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${g.piece}"/></svg></span><span class="ct"><b>${tx(g.title)}</b><span>${tx(g.blurb)}</span><span class="cwho">${unit(g.who)}</span>${Classics.done(g.id) ? `<span class="cdone">${ic('check', 16)} ${unit(T('다 봤어요', 'Watched'))}</span>` : ''}</span></button>`;
+  const lvPill = (g) => (g.lv ? `<span class="clv l${g.lv}">${unit(Classics.LV[g.lv])}</span>` : '');
+  const clCard = (g) => `<button class="chap ${Classics.done(g.id) ? 'done' : ''}" data-cl="${g.id}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${g.piece}"/></svg></span><span class="ct"><b>${tx(g.title)}</b><span>${tx(g.blurb)}</span><span class="cwho">${lvPill(g)}${unit(g.who)}</span>${Classics.done(g.id) ? stars(Classics.stars(g.id)) : ''}</span></button>`;
   // a finished chapter/game: small, two per row, behind a fold
   const mini = (id, piece, title, extra, attr) => `<button class="chap mini done" ${attr}="${id}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${piece}"/></svg></span><span class="ct"><b>${unit(title)}</b>${extra}</span></button>`;
   const fold = (n, inner, label) => (n ? `<details class="donefold"><summary>${ic('check', 18)} <span>${unit(label)}</span><span class="fn">${n}</span></summary><div class="minis">${inner}</div></details>` : '');
@@ -5553,10 +5631,10 @@ Views.learn = (root) => {
       h += `<div class="chapters">${todo.map((c) => card(c, locked)).join('')}</div>`;
       h += fold(dn.length, dn.map((c) => mini(c.id, c.piece, c.title, stars((S.progress[c.id] || {}).stars || 0), 'data-ch')).join(''), T('다 배운 단원', 'Finished'));
     } else {
-      h += `<p class="ltip">${rich(T('옛날 체스 고수들의 유명한 대국을 레오가 TV처럼 해설해요. 중간중간 <b>다음 수 맞히기</b>도 있어요!', 'Leo explains famous games from chess history, like on TV. You can <b>guess the next move</b> along the way!'))}</p>`;
+      h += `<p class="ltip">${rich(T('짧은 <b>덫</b>부터 옛날 고수들의 명국까지, 레오가 TV처럼 해설해요. <b>다음 수 맞히기</b>를 한 번에 다 맞히면 별 3개!', 'From short <b>traps</b> to famous games, Leo explains them like on TV. Get every <b>guess</b> on the first try for 3 stars!'))}</p>`;
       const todo = Classics.G.filter((g) => !Classics.done(g.id)), dn = Classics.G.filter((g) => Classics.done(g.id));
       h += `<div class="chapters">${todo.map(clCard).join('')}</div>`;
-      h += fold(dn.length, dn.map((g) => mini(g.id, g.piece, g.title, `<span class="cdone">${ic('check', 14)} ${unit(T('다 봤어요', 'Watched'))}</span>`, 'data-cl')).join(''), T('다 본 명국', 'Watched'));
+      h += fold(dn.length, dn.map((g) => mini(g.id, g.piece, g.title, stars(Classics.stars(g.id)), 'data-cl')).join(''), T('다 본 명국', 'Watched'));
     }
     body.innerHTML = h;
     $$('.lt', root).forEach((b) => b.setAttribute('aria-pressed', b.dataset.tab === L.tab));
@@ -7047,7 +7125,7 @@ const RWD = (() => {
     practice: { ok: 1, perfect: 2, cap: 4 },   // extra practice puzzles: only puzzles never solved before earn stars, at most 4 per day
     game: { play: 1, win: 1, cap: 3, minPlies: 12 }, // per day cap: effort counts, not only winning
     review: { n: 1, cap: 1 },                  // analysing a finished game ("find my mistakes")
-    classic: { n: 2 },                         // watching a famous game to the end, once per game
+    classic: { max: 3 },                       // famous game / trap: 1 watched, 2 all guesses found, 3 all on the first try; a better replay earns the difference
     mission: { n: 2 },                         // finish all three of today's missions
     week: { days: 4, n: 3 },                   // practise on 4 different days in a week
     lvWin: 2,                                  // first win against each computer level
@@ -7258,7 +7336,8 @@ const RW = (() => {
       if (!(r.e['r' + t])) award('r' + t, RULES.review.n, '복기로 실수를 찾았어요', 'Reviewed a game');
       mark('l');
     } else if (kind === 'classic') {
-      if (!r.e['c:' + o.id]) award('c:' + o.id, RULES.classic.n, '명국 해설을 끝까지 봤어요', 'Watched a famous game');
+      const k = 'c:' + o.id, was = +r.e[k] || 0, now = Math.min(RULES.classic.max, Math.max(1, +o.stars || 1));
+      if (now > was) award(k, now - was, was ? '명국 해설 별을 더 모았어요' : '명국 해설을 끝까지 봤어요', was ? 'More stars on a famous game' : 'Watched a famous game', true);
       mark('l');
     } else if (kind === 'gift') {
       award('g:' + o.id, o.n, '부모님이 주신 칭찬 별', 'A praise star from your parent');
