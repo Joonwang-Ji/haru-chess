@@ -2202,15 +2202,17 @@ class Board {
   }
   setArrows(list) {
     let s = '';
-    (list || []).forEach(([f, t, color]) => {
+    let badges = '';
+    (list || []).forEach(([f, t, color, label]) => {
       const [x1, y1] = this.center(f), [x2, y2] = this.center(t);
       const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
       const col = color === 'red' ? '#e8506a' : (color || '#f59e2e');
       const hx = x2 - ux * 0.12, hy = y2 - uy * 0.12, bx = x2 - ux * 0.42, by = y2 - uy * 0.42;
       const px = -uy * 0.24, py = ux * 0.24;
       s += `<g opacity=".92"><line x1="${x1 + ux * 0.22}" y1="${y1 + uy * 0.22}" x2="${bx}" y2="${by}" stroke="${col}" stroke-width=".17" stroke-linecap="round"/><polygon points="${hx},${hy} ${bx + px},${by + py} ${bx - px},${by - py}" fill="${col}" stroke="${col}" stroke-width=".05" stroke-linejoin="round"/></g>`;
+      if (label) { const d = Math.max(len * 0.5, len - 0.8), mx = x1 + ux * d, my = y1 + uy * d; badges += `<g><circle cx="${mx}" cy="${my}" r=".3" fill="#fff" stroke="${col}" stroke-width=".08"/><text x="${mx}" y="${my + 0.12}" text-anchor="middle" font-size=".34" font-weight="700" font-family="system-ui,sans-serif" fill="${col}">${label}</text></g>`; }
     });
-    this.arrowSvg.innerHTML = s;
+    this.arrowSvg.innerHTML = s + badges; // badges on top, so a crossing arrow never hides a number
   }
   animate(from, to) {
     const a = this.sqEls[from], b = this.sqEls[to];
@@ -4774,7 +4776,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v26 · notation off</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v27 · numbered arrows</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4807,7 +4809,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v26 · notation off</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v27 · numbered arrows</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5172,7 +5174,7 @@ const Classics = (() => {
         5: { t: T('흰색은 폰, 비숍, 나이트를 차례로 꺼냈어요. 시작할 때는 <b>말을 빨리 꺼내는 것</b>이 비결이에요.', 'White brought out a pawn, a bishop and a knight. At the start, <b>bring your pieces out quickly</b>.'), hl: ['e4', 'c4', 'f3'] },
         6: { t: T('검은 비숍이 f3 나이트를 노려요. 나이트가 비키면 그 뒤의 d1 퀸이 잡혀요. 이것을 <b>핀</b>이라고 해요.', 'The black bishop aims at the knight on f3. If the knight moves away, the queen on d1 behind it can be taken. This is called a <b>pin</b>.'), arr: [['g4', 'd1', 'red']], hl: ['f3'] },
         8: { t: T('이제 레갈 선생님의 깜짝 놀랄 수가 나와요. 핀에 걸린 나이트를 움직여 볼까요?', 'Now comes Légal\'s surprising move. Shall we move the pinned knight?'), guess: true, hint: T('f3 나이트가 잡을 수 있는 폰이 있어요.', 'The knight on f3 can capture a pawn.'), mood: 'wink' },
-        9: { t: T('나이트가 e5 폰을 잡았어요! 이제 검은 비숍은 흰 퀸을 잡을 수 있어요.', 'The knight took the e5 pawn! Now the black bishop can take White\'s queen.'), q: T('왜 퀸을 그냥 내줬을까요?', 'Why give away the queen?'), a: T('검은색이 퀸을 잡으면, c4 비숍과 두 나이트가 힘을 합쳐 <b>체크메이트</b>를 할 수 있어요. 퀸보다 킹이 더 중요하죠! (검은색은 퀸 대신 e5 나이트를 잡았어야 했어요.)', 'If Black takes the queen, the c4 bishop and the two knights can work together for <b>checkmate</b>. The king matters more than the queen! (Black should have taken the e5 knight instead.)'), arr: [['c4', 'f7'], ['c3', 'd5']], mood: 'think' },
+        9: { t: T('나이트가 e5 폰을 잡았어요! 이제 검은 비숍은 흰 퀸을 잡을 수 있어요.', 'The knight took the e5 pawn! Now the black bishop can take White\'s queen.'), q: T('왜 퀸을 그냥 내줬을까요?', 'Why give away the queen?'), a: T('검은색이 퀸을 잡으면 ① c4 비숍이 f7을 잡으며 체크, ② c3 나이트가 d5로 와서 <b>체크메이트</b>예요. 퀸보다 킹이 더 중요하죠! (검은색은 퀸 대신 e5 나이트를 잡았어야 했어요.)', 'If Black takes the queen: ① the c4 bishop takes f7 with check, ② the c3 knight jumps to d5 for <b>checkmate</b>. The king matters more than the queen! (Black should have taken the e5 knight instead.)'), arr: [['g4', 'd1', 'red']], aArr: [['c4', 'f7', '', '1'], ['c3', 'd5', '', '2']], mood: 'think' },
         10: { t: T('검은색이 퀸을 잡았어요. 이제 흰색 차례예요. 체크로 시작해 봐요!', 'Black took the queen. Now it is White\'s turn. Start with a check!'), guess: true, hint: T('c4 비숍으로 킹 옆의 f7 폰을 잡아요.', 'Take the f7 pawn next to the king with the c4 bishop.') },
         12: { t: T('검은 킹은 e7로 피할 수밖에 없었어요. 마지막 한 수! 체크메이트를 찾아봐요.', 'The black king had to run to e7. One last move! Find the checkmate.'), guess: true, hint: T('c3 나이트를 d5로!', 'The c3 knight goes to d5!') },
         13: { t: T('<b>체크메이트!</b> 비숍 하나와 나이트 둘이 검은 킹이 갈 곳을 모두 막았어요. 퀸이 없어도 이겼어요.', '<b>Checkmate!</b> One bishop and two knights cover every square the king could go to. White won without a queen.'), hl: ['e7'], mood: 'cheer' },
@@ -5189,7 +5191,7 @@ const Classics = (() => {
         6: { t: T('검은색이 f폰을 두 칸 내밀었어요. 그러자 검은 킹에서 h5까지 <b>대각선 길</b>이 열렸어요!', 'Black pushed the f-pawn two squares. Now a <b>diagonal road</b> opens from the black king to h5!'), hl: ['e8', 'f7', 'g6', 'h5'], mood: 'think' },
         8: { t: T('검은 비숍이 g2 폰을 잡고 h1 룩을 노려요. 하지만 흰색은 더 큰 것을 노려요. 열린 대각선을 이용해 봐요!', 'The black bishop took on g2 and attacks the rook on h1. But White has a bigger idea. Use the open diagonal!'), arr: [['g2', 'h1', 'red']], guess: true, hint: T('퀸으로 h5에서 체크!', 'Check with the queen from h5!') },
         10: { t: T('검은색은 g6 폰으로 체크를 막았어요.', 'Black blocked the check with the g6 pawn.') },
-        11: { t: T('흰 폰이 g6를 잡았어요.', 'White\'s pawn took on g6.'), q: T('이 폰은 다음에 무엇을 노릴까요?', 'What does this pawn want to do next?'), a: T('h7을 잡으면 폰이 비키면서 h5 퀸의 길이 다시 열려요. 그러면 퀸이 킹을 체크해요. 이렇게 비키면서 하는 체크를 <b>발견 체크</b>라고 해요.', 'If it takes on h7, it steps out of the way and the queen on h5 sees the king again. That is a check made by moving away, called a <b>discovered check</b>.'), arr: [['g6', 'h7']], mood: 'think' },
+        11: { t: T('흰 폰이 g6를 잡았어요.', 'White\'s pawn took on g6.'), q: T('이 폰은 다음에 무엇을 노릴까요?', 'What does this pawn want to do next?'), a: T('① 폰이 h7을 잡으며 비키면, ② h5 퀸의 길이 열려서 퀸이 킹을 체크해요. 이렇게 비키면서 하는 체크를 <b>발견 체크</b>라고 해요.', '① If the pawn takes on h7, it steps out of the way, ② and the queen on h5 checks the king. A check made by moving away is called a <b>discovered check</b>.'), hl: ['g6'], aArr: [['g6', 'h7', '', '1'], ['h5', 'e8', 'red', '2']], mood: 'think' },
         12: { t: T('검은 나이트가 f6로 나와 흰 퀸을 공격해요. 퀸이 위험해요! 그런데 흰색은 퀸을 지키지 않아요.', 'The black knight came to f6 and attacks White\'s queen. The queen is in danger! But White does not save it.'), arr: [['f6', 'h5', 'red']], guess: true, hint: T('g6 폰으로 h7을 잡아요. 비키면서 체크!', 'Take on h7 with the g6 pawn. A check by moving away!') },
         13: { t: T('<b>발견 체크!</b> 폰이 비키자 퀸이 킹을 체크해요. 검은색은 체크를 피하려고 퀸을 잡아요.', '<b>Discovered check!</b> The pawn moved away and the queen gives check. Black takes the queen to stop it.'), arr: [['h5', 'e8', 'red']] },
         14: { t: T('검은색이 흰 퀸을 잡았어요. 그런데 흰색에게는 비숍이 있어요!', 'Black took White\'s queen. But White still has a bishop!'), guess: true, hint: T('d3 비숍을 g6로!', 'The d3 bishop goes to g6!') },
@@ -5205,12 +5207,12 @@ const Classics = (() => {
       at: {
         0: { t: T('1910년 오스트리아 빈에서 리하르트 <b>레티</b>(흰색)가 둔 대국이에요. 11수 만에 끝나요!', 'Vienna, 1910. Richard <b>Réti</b> plays White. It is over in just 11 moves!'), mood: 'happy' },
         9: { t: T('흰 퀸이 d3에 나와 e4 나이트를 지켜요. 퀸이 <b>d줄</b>에 있다는 것을 기억해 두세요!', 'White\'s queen comes to d3 to protect the e4 knight. Remember: the queen is on the <b>d-file</b>!'), arr: [['d3', 'e4']], hl: ['d3'] },
-        12: { t: T('검은 퀸이 체크! 그러면서 e5 폰도 노려요. 체크하면서 다른 것도 노리는 수예요.', 'Black\'s queen gives check, and also aims at the e5 pawn. A check that attacks something else too.'), arr: [['a5', 'e1', 'red'], ['a5', 'e5']] },
-        15: { t: T('흰색은 e4 나이트를 지키지 않고 퀸 쪽으로 캐슬링했어요.', 'White did not protect the e4 knight. Instead White castled to the queen side.'), q: T('왜 나이트를 지키지 않았을까요?', 'Why not protect the knight?'), a: T('캐슬링으로 룩이 <b>d1</b>에 왔어요. 룩과 퀸이 같은 d줄에서 검은 킹을 겨냥해요. 나이트는 미끼였어요!', 'Castling brought the rook to <b>d1</b>. The rook and queen now line up on the d-file toward the black king. The knight was bait!'), arr: [['d1', 'd8']], mood: 'think' },
+        12: { t: T('검은 퀸이 ① 체크! 그러면서 ② e5 폰도 노려요. 체크하면서 다른 것도 노리는 수예요.', 'Black\'s queen ① gives check, ② and also aims at the e5 pawn. A check that attacks something else too.'), arr: [['a5', 'e1', 'red', '1'], ['a5', 'e5', 'red', '2']] },
+        15: { t: T('흰색은 e4 나이트를 지키지 않고 퀸 쪽으로 캐슬링했어요.', 'White did not protect the e4 knight. Instead White castled to the queen side.'), q: T('왜 나이트를 지키지 않았을까요?', 'Why not protect the knight?'), a: T('캐슬링으로 룩이 <b>d1</b>에 왔어요. 룩과 퀸이 같은 d줄에서 검은 킹을 겨냥해요. 나이트는 미끼였어요!', 'Castling brought the rook to <b>d1</b>. The rook and queen now line up on the d-file toward the black king. The knight was bait!'), hl: ['e4'], aArr: [['d1', 'd8']], aHl: ['d1', 'd3'], mood: 'think' },
         16: { t: T('검은 나이트가 e4 나이트를 잡았어요. 검은색이 좋아 보이죠? 그런데… 퀸을 아주 대담한 곳에 둬 봐요!', 'Black took the knight on e4. Black looks fine, right? But... put the queen somewhere very bold!'), guess: true, hint: T('퀸을 검은 킹 바로 옆 d8로!', 'Queen to d8, right next to the black king!'), mood: 'wink' },
-        17: { t: T('퀸이 d8에서 체크! 검은 킹이 퀸을 잡을 수 있어요.', 'The queen checks from d8! The black king can take it.'), q: T('왜 퀸을 그냥 줬을까요?', 'Why give the queen away?'), a: T('킹이 퀸을 잡으면 <b>d줄</b>로 나오게 돼요. 그 줄에는 d1 룩이 있죠. d2 비숍만 비키면 룩이 체크하게 돼요!', 'Taking the queen brings the king onto the <b>d-file</b>, where the d1 rook waits. If the d2 bishop steps aside, the rook gives check!'), arr: [['d1', 'd8', 'red']], mood: 'think' },
+        17: { t: T('퀸이 d8에서 체크! 검은 킹이 퀸을 잡을 수 있어요.', 'The queen checks from d8! The black king can take it.'), q: T('왜 퀸을 그냥 줬을까요?', 'Why give the queen away?'), a: T('킹이 퀸을 잡으면 <b>d줄</b>로 나오게 돼요. 그 줄에는 d1 룩이 있죠. d2 비숍만 비키면 룩이 체크하게 돼요!', 'Taking the queen brings the king onto the <b>d-file</b>, where the d1 rook waits. If the d2 bishop steps aside, the rook gives check!'), arr: [['d8', 'e8', 'red']], aArr: [['d1', 'd8', 'red']], aHl: ['d2'], mood: 'think' },
         18: { t: T('킹이 퀸을 잡았어요. 이제 비숍이 비키면서 체크해 봐요!', 'The king took the queen. Now move the bishop away with check!'), guess: true, hint: T('d2 비숍을 g5로!', 'The d2 bishop goes to g5!') },
-        19: { t: T('<b>양방 체크!</b> 룩과 비숍이 동시에 체크해요. 두 곳에서 오는 체크는 막을 수도 잡을 수도 없어서 킹이 피하는 수밖에 없어요.', '<b>Double check!</b> The rook and the bishop check at the same time. You cannot block or capture two checks, so the king must run.'), arr: [['d1', 'd8', 'red'], ['g5', 'd8', 'red']] },
+        19: { t: T('<b>양방 체크!</b> ① 룩과 ② 비숍이 동시에 체크해요. 두 곳에서 오는 체크는 막을 수도 잡을 수도 없어서 킹이 피하는 수밖에 없어요.', '<b>Double check!</b> ① The rook and ② the bishop check at the same time. You cannot block or capture two checks, so the king must run.'), arr: [['d1', 'd8', 'red', '1'], ['g5', 'd8', 'red', '2']] },
         20: { t: T('킹이 c7로 피했어요. 끝낼 수 있어요!', 'The king ran to c7. You can finish it!'), guess: true, hint: T('g5 비숍을 d8로!', 'The g5 bishop goes to d8!') },
         21: { t: T('<b>체크메이트!</b> 비숍이 체크하고, 룩이 d줄을 막아요. 검은 킹은 자기 말들에 둘러싸여 갈 곳이 없어요.', '<b>Checkmate!</b> The bishop gives check and the rook guards the d-file. The black king is boxed in by its own pieces.'), arr: [['d8', 'c7', 'red']], mood: 'cheer' },
       },
@@ -5224,7 +5226,7 @@ const Classics = (() => {
       at: {
         0: { t: T('1858년 파리의 <b>오페라 극장</b>! 폴 모피(흰색)는 공연을 보면서, 두 귀족이 힘을 합친 검은색과 대국했어요. 체스 선생님들이 가장 많이 보여 주는 대국이에요.', 'Paris, 1858, at the <b>opera house</b>! Paul Morphy (White) played during the show against two noblemen playing Black together. Chess teachers show this game more than any other.'), mood: 'happy' },
         8: { t: T('검은 비숍이 f3 나이트와 바꿨어요. 흰 퀸이 일찍 나왔지만, 대신 검은색은 비숍이 하나 줄었어요.', 'Black traded the bishop for the f3 knight. White\'s queen comes out early, and Black has one bishop fewer.') },
-        13: { t: T('흰 퀸이 b3로 왔어요.', 'White\'s queen goes to b3.'), q: T('퀸과 c4 비숍이 함께 노리는 칸은 어디일까요?', 'Which square do the queen and the c4 bishop attack together?'), a: T('<b>f7</b>이에요! 킹 옆의 약한 칸이죠. 게다가 퀸은 b7 폰도 노려요. 한 번에 두 곳을 노리는 수예요.', 'It is <b>f7</b>, the weak square next to the king! The queen also attacks b7. One move, two threats.'), arr: [['b3', 'f7', 'red'], ['c4', 'f7', 'red'], ['b3', 'b7']], mood: 'think' },
+        13: { t: T('흰 퀸이 b3로 왔어요.', 'White\'s queen goes to b3.'), q: T('퀸과 c4 비숍이 함께 노리는 칸은 어디일까요?', 'Which square do the queen and the c4 bishop attack together?'), a: T('① <b>f7</b>이에요! 킹 옆의 약한 칸이죠. ② 게다가 퀸은 b7 폰도 노려요. 한 번에 두 곳을 노리는 수예요.', '① It is <b>f7</b>, the weak square next to the king! ② The queen also attacks b7. One move, two threats.'), hl: ['b3', 'c4'], aArr: [['b3', 'f7', 'red', '1'], ['c4', 'f7', 'red', '1'], ['b3', 'b7', '', '2']], mood: 'think' },
         14: { t: T('검은 퀸이 e7에서 f7을 지켰어요. 그런데 퀸이 f8 비숍의 길을 막아 버렸어요. 검은 말들이 집에 갇혔어요.', 'Black\'s queen guards f7 from e7. But now it blocks the f8 bishop. Black\'s pieces are stuck at home.'), hl: ['f8', 'h8', 'b8'] },
         17: { t: T('비숍이 g5로! f6 나이트가 움직이면 뒤의 e7 퀸이 잡혀요. 이것이 <b>핀</b>이에요.', 'Bishop to g5! If the f6 knight moves, the queen on e7 behind it is lost. That is a <b>pin</b>.'), arr: [['g5', 'e7', 'red']], hl: ['f6'] },
         19: { t: T('모피는 나이트로 b5 폰을 잡았어요. 검은 폰이 나이트를 잡을 수 있어요.', 'Morphy took the b5 pawn with his knight. A black pawn can take it.'), q: T('왜 나이트를 내줬을까요?', 'Why give away a knight?'), a: T('나이트를 주고 <b>줄을 열어</b> 검은 킹을 빨리 공격하려고요. 검은 말들은 아직 집에 있어서 킹을 도우러 오지 못해요.', 'To <b>open lines</b> and attack the black king fast. Black\'s pieces are still at home and cannot come to help.'), mood: 'think' },
@@ -5234,9 +5236,9 @@ const Classics = (() => {
         26: { t: T('룩을 바꿨어요. 이제 남은 룩도 d줄로 데려와요.', 'Rooks traded. Now bring the other rook to the d-file.'), arr: [['h1', 'd1']] },
         28: { t: T('흰색은 b5 비숍으로 d7 룩을 잡으며 체크할 수 있어요.', 'White can take the d7 rook with the b5 bishop, with check.'), arr: [['b5', 'd7']] },
         30: { t: T('나이트가 비숍을 잡았어요. 이제 모피의 가장 유명한 수! 퀸을 내주며 체크해 봐요.', 'The knight took the bishop. Now Morphy\'s most famous move: check by giving up the queen!'), guess: true, hint: T('퀸을 b8로!', 'Queen to b8!'), mood: 'wink' },
-        31: { t: T('퀸으로 b8에서 체크! 나이트가 퀸을 잡을 수밖에 없어요.', 'Check from b8! The knight has to take the queen.'), q: T('왜 퀸을 줬을까요?', 'Why give the queen?'), a: T('d7 나이트가 퀸을 잡으러 가면 <b>d줄이 비어요</b>. 그러면 d1 룩이 끝까지 달려갈 수 있어요!', 'When the d7 knight takes the queen, the <b>d-file is empty</b>. Then the d1 rook can run all the way!'), arr: [['d1', 'd8', 'red']], mood: 'think' },
+        31: { t: T('퀸으로 b8에서 체크! 나이트가 퀸을 잡을 수밖에 없어요.', 'Check from b8! The knight has to take the queen.'), q: T('왜 퀸을 줬을까요?', 'Why give the queen?'), a: T('d7 나이트가 퀸을 잡으러 가면 <b>d줄이 비어요</b>. 그러면 d1 룩이 끝까지 달려갈 수 있어요!', 'When the d7 knight takes the queen, the <b>d-file is empty</b>. Then the d1 rook can run all the way!'), arr: [['b8', 'e8', 'red']], aArr: [['d1', 'd8', 'red']], aHl: ['d7'], mood: 'think' },
         32: { t: T('마지막 한 수예요!', 'The final move!'), guess: true, hint: T('d1 룩을 d8로!', 'The d1 rook goes to d8!') },
-        33: { t: T('<b>체크메이트!</b> 모피는 퀸을 내주고 비숍과 룩으로 이겼어요. 검은 h8 룩과 f8 비숍은 끝까지 <b>한 번도</b> 움직이지 못했어요.', '<b>Checkmate!</b> Morphy gave up his queen and won with a bishop and a rook. Black\'s h8 rook and f8 bishop <b>never moved</b> the whole game.'), hl: ['h8', 'f8'], arr: [['g5', 'd8'], ['d1', 'd8', 'red']], mood: 'cheer' },
+        33: { t: T('<b>체크메이트!</b> ① 룩이 d8에서 체크하고, ② g5 비숍이 그 룩을 지켜서 킹이 룩을 잡을 수 없어요. 모피는 퀸을 내주고 비숍과 룩으로 이겼어요. 검은 h8 룩과 f8 비숍은 끝까지 <b>한 번도</b> 움직이지 못했어요.', '<b>Checkmate!</b> ① The rook checks from d8, ② and the g5 bishop guards it, so the king cannot take the rook. Morphy gave up his queen and won with a bishop and a rook. Black\'s h8 rook and f8 bishop <b>never moved</b> the whole game.'), hl: ['h8', 'f8'], arr: [['d8', 'e8', 'red', '1'], ['g5', 'd8', '', '2']], mood: 'cheer' },
       },
     },
     {
@@ -5250,10 +5252,10 @@ const Classics = (() => {
         16: { t: T('검은색이 캐슬링해서 킹이 g8에 있어요. 킹 앞 h7 폰을 잘 보세요.', 'Black castled, so the king is on g8. Keep an eye on the h7 pawn in front of it.'), hl: ['g8', 'h7'] },
         19: { t: T('흰 퀸이 h5로! d3 비숍과 함께 h7을 노려요.', 'White\'s queen goes to h5! Together with the d3 bishop it aims at h7.'), arr: [['h5', 'h7', 'red'], ['d3', 'h7', 'red']] },
         20: { t: T('검은 퀸은 e7로 갔어요. 이제 깜짝 놀랄 수! h7 폰을 퀸으로 잡아 봐요. 킹이 퀸을 잡을 수 있지만 괜찮아요!', 'Black\'s queen went to e7. Now the shocker! Take h7 with the queen. The king can take it, and that is fine!'), guess: true, hint: T('h5 퀸으로 h7을!', 'Queen from h5 takes h7!'), mood: 'wink' },
-        21: { t: T('퀸을 내줬어요! 검은 킹이 퀸을 잡을 수밖에 없어요.', 'The queen is given away! The black king has to take it.'), q: T('무엇을 노리는 걸까요?', 'What is the idea?'), a: T('킹을 h7로 끌어냈어요. 이제 e4 나이트가 비키면서 체크하면 d3 비숍도 함께 체크해요. <b>양방 체크</b>가 준비됐어요!', 'The king is pulled out to h7. When the e4 knight moves away with check, the d3 bishop checks too. A <b>double check</b> is ready!'), arr: [['d3', 'h7', 'red']], mood: 'think' },
+        21: { t: T('퀸을 내줬어요! 검은 킹이 퀸을 잡을 수밖에 없어요.', 'The queen is given away! The black king has to take it.'), q: T('무엇을 노리는 걸까요?', 'What is the idea?'), a: T('킹을 h7로 끌어냈어요. 이제 ① e4 나이트가 비키면서 체크하면 ② d3 비숍도 함께 체크해요. <b>양방 체크</b>가 준비됐어요!', 'The king is pulled out to h7. ① When the e4 knight moves away with check, ② the d3 bishop checks too. A <b>double check</b> is ready!'), hl: ['h7'], aArr: [['e4', 'f6', '', '1'], ['d3', 'h7', 'red', '2']], mood: 'think' },
         23: { t: T('<b>양방 체크!</b> 나이트와 비숍이 함께 체크해요. 킹이 앞으로 나올 수밖에 없어요.', '<b>Double check!</b> The knight and bishop both give check. The king must step forward.'), arr: [['f6', 'h7', 'red'], ['d3', 'h7', 'red']] },
         24: { t: T('킹이 h6로 나왔어요. 이제 계속 <b>체크</b>로 쫓아가요!', 'The king came out to h6. Now keep chasing it with <b>checks</b>!'), guess: true, hint: T('e5 나이트를 g4로! 체크예요.', 'The e5 knight to g4. Check!') },
-        26: { t: T('킹이 g5로 더 나왔어요. 이번엔 폰도 사냥에 함께해요.', 'The king is out on g5. Now the pawns join the hunt.'), arr: [['h4', 'g5', 'red']] },
+        26: { t: T('킹이 g5로 더 나왔어요. 이번엔 폰도 사냥에 함께해요.', 'The king is out on g5. Now the pawns join the hunt.'), arr: [['h2', 'h4']] },
         28: { t: T('킹이 f4까지 왔어요. g폰도 체크!', 'The king reached f4. The g-pawn checks too!') },
         30: { t: T('킹이 f3에 와서 흰 진영 한가운데에 들어왔어요.', 'The king is on f3, right in the middle of White\'s camp.'), hl: ['f3'] },
         32: { t: T('킹이 g2까지! 룩으로 체크해요.', 'The king reached g2! Check with the rook.'), arr: [['h1', 'h2']] },
@@ -5274,9 +5276,9 @@ const Classics = (() => {
         12: { t: T('흰 나이트가 나오면서 검은 퀸을 공격해서, 퀸이 h6로 피했어요. <b>말을 꺼내면서 공격하면</b> 시간을 벌 수 있어요.', 'The white knight came out and attacked the queen, so the queen ran to h6. <b>Developing with an attack</b> wins time.'), hl: ['f3', 'h6'] },
         22: { t: T('검은색이 b5 비숍을 잡았어요. 흰색은 비숍 하나를 그냥 내준 셈이에요.', 'Black took the bishop on b5. White has simply given away a bishop.'), q: T('그런데 흰색은 왜 비숍을 지키지 않았을까요?', 'Why did White not save the bishop?'), a: T('흰색은 폰과 나이트로 검은 퀸을 계속 쫓으면서 <b>공격할 시간</b>을 벌고 있어요. 비숍 하나보다 시간이 더 소중하다고 본 거예요.', 'White is chasing the black queen with pawns and a knight, <b>winning time to attack</b>. Time mattered more than one bishop.'), hl: ['b5'] },
         28: { t: T('검은 나이트가 집(g8)으로 돌아갔어요. 검은 말들은 거의 다 아직 집에 있네요. 흰색 차례예요. <b>말을 꺼내면서 폰도 잡는</b> 수가 있어요.', 'The black knight went back home to g8. Most black pieces are still at home. White to move: there is a move that <b>develops a piece and wins a pawn</b>.'), guess: true, hint: T('c1 비숍이 대각선으로 f4 폰을 잡을 수 있어요.', 'The c1 bishop can take the f4 pawn along the diagonal.'), mood: 'wink' },
-        33: { t: T('나이트가 가운데 d5로 뛰었어요! 검은 퀸을 공격하고 c7 칸도 노려요.', 'The knight jumps to d5 in the centre! It attacks the queen and eyes the c7 square.'), hl: ['d5'], arr: [['d5', 'f6', 'red'], ['d5', 'c7', 'red']] },
+        33: { t: T('나이트가 가운데 d5로 뛰었어요! ① 검은 퀸을 공격하고 ② c7 칸도 노려요.', 'The knight jumps to d5 in the centre! ① It attacks the queen ② and eyes the c7 square.'), hl: ['d5'], arr: [['d5', 'f6', 'red', '1'], ['d5', 'c7', 'red', '2']] },
         34: { t: T('검은 퀸이 b2 폰을 잡으며 a1 룩을 노려요.', 'The black queen takes the b2 pawn and aims at the a1 rook.'), arr: [['b2', 'a1', 'red']] },
-        35: { t: T('흰색은 룩을 지키지 않고 비숍을 d6으로! 룩 두 개를 다 내주겠다는 뜻이에요.', 'White does not save the rook and plays the bishop to d6! White is ready to give up both rooks.'), q: T('왜 룩을 내줄까요?', 'Why give up the rooks?'), a: T('d6 비숍은 검은 킹이 도망갈 칸 <b>e7과 f8</b>을 막아요. 검은 퀸과 비숍이 룩을 잡으러 멀리 가는 동안, 흰 말들은 검은 킹 가까이 모여 있어요.', 'The d6 bishop guards <b>e7 and f8</b>, the black king\'s escape squares. While the black queen and bishop go far away to grab rooks, White\'s pieces gather near the black king.'), hl: ['e7', 'f8'], mood: 'think' },
+        35: { t: T('흰색은 룩을 지키지 않고 비숍을 d6으로! 룩 두 개를 다 내주겠다는 뜻이에요.', 'White does not save the rook and plays the bishop to d6! White is ready to give up both rooks.'), q: T('왜 룩을 내줄까요?', 'Why give up the rooks?'), a: T('d6 비숍은 검은 킹이 도망갈 칸 <b>e7과 f8</b>을 막아요. 검은 퀸과 비숍이 룩을 잡으러 멀리 가는 동안, 흰 말들은 검은 킹 가까이 모여 있어요.', 'The d6 bishop guards <b>e7 and f8</b>, the black king\'s escape squares. While the black queen and bishop go far away to grab rooks, White\'s pieces gather near the black king.'), hl: ['d6'], aHl: ['e7', 'f8'], mood: 'think' },
         37: { t: T('e5! 이 폰이 검은 퀸의 대각선 길을 막아서, 퀸이 g7을 지키러 돌아올 수 없어요.', 'e5! This pawn blocks the black queen\'s diagonal, so the queen cannot come back to guard g7.'), arr: [['b2', 'g7', 'red']], hl: ['e5'] },
         38: { t: T('검은 퀸이 a1 룩까지 잡고 체크! 흰색은 비숍과 룩 두 개를 잃었어요. 그래도 흰 킹은 e2로 비키면 괜찮아요.', 'The queen takes the a1 rook too, with check! White has lost a bishop and both rooks. The king just steps to e2.'), mood: 'think' },
         40: { t: T('흰색 차례예요. 이제 공격할 시간! <b>체크를 하면서 폰을 잡는</b> 나이트 수를 찾아봐요.', 'White to move. Time to attack! Find a knight move that <b>takes a pawn with check</b>.'), guess: true, hint: T('f5 나이트가 g7 폰을 잡을 수 있어요.', 'The f5 knight can take the g7 pawn.'), mood: 'wink' },
@@ -5297,9 +5299,9 @@ const Classics = (() => {
         8: { t: T('검은색은 일찍 <b>캐슬링</b>을 해서 킹을 안전하게 했어요.', 'Black <b>castled</b> early and made the king safe.'), hl: ['g8'] },
         19: { t: T('흰 퀸이 또 움직였어요. 그런데 흰 킹을 보세요. 아직 가운데(e1)에 있고 캐슬링을 안 했어요. 이것을 기억해 두세요!', 'The white queen moved again. But look at the white king: still in the middle on e1, not castled. Remember this!'), hl: ['e1'], mood: 'think' },
         21: { t: T('피셔의 깜짝 수가 나와요! 검은색 차례예요. 나이트를 흰색 말들 한가운데로 보내 볼까요?', 'Here comes Fischer\'s surprise! Black to move. Can you send a knight right in among the white pieces?'), guess: true, hint: T('b6 나이트가 a4로 뛰어서 c3 나이트를 노려요.', 'The b6 knight jumps to a4 and attacks the c3 knight.'), mood: 'wink' },
-        22: { t: T('나이트가 a4로! 흰 나이트가 이 나이트를 잡을 수도 있어요.', 'The knight goes to a4! The white knight could even take it.'), q: T('왜 잡힐 수 있는 칸에 갔을까요?', 'Why go where it can be taken?'), a: T('c3 나이트는 <b>e4 폰을 지키는 말</b>이에요. 이 나이트가 사라지면 검은색이 e4 폰을 잡을 수 있어요. 흰색이 a4 나이트를 잡으면 검은 나이트가 e4 폰을 잡고 흰색이 곤란해져요.', 'The c3 knight is <b>the guard of the e4 pawn</b>. If it disappears, Black can win that pawn. If White takes on a4, the other black knight takes e4 and White is in trouble.'), arr: [['a4', 'c3', 'red']] },
+        22: { t: T('나이트가 a4로 와서 c3 나이트를 노려요! 흰 나이트가 이 나이트를 잡을 수도 있어요.', 'The knight goes to a4 and attacks the c3 knight! The white knight could even take it.'), q: T('왜 잡힐 수 있는 칸에 갔을까요?', 'Why go where it can be taken?'), a: T('c3 나이트는 <b>e4 폰을 지키는 말</b>이에요. ① a4 나이트가 c3 나이트를 없애면 ② f6 나이트가 e4 폰을 잡을 수 있어요. 흰색이 a4 나이트를 잡아도 f6 나이트가 e4 폰을 잡아서 흰색이 곤란해져요.', 'The c3 knight is <b>the guard of the e4 pawn</b>. ① If the a4 knight removes it, ② the f6 knight can take e4. Even if White takes on a4, the f6 knight takes e4 and White is in trouble.'), arr: [['a4', 'c3', 'red']], aArr: [['a4', 'c3', 'red', '1'], ['f6', 'e4', 'red', '2']] },
         26: { t: T('검은 나이트가 e4 폰까지 잡았어요. 흰 킹 앞의 e줄이 점점 열리고 있어요.', 'The black knight took the e4 pawn too. The e‑file in front of the white king is opening up.'), hl: ['e4'] },
-        27: { t: T('흰 비숍이 e7 폰을 잡고 검은 퀸과 f8 룩을 노려요.', 'The white bishop took the e7 pawn and now attacks the queen and the f8 rook.'), arr: [['e7', 'd8', 'red'], ['e7', 'f8', 'red']] },
+        27: { t: T('흰 비숍이 e7 폰을 잡고 ① 검은 퀸과 ② f8 룩을 노려요.', 'The white bishop took the e7 pawn and now attacks ① the queen and ② the f8 rook.'), arr: [['e7', 'd8', 'red', '1'], ['e7', 'f8', 'red', '2']] },
         28: { t: T('검은 퀸이 b6으로 피했어요. 흰색이 f8 룩을 잡아도 검은색은 공격을 이어 갈 수 있어요.', 'The black queen escaped to b6. Even if White takes the f8 rook, Black can keep attacking.'), hl: ['b6'] },
         32: { t: T('룩으로 체크! 흰 킹은 f1로 피해야 해요. 이제 흰색은 캐슬링을 할 수 없어요.', 'Check with the rook! The white king must step to f1. Now White can never castle.'), arr: [['e8', 'e1', 'red']] },
         33: { t: T('검은색 차례예요. 이제 이 대국에서 가장 유명한 수! b6 퀸이 공격받고 있지만 피셔는 퀸을 구하지 않아요. 비숍을 움직여 볼까요?', 'Black to move. Now the most famous move of the game! The b6 queen is attacked, but Fischer does not save it. Can you move a bishop?'), guess: true, hint: T('g4 비숍이 e6으로 가서 c4 비숍을 노려요.', 'The g4 bishop goes to e6 and attacks the c4 bishop.'), mood: 'wink' },
@@ -5354,8 +5356,8 @@ Views.classic = (root, params) => {
     lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = html;
     const cs = $('#cscroll', root), an = $('.ans', txt);
     if (cs) { cs.scrollTop = an && C.open[C.i] ? Math.max(0, an.getBoundingClientRect().top - cs.getBoundingClientRect().top + cs.scrollTop - 40) : 0; fade(); } // new note: from the top; Leo's idea: show the answer
-    const names = sqLinks(txt), tk = C.tok;
-    if (names.length && names.length <= 6) setTimeout(() => { if (!C.dead && tk === C.tok) board.flash(names.map(sqIdx)); }, 250);
+    const names = sqLinks(txt), tk = C.tok, n0 = note(C.i), numbered = n0 && [...(n0.arr || []), ...(C.open[C.i] && n0.aArr || [])].some((x) => x[3]);
+    if (names.length && names.length <= 6 && !numbered) setTimeout(() => { if (!C.dead && tk === C.tok) board.flash(names.map(sqIdx)); }, 250);
   };
   const B = (a, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}">${label}</button>`;
   const lb = (icon, o) => (icon ? ic(icon, 18) + ' ' : '') + `<span>${unit(o)}</span>`; // one language on the buttons so they fit in one row
@@ -5384,8 +5386,8 @@ Views.classic = (root, params) => {
     const last = i > 0 ? mvs[i - 1] : null;
     if (anim && last) board.animate(last.f, last.t);
     const n = note(i);
-    board.mark({ last: last ? [last.f, last.t] : [], chk: cur.inCheck() ? cur.k[cur.turn] : null, sel: null, dots: [], caps: [], hl: n && n.hl ? n.hl.map(sqIdx) : [], bad: [], hf: [], ht: [] });
-    board.setArrows(n && n.arr ? n.arr.map(([a, b, col]) => [sqIdx(a), sqIdx(b), col]) : []);
+    board.mark({ last: last ? [last.f, last.t] : [], chk: cur.inCheck() ? cur.k[cur.turn] : null, sel: null, dots: [], caps: [], hl: n ? ((C.open[i] && n.aHl) || n.hl || []).map(sqIdx) : [], bad: [], hf: [], ht: [] });
+    arrows(n && ((C.open[i] && n.aArr) || n.arr));
     $('#rpos', root).textContent = i + ' / ' + N;
     $$('.mvb', mv).forEach((b) => b.classList.toggle('cur', +b.dataset.m === i));
     const cb = $('.mvb.cur', mv); if (cb) { const r1 = cb.getBoundingClientRect(), r0 = mv.getBoundingClientRect(); mv.scrollLeft += (r1.left + r1.width / 2) - (r0.left + r0.width / 2); } // only sideways: never scroll the board away
@@ -5399,6 +5401,14 @@ Views.classic = (root, params) => {
     if (!g) return;
     const k = Object.keys(c.at).filter((x) => c.at[x].guess).map(Number).sort((x, y) => x - y).indexOf(C.i) + 1;
     cg.innerHTML = `<span class="cgi">${ic('bulb', 20)}</span><span class="cgt">${rich(c.side === 'b' ? T('내 차례! <b>검은 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>black piece</b> on the board') : T('내 차례! <b>흰 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>white piece</b> on the board'), true)}</span><span class="cgn">${k}/${guessN}</span>`;
+  }
+  // draw a note's arrows; numbered ones come in order (1, then 2 ...) so the child can follow the plan step by step
+  function arrows(list) {
+    const L = (list || []).map(([a, b, col, lab]) => [sqIdx(a), sqIdx(b), col, lab]);
+    const steps = [...new Set(L.map((x) => x[3]).filter(Boolean))].sort();
+    if (steps.length < 2) { board.setArrows(L); return; }
+    const tk = C.tok;
+    steps.forEach((st, k) => setTimeout(() => { if (!C.dead && tk === C.tok) board.setArrows(L.filter((x) => !x[3] || x[3] <= st)); }, k * 750));
   }
   function text() {
     const i = C.i, n = note(i), head = '';
@@ -5486,7 +5496,7 @@ Views.classic = (root, params) => {
     }
     else if (a === 'last') { for (const k of Object.keys(c.at)) if (c.at[k].guess && C.res[k] == null) C.res[k] = 0; goTo(N); }
     else if (a === 'go') { sfx('tap'); play(); }
-    else if (a === 'why') { sfx('tap'); C.open[C.i] = 1; text(); }
+    else if (a === 'why') { sfx('tap'); C.open[C.i] = 1; const n = note(C.i); C.tok++; text(); if (n.aArr || n.aHl) { if (n.aHl) board.mark({ hl: n.aHl.map(sqIdx) }); arrows(n.aArr || n.arr); } }
     else if (a === 'hint') { sfx('tap'); C.hint = 1; text(); board.mark({ hf: [mvs[C.i].f] }); }
     else if (a === 'reveal') { sfx('tap'); C.res[C.i] = 0; const n = note(C.i); board.setArrows([[mvs[C.i].f, mvs[C.i].t, '#2fb36b']]); setTimeout(() => { if (!C.dead && C.res[C.i] === 0) goTo(C.i + 1, true); }, 900); acts.innerHTML = ''; void n; }
     else if (a === 'speak') { const n = note(C.i); if (!n) return; speak(guessing() ? n.t : C.i === N ? T(`${n.t.ko} ${c.lesson.ko}`, `${n.t.en} ${c.lesson.en}`) : n.q && C.open[C.i] ? T(`${n.t.ko} ${n.q.ko} ${n.a.ko}`, `${n.t.en} ${n.q.en} ${n.a.en}`) : n.q ? T(`${n.t.ko} ${n.q.ko}`, `${n.t.en} ${n.q.en}`) : n.t); }
