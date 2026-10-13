@@ -532,6 +532,30 @@ svg.pc, svg.ic { overflow: visible; }
 .lesson.replay.classic .coach { flex: 1 1 auto; height: auto; min-height: 0; }
 .lesson.replay.classic .coach .bubble { max-height: none; display: flex; flex-direction: column; overflow: hidden; align-self: stretch; padding-bottom: 8px; }
 .lesson.replay.classic .cscroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+/* famous games (v25): bubble header (move · position · speaker), one-row buttons, "your turn" banner */
+.classic .chead { flex: none; display: flex; align-items: center; gap: 6px; min-height: 30px; margin: -2px 0 2px; }
+.classic .chead #mvh { flex: 1; min-width: 0; font-family: var(--font-d); color: var(--brand-d); font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.classic .chead .cpos { font-size: .8rem; color: var(--ink2); white-space: nowrap; }
+.classic .cspk { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface2); color: var(--ink2); display: grid; place-items: center; padding: 0; }
+.classic .cspk[hidden] { display: none; }
+.classic .coach .acts { flex-wrap: nowrap; gap: 6px; margin-top: 6px; }
+.classic .coach .acts .btn { flex: 0 1 auto; min-width: 0; padding-left: 12px; padding-right: 12px; gap: 4px; }
+.classic .coach .acts .btn > span { overflow: hidden; text-overflow: ellipsis; }
+.classic .cgo { flex: none; display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 5px 12px; border-radius: 14px; background: var(--sun); color: var(--brand-ink); font-family: var(--font-d); font-size: .98rem; line-height: 1.25; }
+.classic .cgo[hidden], .rmoves[hidden], .moves[hidden] { display: none; }
+.classic .cgo .cgt { flex: 1; min-width: 0; }
+.classic .cgo .cgt b { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.classic .cgo .cgt .en { display: block; font-size: .78em; opacity: .85; }
+.classic .cgo .cgn { flex: none; background: var(--surface); border-radius: 99px; padding: 1px 9px; font-size: .85rem; }
+.classic .cgo.pulse { animation: shake .5s; }
+.classic .boardwrap.guess .board { outline: 4px solid var(--sun); outline-offset: 2px; }
+@media (min-aspect-ratio: 1/1) and (min-width: 760px) { .lesson.replay.classic .cgo { grid-column: 2; } }
+@media (max-height: 760px) and (max-aspect-ratio: 1/1), (max-height: 760px) and (max-width: 759px) {
+  .lesson.replay.classic .rdate { display: none; }
+  .classic .cgo .cgt .en { display: none; }
+  .lesson.replay.classic .rctl .btn { min-height: 36px; padding-top: 4px; padding-bottom: 4px; }
+  .lesson.replay.classic .boardwrap#bw { width: min(100%, calc(100vh - 150px - max(236px, 33vh))); width: min(100%, calc(100dvh - 150px - max(236px, 33dvh))); }
+}
 .lesson.replay.classic .coach .acts { flex: none; }
 .lesson.replay.classic .cscroll.ovf { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
 @media (max-aspect-ratio: 1/1), (max-width: 759px) {
@@ -1920,7 +1944,7 @@ const pid = (p) => ((p >> 3) ? 'b' : 'w') + PTYPE[(p & 7) - 1];
 const KEY = 'leochess.v1';
 const DEFAULTS = {
   lang: 'both', sound: true, coords: true, board: 'mint', theme: 'auto',
-  progress: {}, proOpen: false, learnTab: '',
+  progress: {}, proOpen: false, learnTab: '', notation: false,
   stats: { games: 0, wins: {}, losses: {}, draws: {}, net: { w: 0, l: 0, d: 0 } },
   streak: { last: '', n: 0 },
   setup: { mode: 'cpu', color: 'w', level: 2, clock: 'off', custom: { min: 10, inc: 5 }, hint: true, safety: true, undo: true, f2f: true },
@@ -4750,7 +4774,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v24 · learn tabs</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v26 · notation off</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4783,7 +4807,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v24 · learn tabs</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v26 · notation off</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5118,6 +5142,23 @@ Views.home = (root) => {
    n.q/n.a  = "why?" question; the answer opens with a button.
    n.guess  = the next move (ply+1) is a "guess the move" for the child; n.hint is shown after a miss.
    arr = arrows [from, to, color?], hl = squares to highlight. */
+/* how a move is named for the child: notation (Nf3) only when turned on in Settings, otherwise in words ("흰 나이트 g1→f3") */
+function mvText(fen, mv) {
+  try {
+    const g = new Chess(fen); g.track = false; const L = g.legal();
+    const x = L.find((y) => y.f === mv.f && y.t === mv.t && (!mv.pr || (y.pr & 7) === (mv.pr & 7))) || mv;
+    const san = g.san(x, L);
+    if (S.notation) return T(san, san);
+    const NM = Coach.NM, w = (x.p >> 3) === 0, t = x.p & 7;
+    let ko, en;
+    if (/^O-O/.test(san)) { ko = (w ? '흰색 ' : '검은색 ') + (san === 'O-O' ? '짧은 캐슬링' : '긴 캐슬링'); en = (w ? 'White ' : 'Black ') + (san === 'O-O' ? 'castles short' : 'castles long'); }
+    else { ko = `${w ? '흰' : '검은'} ${NM[t].ko} ${sqName(x.f)}→${sqName(x.t)}`; en = `${w ? 'White' : 'Black'} ${NM[t].en} ${sqName(x.f)}→${sqName(x.t)}`; }
+    if (x.c) { ko += ` · ${NM[x.c & 7].ko} 잡기`; en += ` · takes ${NM[x.c & 7].en}`; }
+    if (x.pr) { ko += ` · ${NM[x.pr & 7].ko}(으)로 변신`; en += ` · becomes a ${NM[x.pr & 7].en}`; }
+    if (/#$/.test(san)) { ko += ' · 체크메이트!'; en += ' · checkmate!'; } else if (/\+$/.test(san)) { ko += ' · 체크'; en += ' · check'; }
+    return T(ko, en);
+  } catch (e) { return T('', ''); }
+}
 const Classics = (() => {
   const G = [
     {
@@ -5301,10 +5342,10 @@ Views.classic = (root, params) => {
   const stop = () => { if (C.auto) { clearTimeout(C.auto); C.auto = 0; } };
   V.cleanup = () => { C.dead = true; C.tok++; stop(); };
   setTop({ back: 'learn', title: c.title });
-  root.innerHTML = `<div class="lesson replay classic"><div class="rdate">${unit(c.who)} · <span id="rpos"></span></div><div class="boardwrap" id="bw"></div>
+  root.innerHTML = `<div class="lesson replay classic"><div class="rdate">${unit(c.who)}</div><div class="boardwrap" id="bw"></div>
     <div class="rctl"><button class="btn ghost sm" data-a="first" aria-label="${aria('처음', 'Start')}"><span class="dbl">${ic('back', 18)}${ic('back', 18)}</span></button><button class="btn ghost sm" data-a="prev" aria-label="${aria('이전', 'Back')}">${ic('back', 18)}</button><button class="btn mint sm cplay" data-a="go" id="cplay" aria-label="${aria('계속 보기', 'Play on')}">${ic('play', 18)}</button><button class="btn ghost sm" data-a="next" aria-label="${aria('다음', 'Next')}">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last" aria-label="${aria('끝', 'End')}"><span class="dbl">${ic('next', 18)}${ic('next', 18)}</span></button></div>
-    <div class="rmoves" id="rmv"></div>
-    <div class="coach"><div id="lion"></div><div class="bubble"><div class="cscroll" id="cscroll"><div id="txt"></div></div><div class="acts" id="acts"></div></div></div></div>`;
+    <div class="rmoves" id="rmv"></div><div class="cgo" id="cgo" hidden></div>
+    <div class="coach"><div id="lion"></div><div class="bubble"><div class="chead"><span id="mvh"></span><span class="cpos" id="rpos"></span><button class="cspk" data-a="speak" id="cspk" aria-label="${aria('읽어 주기', 'Read aloud')}">${ic('speaker', 18)}</button></div><div class="cscroll" id="cscroll"><div id="txt"></div></div><div class="acts" id="acts"></div></div></div></div>`;
   const board = new Board(); $('#bw', root).appendChild(board.el); board.setCoords(S.coords); board.setView(c.side || 'w');
   const lionEl = $('#lion', root), txt = $('#txt', root), acts = $('#acts', root), mv = $('#rmv', root);
   let cur = null; // the position on the board (a Chess), so the child can play the guess move
@@ -5317,6 +5358,7 @@ Views.classic = (root, params) => {
     if (names.length && names.length <= 6) setTimeout(() => { if (!C.dead && tk === C.tok) board.flash(names.map(sqIdx)); }, 250);
   };
   const B = (a, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}">${label}</button>`;
+  const lb = (icon, o) => (icon ? ic(icon, 18) + ' ' : '') + `<span>${unit(o)}</span>`; // one language on the buttons so they fit in one row
   // a soft fade at the bottom of the note while there is more text to scroll to
   const fade = () => { const cs = $('#cscroll', root); if (cs) cs.classList.toggle('ovf', cs.scrollHeight - cs.scrollTop - cs.clientHeight > 6); };
   $('#cscroll', root).addEventListener('scroll', fade, { passive: true });
@@ -5350,17 +5392,28 @@ Views.classic = (root, params) => {
     if (guessing()) { const lz = $('.lesson', root); if (lz && board.el.getBoundingClientRect().top < 0) lz.scrollTop = 0; }
     text();
   }
+  // "your turn" banner in place of the move strip, so the child sees it without reading the bubble
+  function banner() {
+    const g = guessing(), cg = $('#cgo', root);
+    mv.hidden = g || !S.notation; cg.hidden = !g; $('#bw', root).classList.toggle('guess', g);
+    if (!g) return;
+    const k = Object.keys(c.at).filter((x) => c.at[x].guess).map(Number).sort((x, y) => x - y).indexOf(C.i) + 1;
+    cg.innerHTML = `<span class="cgi">${ic('bulb', 20)}</span><span class="cgt">${rich(c.side === 'b' ? T('내 차례! <b>검은 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>black piece</b> on the board') : T('내 차례! <b>흰 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>white piece</b> on the board'), true)}</span><span class="cgn">${k}/${guessN}</span>`;
+  }
   function text() {
-    const i = C.i, n = note(i), head = i > 0 ? `<div class="mvhead">${esc(moveNo(i - 1))}</div>` : '';
+    const i = C.i, n = note(i), head = '';
     let a = '';
     const cp = $('#cplay', root); if (cp) cp.disabled = i === N || guessing();
+    $('#mvh', root).textContent = i > 0 ? (S.notation ? moveNo(i - 1) : unit(mvText(fens[i - 1], mvs[i - 1]))) : unit(T('대국 소개', 'Intro'));
+    $('#cspk', root).hidden = !(n || i === N);
+    banner();
     if (i === N) { finish(); return; }
     if (guessing()) {
       C.miss = C.miss || 0;
-      let h = head + rich(n.t) + `<div class="more">${rich(c.side === 'b' ? T('검은색 차례! 다음 수를 <b>직접 둬</b> 보세요.', 'Black to move! <b>Play</b> the next move yourself.') : T('흰색 차례! 다음 수를 <b>직접 둬</b> 보세요.', 'White to move! <b>Play</b> the next move yourself.'))}</div>`;
+      let h = rich(n.t);
       if (C.hint) h += `<div class="more hint">${ic('bulb', 16)} ${rich(n.hint)}</div>`;
       say(h, n.mood || 'wink');
-      a = (C.hint ? '' : B('hint', ic('bulb', 18) + ' ' + tx(T('힌트', 'Hint'), true), 'lav')) + B('reveal', tx(T('정답 보기', 'Show me'), true), 'ghost') + B('speak', ic('speaker', 18), 'ghost');
+      a = (C.hint ? '' : B('hint', lb('bulb', T('힌트', 'Hint')), 'lav')) + B('reveal', lb('', T('정답 보기', 'Show me')), 'ghost');
       acts.innerHTML = a; return;
     }
     let h = head + praise(i);
@@ -5369,26 +5422,26 @@ Views.classic = (root, params) => {
       if (n.q) h += `<div class="ask">${ic('bulb', 16)} <b>${rich(n.q)}</b></div>` + (C.open[i] ? `<div class="ans">${rich(n.a)}</div>` : '');
     } else h += rich(T('계속 보면서 말들이 어디로 가는지 살펴봐요.', 'Keep watching where the pieces go.'));
     say(h, n ? (n.q && !C.open[i] ? 'think' : n.mood || 'happy') : 'happy');
-    if (n && n.q && !C.open[i]) a += B('why', tx(T('레오의 생각 듣기', 'Hear Leo\'s idea'), true), 'sun');
-    a += B('go', ic('play', 18) + ' ' + tx(i === 0 ? T('시작', 'Start') : T('계속', 'Continue'), true), 'mint');
-    if (n) a += B('speak', ic('speaker', 18), 'ghost');
+    if (n && n.q && !C.open[i]) a += B('why', lb('bulb', T('레오 생각', 'Leo\'s idea')), 'sun');
+    a += B('go', lb('play', i === 0 ? T('시작', 'Start') : T('계속', 'Continue')), 'mint');
     acts.innerHTML = a;
   }
   // a word of praise right after the child played the game's move
   function praise(i) {
-    if (C.alt != null && C.alt === i - 1) return `<div class="more good">${rich(T(`그 수도 체크메이트예요! (실제 대국의 수: <b>${sans[i - 1]}</b>)`, `Your move is checkmate too! In the game, <b>${sans[i - 1]}</b> was played.`))}</div>`;
+    if (C.alt != null && C.alt === i - 1) { const l = mvText(fens[i - 1], mvs[i - 1]); return `<div class="more good">${rich(T(`그 수도 체크메이트예요! (실제 대국의 수: <b>${l.ko}</b>)`, `Your move is checkmate too! In the game, <b>${l.en}</b> was played.`))}</div>`; }
     if (C.res[i - 1] === 1) return `<div class="more good">${rich(T('맞혔어요! 이 대국에서 둔 바로 그 수예요.', 'You got it! That is the move from the game.'))}</div>`;
     if (C.res[i - 1] === 2) return `<div class="more good">${rich(T('좋아요! 끝까지 찾아냈어요.', 'Nice! You found it.'))}</div>`;
     return '';
   }
   function finish() {
     const first = !RW.st().e['c:' + c.id];
-    const got = Object.values(C.res).filter((v) => v === 1).length;
+    const got = Object.values(C.res).filter((v) => v === 1).length, got2 = Object.values(C.res).filter((v) => v === 2).length, skip = guessN - got - got2;
     const n = note(N);
-    say(`<div class="mvhead">${esc(moveNo(N - 1))}</div>${praise(N)}${n ? rich(n.t) : ''}<div class="ask">${ic('book', 16)} <b>${rich(T('오늘의 교훈', 'Today\'s lesson'))}</b></div><div class="ans">${rich(c.lesson)}</div>` +
-      (guessN ? `<div class="more">${rich(T(`다음 수 맞히기: <b>${got} / ${guessN}</b> (한 번에 맞힌 수)`, `Guess the move: <b>${got} / ${guessN}</b> (first try)`))}</div>` : ''), 'cheer');
+    say(`${praise(N)}${n ? rich(n.t) : ''}<div class="ask">${ic('book', 16)} <b>${rich(T('오늘의 교훈', 'Today\'s lesson'))}</b></div><div class="ans">${rich(c.lesson)}</div>` +
+      (guessN ? `<div class="more">${rich(T(`다음 수 맞히기: <b>${got + got2} / ${guessN}</b> 맞혔어요 (한 번에 ${got}개)`, `Guess the move: <b>${got + got2} / ${guessN}</b> found (${got} on the first try)`))}</div>` : '') +
+      (guessN && skip ? `<div class="more">${rich(T('건너뛴 문제는 <b>처음부터</b>를 눌러 다시 맞혀 볼 수 있어요.', 'Tap <b>Again</b> to try the skipped guesses.'))}</div>` : ''), 'cheer');
     const nx = Classics.G[(Classics.G.indexOf(c) + 1) % Classics.G.length];
-    acts.innerHTML = B('again', ic('refresh', 18) + ' ' + tx(T('처음부터', 'Watch again'), true), 'ghost') + B('nextgame', ic('next', 18) + ' ' + tx(T('다음 명국', 'Next game'), true), 'mint') + (n ? B('speak', ic('speaker', 18), 'ghost') : '');
+    acts.innerHTML = B('again', lb('refresh', T('처음부터', 'Again')), 'ghost') + B('nextgame', lb('next', T('다음 명국', 'Next')), 'mint');
     if (!C.fin) {
       C.fin = true; sfx('win'); touchStreak();
       if (first) { RW.earn('classic', { id: c.id }); RW.notify(); }
@@ -5427,14 +5480,17 @@ Views.classic = (root, params) => {
     const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
     if (a === 'first') goTo(0);
     else if (a === 'prev') goTo(C.i - 1);
-    else if (a === 'next') { if (guessing()) C.res[C.i] = 0; goTo(C.i + 1, true); }
+    else if (a === 'next') {
+      if (guessing() && C.warn !== C.i) { C.warn = C.i; sfx('tap'); toast(T('먼저 보드에서 둬 봐요! 한 번 더 누르면 건너뛰어요', 'Try it on the board first! Tap again to skip'), 2600); const cg = $('#cgo', root); cg.classList.remove('pulse'); void cg.offsetWidth; cg.classList.add('pulse'); return; }
+      if (guessing()) C.res[C.i] = 0; goTo(C.i + 1, true);
+    }
     else if (a === 'last') { for (const k of Object.keys(c.at)) if (c.at[k].guess && C.res[k] == null) C.res[k] = 0; goTo(N); }
     else if (a === 'go') { sfx('tap'); play(); }
     else if (a === 'why') { sfx('tap'); C.open[C.i] = 1; text(); }
     else if (a === 'hint') { sfx('tap'); C.hint = 1; text(); board.mark({ hf: [mvs[C.i].f] }); }
     else if (a === 'reveal') { sfx('tap'); C.res[C.i] = 0; const n = note(C.i); board.setArrows([[mvs[C.i].f, mvs[C.i].t, '#2fb36b']]); setTimeout(() => { if (!C.dead && C.res[C.i] === 0) goTo(C.i + 1, true); }, 900); acts.innerHTML = ''; void n; }
     else if (a === 'speak') { const n = note(C.i); if (!n) return; speak(guessing() ? n.t : C.i === N ? T(`${n.t.ko} ${c.lesson.ko}`, `${n.t.en} ${c.lesson.en}`) : n.q && C.open[C.i] ? T(`${n.t.ko} ${n.q.ko} ${n.a.ko}`, `${n.t.en} ${n.q.en} ${n.a.en}`) : n.q ? T(`${n.t.ko} ${n.q.ko}`, `${n.t.en} ${n.q.en}`) : n.t); }
-    else if (a === 'again') { sfx('tap'); C.res = {}; C.open = {}; C.fin = false; C.max = 0; renderMoves(); goTo(0); }
+    else if (a === 'again') { sfx('tap'); C.res = {}; C.open = {}; C.fin = false; C.max = 0; C.warn = null; renderMoves(); goTo(0); }
     else if (a === 'nextgame') { sfx('tap'); go('classic', { id: C.nx }); }
   });
   renderMoves();
@@ -5541,7 +5597,7 @@ Views.settings = (root) => {
   root.innerHTML = `<div class="scroll"><div class="wrap">
     <div class="card"><h3>${tx(T('언어', 'Language'), true)}</h3>
       <div class="chips">${chip('lang', 'ko', T('한국어', 'Korean'), S.lang)}${chip('lang', 'en', T('English', 'English'), S.lang)}${chip('lang', 'both', T('둘 다', 'Both'), S.lang)}</div>
-      ${sw('sw-sound', T('소리', 'Sound'), null, S.sound)}${sw('sw-coords', T('칸 이름 표시 (a~h, 1~8)', 'Show square names (a–h, 1–8)'), null, S.coords)}
+      ${sw('sw-sound', T('소리', 'Sound'), null, S.sound)}${sw('sw-notation', T('기보 표시', 'Show move notation'), T('Nf3, Bxe5 같은 수 기록을 보여 줘요', 'Shows moves written like Nf3, Bxe5'), S.notation)}${sw('sw-coords', T('칸 이름 표시 (a~h, 1~8)', 'Show square names (a–h, 1–8)'), null, S.coords)}
     </div>
     <div class="card"><h3>${tx(T('보드 색', 'Board color'), true)}</h3>
       <div class="chips">${chip('board', 'mint', T('민트', 'Mint'), S.board)}${chip('board', 'peach', T('복숭아', 'Peach'), S.board)}${chip('board', 'lav', T('라벤더', 'Lavender'), S.board)}${chip('board', 'sky', T('하늘', 'Sky'), S.board)}</div>
@@ -5571,7 +5627,7 @@ Views.settings = (root) => {
     const c = e.target.closest('.chip[data-set]');
     if (c) { sfx('tap'); S[c.dataset.set] = c.dataset.v; if (c.dataset.set === 'board') { RW.st().eq.board = ''; RW.st().eqt = Date.now(); } save(); applyPrefs(); rerender(); return; }
     const tg = e.target.closest('.tg');
-    if (tg) { sfx('tap'); if (tg.id === 'sw-sound') S.sound = !S.sound; if (tg.id === 'sw-coords') S.coords = !S.coords; save(); tg.setAttribute('aria-checked', tg.id === 'sw-sound' ? S.sound : S.coords); return; }
+    if (tg) { sfx('tap'); const k = { 'sw-sound': 'sound', 'sw-coords': 'coords', 'sw-notation': 'notation' }[tg.id]; if (k) { S[k] = !S[k]; save(); tg.setAttribute('aria-checked', S[k]); } return; }
     if (e.target.closest('#btn-parent')) { sfx('tap'); if (await verifyParent()) go('parent'); return; }
     if (e.target.closest('#btn-reset')) {
       const me = Net.me(), kidCloud = !!(me && !me.parent && Net.user);
@@ -5729,7 +5785,7 @@ function dailyChap(pz, prac) {
 // a puzzle from the player's own game: the position before a mistake, the better move is the answer
 function mineChap(p) {
   const w = p.f.split(' ')[1] === 'w', side = w ? T('흰색', 'White') : T('검은색', 'Black');
-  let ps = ''; try { const g = new Chess(p.f); g.track = false; const m = g.findUci(p.p); ps = m ? g.san(m) : ''; } catch (e) { ps = ''; }
+  let ps = ''; try { const g = new Chess(p.f); g.track = false; const m = g.findUci(p.p); ps = m ? unit(mvText(p.f, m)) : ''; } catch (e) { ps = ''; }
   const when = dayLabel(new Date(p.t || Date.now()));
   const step = { t: 'move', fen: p.f, ok: [p.o], mine: p, ps,
     text: T(`${when.ko} 대국에서 나온 장면이에요. 그때 둔 수는 <b>${esc(ps)}</b>였는데, 더 좋은 수가 있었어요. ${side.ko} 차례예요. 찾아보세요!`, `A position from your game (${when.en}). You played <b>${esc(ps)}</b>, but there was a better move. ${side.en} to move. Find it!`),
@@ -5922,7 +5978,7 @@ Views.lesson = (root, params) => {
   }
 
   function mineMore(s) {
-    let bs = ''; try { const g = new Chess(s.fen); g.track = false; const m = g.findUci(s.mine.o); bs = m ? g.san(m) : ''; } catch (e) { bs = ''; }
+    let bs = ''; try { const g = new Chess(s.fen); g.track = false; const m = g.findUci(s.mine.o); bs = m ? unit(mvText(s.fen, m)) : ''; } catch (e) { bs = ''; }
     const why = Analyzer.why(s.fen, s.mine.o, s.mine.s);
     return `<div class="more">${rich(T(`그때 둔 수: <b>${esc(s.ps)}</b> → 레오가 찾은 수: <b>${esc(bs)}</b>`, `You played <b>${esc(s.ps)}</b> → Leo's move: <b>${esc(bs)}</b>`))}</div>${why.length ? `<ul class="why">${why.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>` : ''}`;
   }
@@ -6217,6 +6273,7 @@ Views.game = (root, params) => {
   }
   function renderMoves() {
     const mv = $('#mv', root); if (!mv) return;
+    mv.hidden = !S.notation; if (!S.notation) return;
     let s = '';
     for (let i = 0; i < G.sans.length; i += 2) s += `<span><b>${i / 2 + 1}.</b> ${G.sans[i]} ${G.sans[i + 1] || ''}</span>`;
     mv.innerHTML = s; mv.scrollLeft = mv.scrollWidth;
@@ -6855,7 +6912,7 @@ Views.replay = (root, params) => {
   const PD = new Date(E.t);
   root.innerHTML = `<div class="lesson replay"><div class="rdate">${unit(dayLabel(PD))} · ${unit(timeLabel(PD))}<span class="rst" id="rst"></span></div><div class="boardwrap" id="bw"></div>
     <div class="rctl"><button class="btn ghost sm" data-a="first"><span class="dbl">${ic('back', 18)}${ic('back', 18)}</span></button><button class="btn ghost sm" data-a="prev">${ic('back', 18)}</button><span id="rpos" class="rpos"></span><button class="btn ghost sm" data-a="next">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last"><span class="dbl">${ic('next', 18)}${ic('next', 18)}</span></button></div>
-    <div class="rmoves" id="rmv"></div>
+    <div class="rmoves" id="rmv"${S.notation ? '' : ' hidden'}></div>
     <div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>`;
   const board = new Board(); $('#bw', root).appendChild(board.el); board.setCoords(S.coords); board.setView(view);
   const lionEl = $('#lion', root), txt = $('#txt', root), acts = $('#acts', root), mv = $('#rmv', root);
@@ -6877,7 +6934,7 @@ Views.replay = (root, params) => {
   function explain(i) {
     const g = new Chess(fens[i]); g.track = false;
     const best = g.findUci(R.an[i][1]);
-    const bestSan = best ? g.san(best) : null;
+    const bestSan = best ? mvText(fens[i], best) : null;
     const lines = [];
     const g2 = new Chess(fens[i + 1]); g2.track = false;
     const rep = R.an[i + 1] && R.an[i + 1][1] ? g2.findUci(R.an[i + 1][1]) : null;
@@ -6940,13 +6997,14 @@ Views.replay = (root, params) => {
       const arr = [[last.f, last.t, 'red']];
       if (ex.best) arr.push([ex.best.f, ex.best.t, '#2fb36b']);
       board.setArrows(arr);
-      say(`<b>${sans[i - 1]}${MK[k]} · ${rich(lab)}</b>`, 'oops', `<ul>${ex.lines.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>${ex.bestSan ? `<div class="more">${rich(T(`더 좋은 수: <b>${ex.bestSan}</b> (초록 화살표)`, `Better: <b>${ex.bestSan}</b> (green arrow)`))}</div>` : ''}${ex.why && ex.why.length ? `<ul class="why">${ex.why.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>` : ''}`);
+      const ml = mvText(fens[i - 1], mvs[i - 1]);
+      say(`<b>${rich(ml, true)}${S.notation ? MK[k] : ''} · ${rich(lab)}</b>`, 'oops', `<ul>${ex.lines.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>${ex.bestSan ? `<div class="more">${rich(T(`더 좋은 수: <b>${ex.bestSan.ko}</b> (초록 화살표)`, `Better: <b>${ex.bestSan.en}</b> (green arrow)`))}</div>` : ''}${ex.why && ex.why.length ? `<ul class="why">${ex.why.map((l) => `<li>${rich(l)}</li>`).join('')}</ul>` : ''}`);
     } else if (summary && R.an) {
       const tot = R.count[0] + R.count[1] + R.count[2] + R.count[3], good = tot ? Math.round((R.count[0] / tot) * 100) : 100;
       say(T(`내가 둔 ${tot}수 중 <b>${R.count[0]}수</b>가 좋은 수였어요 (${good}%).<br>큰 실수 ${R.count[3]} · 실수 ${R.count[2]} · 아쉬운 수 ${R.count[1]}`, `Of your ${tot} moves, <b>${R.count[0]}</b> were good (${good}%).<br>Blunders ${R.count[3]} · Mistakes ${R.count[2]} · Inaccuracies ${R.count[1]}`), R.count[3] + R.count[2] ? 'happy' : 'cheer');
-    } else if (R.an && i > 0 && mine(i - 1)) say(T(`<b>${sans[i - 1]}</b> — 좋은 수예요!`, `<b>${sans[i - 1]}</b> — a good move!`), 'happy');
-    else if (i === 0) say(R.an ? T('◀ ▶ 로 넘기거나 수를 눌러 보세요. 빨간 표시가 실수예요.', 'Step with ◀ ▶ or tap a move. Marks show mistakes.') : T('◀ ▶ 로 한 수씩 다시 봐요. 레오가 <b>실수</b>를 찾고 있어요. 조금만 기다려 주세요.', 'Step through with ◀ ▶. Leo is looking for <b>mistakes</b>. Please wait a moment.'), 'wink');
-    else say(T(`<b>${sans[i - 1]}</b>`, `<b>${sans[i - 1]}</b>`), 'happy');
+    } else if (R.an && i > 0 && mine(i - 1)) { const ml = mvText(fens[i - 1], mvs[i - 1]); say(T(`<b>${ml.ko}</b> — 좋은 수예요!`, `<b>${ml.en}</b> — a good move!`), 'happy'); }
+    else if (i === 0) say(R.an ? (S.notation ? T('◀ ▶ 로 넘기거나 수를 눌러 보세요. 빨간 표시가 실수예요.', 'Step with ◀ ▶ or tap a move. Marks show mistakes.') : T('◀ ▶ 로 한 수씩 넘겨 보세요. <b>다음 실수</b>를 누르면 실수한 곳으로 바로 가요.', 'Step with ◀ ▶. Tap <b>Next mistake</b> to jump to a mistake.')) : T('◀ ▶ 로 한 수씩 다시 봐요. 레오가 <b>실수</b>를 찾고 있어요. 조금만 기다려 주세요.', 'Step through with ◀ ▶. Leo is looking for <b>mistakes</b>. Please wait a moment.'), 'wink');
+    else { const ml = mvText(fens[i - 1], mvs[i - 1]); say(T(`<b>${ml.ko}</b>`, `<b>${ml.en}</b>`), 'happy'); }
     acts.innerHTML = a;
   }
   function goTo(n) { R.i = Math.max(0, Math.min(N, n)); show(); if (R.i > 0) { sfx(mvs[R.i - 1].c ? 'cap' : 'move'); } }
