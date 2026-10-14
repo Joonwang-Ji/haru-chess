@@ -178,6 +178,14 @@ svg.pc, svg.ic { overflow: visible; }
 @keyframes sqflash { from { opacity: .2; } to { opacity: 1; } }
 .sq .sqtag { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); background: #3b2f57; color: #fff; font: 700 clamp(11px, 2.8cqw, 16px)/1.15 var(--font-d); padding: 1px 6px; border-radius: 8px; z-index: 6; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
 .sqn { color: var(--brand-d); font-weight: 700; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+/* glossary words in coach text: a dashed underline; a tap opens .glpop with the meaning */
+.gl { text-decoration: underline dashed var(--brand); text-decoration-thickness: 2px; text-underline-offset: 4px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gl.on { background: color-mix(in srgb, var(--sun) 45%, transparent); border-radius: 4px; }
+.glpop { position: fixed; z-index: 85; width: min(300px, calc(100vw - 24px)); background: var(--surface); color: var(--ink); border: 2px solid var(--sun); border-radius: 16px; padding: 10px 14px 12px; box-shadow: var(--shadow); font-size: .95rem; line-height: 1.5; animation: pop .15s; word-break: keep-all; overflow-wrap: anywhere; }
+.glpop .gt { display: flex; align-items: center; gap: 6px; font: 700 1.05rem/1.3 var(--font-d); margin-bottom: 4px; }
+.glpop .gt small { color: var(--ink2); font-weight: 600; font-size: .85rem; }
+.glpop p { margin: 0; }
+.glpop small.en { display: block; color: var(--ink2); margin-top: 4px; }
 .rdate .rst { margin-left: 6px; color: var(--brand-d); font-weight: 700; }
 .hrow .an-run { color: var(--brand-d); font-weight: 700; }
 .sq .co.f { right: 3px; bottom: 1px; }
@@ -1985,14 +1993,18 @@ const glue = (s) => (typeof s === 'string' && /[가-힣]/.test(s) ? s
   .replace(/([가-힣0-9)])(?=<(?:b|i|em|strong|u|mark)[ >])/g, '$1\u2060')
   .replace(/([가-힣0-9])(?=[(·+\/])/g, '$1\u2060')
   .replace(/([)·+\/])(?=[가-힣])/g, '$1\u2060') : s);
+/* chess words with a hyphen (O-O-O, d-file, f-pawn) never wrap at the hyphen: NON-BREAKING HYPHEN U+2011 */
+const nbh = (s) => (typeof s === 'string' && s.includes('-') ? s
+  .replace(/O-O(?:-O)?/g, (m) => m.replace(/-/g, '\u2011'))
+  .replace(/(?<![\w\u2011-])([a-h])-(?=[a-z])/g, '$1\u2011') : s);
 function tx(o, inline) {
   if (o == null) return '';
-  if (typeof o === 'string') return glue(o);
+  if (typeof o === 'string') return glue(nbh(o));
   const l = S.lang;
-  if (l === 'ko') return glue(o.ko);
-  if (l === 'en') return o.en;
+  if (l === 'ko') return glue(nbh(o.ko));
+  if (l === 'en') return nbh(o.en);
   // one wrapper so a flex parent (button, pill) treats "한글 English" as ONE item that wraps as a sentence, not two columns
-  return inline ? `<span class="bil">${glue(o.ko)}<span class="en">${o.en}</span></span>` : `${glue(o.ko)}<small class="en">${o.en}</small>`;
+  return inline ? `<span class="bil">${glue(nbh(o.ko))}<span class="en">${nbh(o.en)}</span></span>` : `${glue(nbh(o.ko))}<small class="en">${nbh(o.en)}</small>`;
 }
 const rich = (o, inline) => icons(tx(o, inline));
 // a unit next to a number (15분 / 15 m): both-language mode shows it once, in Korean, so it never reads "15분 m"
@@ -2288,11 +2300,66 @@ class Board {
   }
 }
 
+/* Glossary: chess words a child may not know (pin, gambit, ...). Gloss.mark(root) underlines the first use of each word in a note; a tap shows its meaning. */
+const Gloss = (() => {
+  const W = [
+    { k: 'smother', ko: /스모더드 메이트/, en: /smothered mate/i, w: T('스모더드 메이트', 'Smothered mate'), d: T('킹이 <b>자기 말들에 둘러싸여</b> 도망갈 칸이 없을 때, 나이트가 뛰어들어 하는 체크메이트예요.', 'Checkmate by a knight when the king is <b>boxed in by its own pieces</b> and has no square to run to.') },
+    { k: 'discover', ko: /발견 체크/, en: /discovered check/i, w: T('발견 체크', 'Discovered check'), d: T('앞에 있던 내 말이 비키자, <b>뒤에 숨어 있던</b> 다른 내 말이 킹을 체크하는 것이에요.', 'One of your pieces moves out of the way, and <b>another piece hiding behind it</b> gives check.') },
+    { k: 'double', ko: /양방 체크/, en: /double check/i, w: T('양방 체크', 'Double check'), d: T('<b>두 말이 한꺼번에</b> 체크하는 것이에요. 막거나 잡아서는 피할 수 없어서, 킹이 직접 도망가야 해요.', '<b>Two pieces give check at once.</b> Blocking or capturing cannot stop both, so the king itself must move.') },
+    { k: 'pin', ko: /핀/, en: /\bpin(?:s|ned)?\b/i, w: T('핀', 'Pin'), d: T('뒤에 더 귀한 말이 있어서, 앞의 말이 <b>비키지 못하고 꼼짝 못 하는</b> 것이에요. 뒤에 킹이 있으면 아예 움직일 수 없어요.', 'A piece <b>cannot step away</b> because a more valuable piece stands behind it. If the piece behind is the king, it is not allowed to move at all.') },
+    { k: 'gambit', ko: /갬빗/, en: /\bgambit\b/i, w: T('갬빗', 'Gambit'), d: T('시작할 때 <b>일부러 폰을 내주는</b> 것이에요. 대신 말을 빨리 꺼내거나 공격할 시간을 얻어요.', 'Giving away a pawn <b>on purpose</b> at the start, to bring out your pieces faster or win time to attack.') },
+    { k: 'castle', ko: /캐슬링/, en: /\bcastl(?:e|es|ed|ing)\b/i, w: T('캐슬링', 'Castling'), d: T('킹과 룩이 <b>한 번에 함께</b> 움직이는 특별한 수예요. 킹은 룩 쪽으로 두 칸 가고, 룩은 킹을 넘어 바로 옆에 서요. 킹을 안전한 구석으로 옮겨요.', 'A special move where the king and a rook move <b>together</b>. The king steps two squares toward the rook, and the rook jumps over to stand next to it. It tucks the king into a safe corner.') },
+    { k: 'windmill', ko: /풍차/, en: /windmill/i, w: T('풍차', 'Windmill'), d: T('발견 체크를 되풀이하며 상대 말을 <b>하나씩 잡는</b> 것이에요. 같은 말이 풍차 날개처럼 왔다 갔다 해요.', 'Repeating discovered checks to <b>pick off enemy pieces one by one</b>. The same piece swings back and forth like the sails of a windmill.') },
+    { k: 'hunt', ko: /킹 사냥/, en: /king hunt/i, w: T('킹 사냥', 'King hunt'), d: T('상대 킹을 <b>계속 체크로 몰아서</b> 안전한 곳 밖으로 끌어내는 공격이에요.', 'An attack that <b>keeps checking</b> the enemy king and drags it out of its safe corner.') },
+    { k: 'backrow', ko: /뒷줄|[18]번 줄/, en: /back (?:row|rank)/i, w: T('뒷줄', 'Back row'), d: T('내 쪽 <b>맨 끝 가로줄</b>이에요(흰색은 1번 줄, 검은색은 8번 줄). 여기가 비어 있으면 룩이나 퀸에게 체크메이트당하기 쉬워요.', 'The row <b>at your edge of the board</b> (row 1 for White, row 8 for Black). If it is empty, a rook or queen can often checkmate there.') },
+    { k: 'file', ko: /[a-h]줄/, en: /\b[a-h][‑-]files?\b/i, w: T('줄', 'File'), d: T('보드의 <b>세로 한 줄</b>이에요. 맨 아래 글자로 이름을 불러요. 예를 들어 d줄은 d1부터 d8까지예요.', 'One <b>up-and-down column</b> of the board, named by its letter. For example, the d-file runs from d1 to d8.') },
+  ];
+  const BY = Object.fromEntries(W.map((w) => [w.k, w]));
+  const HG = /[가-힣0-9]/;
+  let pop = null, cur = null;
+  function mark(root) {
+    const used = [];
+    for (const w of W) for (const re of [w.ko, w.en]) {
+      if (used.includes(w.k)) break;
+      const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+      while ((n = tw.nextNode())) {
+        if (n.parentElement && n.parentElement.closest('button,.sqn,.gl')) continue;
+        const m = re.exec(n.nodeValue); if (!m) continue;
+        const word = n.splitText(m.index), rest = word.splitText(m[0].length);
+        const sp = document.createElement('span'); sp.className = 'gl'; sp.dataset.g = w.k; sp.setAttribute('role', 'button');
+        word.parentNode.replaceChild(sp, word); sp.appendChild(word);
+        // keep Hangul glued to the new inline box (Safari would wrap "e줄" / "에" apart otherwise)
+        if (HG.test(rest.nodeValue.charAt(0))) rest.nodeValue = '⁠' + rest.nodeValue;
+        if (HG.test(n.nodeValue.slice(-1))) n.nodeValue += '⁠';
+        used.push(w.k); break;
+      }
+    }
+    return used;
+  }
+  function hide() { if (pop) { pop.remove(); pop = null; } if (cur) { cur.classList.remove('on'); cur = null; } }
+  function show(el) {
+    const same = cur === el; hide(); if (same) return;
+    const w = BY[el.dataset.g]; if (!w) return;
+    sfx('tap'); cur = el; el.classList.add('on');
+    pop = document.createElement('div'); pop.className = 'glpop'; pop.setAttribute('role', 'dialog');
+    const name = S.lang === 'both' ? `${esc(w.w.ko)} <small>${esc(w.w.en)}</small>` : esc(unit(w.w));
+    pop.innerHTML = `<div class="gt">📖 ${name}</div><p>${rich(w.d)}</p>`;
+    document.body.appendChild(pop);
+    const r = el.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight, vw = innerWidth, vh = innerHeight;
+    const left = Math.max(12, Math.min(vw - pw - 12, r.left + r.width / 2 - pw / 2));
+    const top = r.top - ph - 10 >= 8 ? r.top - ph - 10 : Math.min(vh - ph - 8, r.bottom + 10); // above the word if it fits (keeps the board side clear), else below
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  }
+  // any tap elsewhere closes the card
+  document.addEventListener('pointerdown', (e) => { if (pop && !e.target.closest('.glpop,.gl')) hide(); }, true);
+  return { mark, show, hide, W };
+})();
+
 /* Square names ("e4") inside coach text: wrapped in <span class="sqn"> so the board can glow them and a tap shows them again. */
 const SQ_RE = /(^|[^A-Za-z0-9])([a-h][1-8])(?![A-Za-z0-9])/g;
 function sqLinks(root) {
   const out = [], nodes = [], tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
-  while ((n = tw.nextNode())) if (/[a-h][1-8]/.test(n.nodeValue) && !(n.parentElement && n.parentElement.closest('button,.sqn'))) nodes.push(n);
+  while ((n = tw.nextNode())) if (/[a-h][1-8]/.test(n.nodeValue) && !(n.parentElement && n.parentElement.closest('button,.sqn,.gl'))) nodes.push(n);
   for (const t of nodes) {
     const v = t.nodeValue, frag = document.createDocumentFragment(); let m, last = 0, hit = false; SQ_RE.lastIndex = 0;
     while ((m = SQ_RE.exec(v))) {
@@ -4780,7 +4847,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v28 · traps</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v29 · glossary</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4813,7 +4880,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v28 · traps</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v29 · glossary</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5235,6 +5302,37 @@ const Classics = (() => {
       },
     },
     {
+      id: 'carokann', lv: 1, piece: 'wN', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2 Ngf6 Nd6#',
+      title: T('카로칸의 나이트 덫', 'The Caro-Kann knight trap'),
+      who: T('카로칸 방어 · 단 6수', 'Caro-Kann Defence · just 6 moves'),
+      blurb: T('나이트 하나로 끝나는 짧은 덫', 'A short trap won by one knight'),
+      lesson: T('킹 둘레를 내 말로 꽉 채우면 킹이 <b>도망갈 칸</b>이 없어요. 상대 나이트를 조심해요!', 'If your own pieces crowd around your king, it has <b>no square to run to</b>. Watch out for enemy knights!'),
+      at: {
+        0: { t: T('나이트 하나로 끝나는 아주 짧은 덫이에요. 흰색 편에서 봐요!', 'A very short trap won by a single knight. Let us watch from White\'s side!'), mood: 'happy' },
+        6: { t: T('검은 폰이 e4 폰을 잡았어요. 흰색도 다시 잡아요!', 'Black\'s pawn took on e4. White takes back!'), hl: ['e4'], guess: true, hint: T('c3 나이트로 e4 폰을 잡아요.', 'Take the e4 pawn with the c3 knight.'), mood: 'wink' },
+        9: { t: T('흰 퀸이 e2로 왔어요. 이제 흰 퀸과 검은 킹이 같은 <b>e줄</b>에 있어요. 지금은 그 사이를 e4 나이트가 막고 있어요.', 'The white queen came to e2. Now the white queen and the black king stand on the same <b>e-file</b>. For now, the e4 knight sits between them.'), hl: ['e2', 'e8'], mood: 'think' },
+        10: { t: T('검은 나이트가 f6으로 나와 e4 나이트를 노려요. 그런데 검은 킹 둘레를 보세요. 검은 말로 꽉 찼어요! 나이트로 체크메이트를 찾아봐요.', 'The black knight comes to f6 and attacks the e4 knight. But look around the black king: it is full of black pieces! Find checkmate with a knight.'), hl: ['e8'], guess: true, hint: T('e4 나이트가 d6으로 뛰어요.', 'The e4 knight jumps to d6.'), mood: 'wink' },
+        11: { t: T('<b>체크메이트!</b> 검은 킹 옆 칸은 모두 검은 말이 막고 있어요. 이렇게 자기 말에 갇힌 킹을 나이트가 잡는 것을 <b>스모더드 메이트</b>라고 해요. e7 폰은 e2 퀸의 <b>핀</b>에 걸려서 나이트를 잡을 수 없어요.', '<b>Checkmate!</b> Black\'s own pieces block every square next to the king. A knight mate like this is called a <b>smothered mate</b>. The e7 pawn cannot take the knight: it is stuck in a <b>pin</b> by the e2 queen.'), arr: [['d6', 'e8', 'red'], ['e2', 'e8', 'red']], hl: ['e8', 'e7'], mood: 'cheer' },
+      },
+    },
+    {
+      id: 'kieninger', lv: 1, side: 'b', piece: 'bN', moves: 'd4 Nf6 c4 e5 dxe5 Ng4 Bf4 Nc6 Nf3 Bb4+ Nbd2 Qe7 a3 Ngxe5 axb4 Nd3#',
+      title: T('키닝거의 덫', 'The Kieninger trap'),
+      who: T('부다페스트 갬빗에서 나온 덫', 'A trap from the Budapest Gambit'),
+      blurb: T('검은색 편! 비숍을 내주고 이겨요', 'Play Black! Give up a bishop and win'),
+      lesson: T('공짜 말을 잡기 전에 <b>내 킹이 안전한지</b> 먼저 살펴봐요.', 'Before grabbing a free piece, first check that <b>your king is safe</b>.'),
+      at: {
+        0: { t: T('이번에는 <b>검은색 편</b>이에요! 검은색이 먼저 폰을 내주는 <b>갬빗</b>으로 시작해요.', 'This time you are <b>Black</b>! Black starts with a <b>gambit</b>, giving away a pawn first.'), mood: 'happy' },
+        5: { t: T('흰 폰이 e5 폰을 잡았어요. 검은색이 일부러 내준 폰이에요. 곧 되찾을 거예요.', 'White\'s pawn took on e5. Black gave it away on purpose and will soon win it back.'), hl: ['e5'] },
+        9: { t: T('흰 나이트가 f3에서 e5 폰을 지켜요. 이번에는 비숍으로 체크해 볼까요?', 'The f3 knight guards the e5 pawn. Now can you give check with a bishop?'), guess: true, hint: T('f8 비숍이 대각선을 따라 b4까지 가요.', 'The f8 bishop slides along the diagonal to b4.'), mood: 'wink' },
+        12: { t: T('검은 퀸도 나왔어요. 퀸과 두 나이트가 모두 e5 폰을 노려요.', 'The black queen came out too. The queen and both knights all attack the e5 pawn.'), arr: [['e7', 'e5', 'red'], ['c6', 'e5', 'red'], ['g4', 'e5', 'red']] },
+        13: { t: T('흰 폰이 a3으로 와서 b4 비숍을 쫓아요. 하지만 비숍은 신경 쓰지 말고 폰을 되찾아요!', 'White\'s pawn comes to a3 to chase the b4 bishop. Never mind the bishop: win the pawn back!'), guess: true, hint: T('g4 나이트로 e5 폰을 잡아요.', 'Take the e5 pawn with the g4 knight.'), mood: 'wink' },
+        14: { t: T('흰색은 이제 b4 비숍을 공짜로 잡을 수 있어요. 정말 공짜일까요?', 'Now White can take the b4 bishop for free. Is it really free?'), arr: [['a3', 'b4', 'red']], hl: ['b4'], mood: 'think' },
+        15: { t: T('흰 폰이 비숍을 덥석 잡았어요. 그런데 흰 킹 둘레를 보세요. 흰 말로 꽉 찼어요! 나이트로 체크메이트를 찾아봐요.', 'White grabbed the bishop. But look around the white king: it is full of white pieces! Find checkmate with a knight.'), hl: ['e1'], guess: true, hint: T('e5 나이트가 d3으로 뛰어요.', 'The e5 knight jumps to d3.'), mood: 'wink' },
+        16: { t: T('<b>체크메이트!</b> 흰 킹 옆 칸을 흰 말들이 모두 막고 있어요. e2 폰은 e7 퀸의 <b>핀</b>에 걸려서 나이트를 잡을 수 없어요. 비숍 하나를 얻으려다 대국을 졌어요.', '<b>Checkmate!</b> White\'s own pieces block every square next to the king. The e2 pawn cannot take the knight: it is stuck in a <b>pin</b> by the e7 queen. White lost the game for one bishop.'), arr: [['d3', 'e1', 'red'], ['e7', 'e1', 'red']], hl: ['e1', 'e2'], mood: 'cheer' },
+      },
+    },
+    {
       id: 'legal', lv: 2, year: 1750, piece: 'wN', moves: 'e4 e5 Bc4 d6 Nf3 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#',
       title: T('레갈의 덫', 'Légal\'s trap'),
       who: T('레갈 vs 생브리 · 1750년 파리', 'Légal vs Saint-Brie · Paris 1750'),
@@ -5415,7 +5513,7 @@ Views.classic = (root, params) => {
   const { fens, mvs, sans, N } = Classics.line(c);
   const C = { i: 0, max: 0, dead: false, tok: 0, auto: 0, open: {}, res: {}, miss: 0, hint: 0, alt: null, fin: false };
   const stop = () => { if (C.auto) { clearTimeout(C.auto); C.auto = 0; } };
-  V.cleanup = () => { C.dead = true; C.tok++; stop(); };
+  V.cleanup = () => { C.dead = true; C.tok++; stop(); Gloss.hide(); };
   setTop({ back: 'learn', title: c.title });
   root.innerHTML = `<div class="lesson replay classic"><div class="rdate">${unit(c.who)}</div><div class="boardwrap" id="bw"></div>
     <div class="rctl"><button class="btn ghost sm" data-a="first" aria-label="${aria('처음', 'Start')}"><span class="dbl">${ic('back', 18)}${ic('back', 18)}</span></button><button class="btn ghost sm" data-a="prev" aria-label="${aria('이전', 'Back')}">${ic('back', 18)}</button><button class="btn mint sm cplay" data-a="go" id="cplay" aria-label="${aria('계속 보기', 'Play on')}">${ic('play', 18)}</button><button class="btn ghost sm" data-a="next" aria-label="${aria('다음', 'Next')}">${ic('next', 18)}</button><button class="btn ghost sm" data-a="last" aria-label="${aria('끝', 'End')}"><span class="dbl">${ic('next', 18)}${ic('next', 18)}</span></button></div>
@@ -5429,6 +5527,8 @@ Views.classic = (root, params) => {
     lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = html;
     const cs = $('#cscroll', root), an = $('.ans', txt);
     if (cs) { cs.scrollTop = an && C.open[C.i] ? Math.max(0, an.getBoundingClientRect().top - cs.getBoundingClientRect().top + cs.scrollTop - 40) : 0; fade(); } // new note: from the top; Leo's idea: show the answer
+    Gloss.hide();
+    if (Gloss.mark(txt).length && !S.glTip) { S.glTip = 1; save(); toast(T('밑줄 친 낱말을 누르면 뜻을 알려 줘요!', 'Tap an underlined word to see what it means!'), 3200); }
     const names = sqLinks(txt), tk = C.tok, n0 = note(C.i), numbered = n0 && [...(n0.arr || []), ...(C.open[C.i] && n0.aArr || [])].some((x) => x[3]);
     if (names.length && names.length <= 6 && !numbered) setTimeout(() => { if (!C.dead && tk === C.tok) board.flash(names.map(sqIdx)); }, 250);
   };
@@ -5436,7 +5536,7 @@ Views.classic = (root, params) => {
   const lb = (icon, o) => (icon ? ic(icon, 18) + ' ' : '') + `<span>${unit(o)}</span>`; // one language on the buttons so they fit in one row
   // a soft fade at the bottom of the note while there is more text to scroll to
   const fade = () => { const cs = $('#cscroll', root); if (cs) cs.classList.toggle('ovf', cs.scrollHeight - cs.scrollTop - cs.clientHeight > 6); };
-  $('#cscroll', root).addEventListener('scroll', fade, { passive: true });
+  $('#cscroll', root).addEventListener('scroll', () => { fade(); Gloss.hide(); }, { passive: true });
   const note = (i) => c.at[i] || null;
   const guessing = () => { const n = note(C.i); return !!(n && n.guess && C.i < N && C.res[C.i] == null); };
   const guessN = Object.keys(c.at).filter((k) => c.at[k].guess).length;
@@ -5563,6 +5663,7 @@ Views.classic = (root, params) => {
   }
   root.addEventListener('click', (e) => {
     const sn = e.target.closest('.sqn'); if (sn) { board.flash([sqIdx(sn.dataset.sq)]); return; }
+    const gw = e.target.closest('.gl'); if (gw) { Gloss.show(gw); return; }
     const m = e.target.closest('[data-m]'); if (m) { goTo(+m.dataset.m); return; }
     const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
     if (a === 'first') goTo(0);
