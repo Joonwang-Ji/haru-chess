@@ -551,6 +551,11 @@ svg.pc, svg.ic { overflow: visible; }
 .classic .coach .acts .btn > span { overflow: hidden; text-overflow: ellipsis; }
 .classic .cgo { flex: none; display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 5px 12px; border-radius: 14px; background: var(--sun); color: var(--brand-ink); font-family: var(--font-d); font-size: .98rem; line-height: 1.25; }
 .classic .cgo[hidden], .rmoves[hidden], .moves[hidden] { display: none; }
+/* while the child guesses, the ⏮‹▶›⏭ row is not needed (▶ is off, › only asks to skip; "Show me" does that), so in portrait the banner takes its place and the note gets the room */
+@media (max-aspect-ratio: 1/1) { .lesson.replay.classic.guessing .rctl { display: none; } }
+/* end screen: icon-only "again" so three buttons fit in one row */
+.classic .acts .btn.icn { padding-left: 12px; padding-right: 12px; flex: none; align-self: stretch; }
+@media (max-width: 359px) { .classic .coach .acts .btn.sm { padding-left: 10px; padding-right: 10px; } .classic .coach .acts .btn.sm:not(.icn) > svg { display: none; } }
 .classic .cgo .cgt { flex: 1; min-width: 0; }
 .classic .cgo .cgt b { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .classic .cgo .cgt .en { display: block; font-size: .78em; opacity: .85; }
@@ -2435,6 +2440,7 @@ const ICON = {
   undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="18" r=".6"/>',
   menu: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   chat: '<path d="M4 5h16v11H9l-5 4z"/>',
   users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 2 4.5 5"/>',
@@ -4847,7 +4853,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v29 · glossary</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v30 · roomy guess</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4880,7 +4886,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v29 · glossary</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v30 · roomy guess</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5570,7 +5576,7 @@ Views.classic = (root, params) => {
   // "your turn" banner in place of the move strip, so the child sees it without reading the bubble
   function banner() {
     const g = guessing(), cg = $('#cgo', root);
-    mv.hidden = g || !S.notation; cg.hidden = !g; $('#bw', root).classList.toggle('guess', g);
+    mv.hidden = g || !S.notation; cg.hidden = !g; $('#bw', root).classList.toggle('guess', g); $('.lesson', root).classList.toggle('guessing', g);
     if (!g) return;
     const k = Object.keys(c.at).filter((x) => c.at[x].guess).map(Number).sort((x, y) => x - y).indexOf(C.i) + 1;
     cg.innerHTML = `<span class="cgi">${ic('bulb', 20)}</span><span class="cgt">${rich(c.side === 'b' ? T('내 차례! <b>검은 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>black piece</b> on the board') : T('내 차례! <b>흰 말</b>을 보드에서 직접 움직여 봐요', 'Your turn! Move a <b>white piece</b> on the board'), true)}</span><span class="cgn">${k}/${guessN}</span>`;
@@ -5625,10 +5631,10 @@ Views.classic = (root, params) => {
     say(`${praise(N)}${n ? rich(n.t) : ''}<div class="ask">${ic('book', 16)} <b>${rich(T('오늘의 교훈', 'Today\'s lesson'))}</b></div><div class="ans">${rich(c.lesson)}</div>` +
       (guessN ? `<div class="more">${rich(T(`다음 수 맞히기: <b>${got + got2} / ${guessN}</b> 맞혔어요 (한 번에 ${got}개)`, `Guess the move: <b>${got + got2} / ${guessN}</b> found (${got} on the first try)`))}</div>` : '') +
       `<div class="more crate">${stars(rate)}${best > rate ? ` <small>${unit(T(`최고 기록 별 ${best}개`, `Best: ${best} stars`))}</small>` : ''}</div>` +
-      (guessN && skip ? `<div class="more">${rich(T('건너뛴 문제는 <b>처음부터</b>를 눌러 다시 맞혀 볼 수 있어요.', 'Tap <b>Again</b> to try the skipped guesses.'))}</div>` : '') +
+      (guessN && skip ? `<div class="more">${rich(T('건너뛴 문제는 <b>↻</b> 버튼을 눌러 처음부터 다시 맞혀 볼 수 있어요.', 'Tap <b>↻</b> to start over and try the skipped guesses.'))}</div>` : '') +
       (tip && best < 3 ? `<div class="more">${rich(tip)}</div>` : ''), 'cheer');
     const nx = Classics.G[(Classics.G.indexOf(c) + 1) % Classics.G.length];
-    acts.innerHTML = B('again', lb('refresh', T('처음부터', 'Again')), 'ghost') + B('nextgame', lb('next', T('다음 명국', 'Next')), 'mint');
+    acts.innerHTML = `<button class="btn sm ghost icn" data-a="again" aria-label="${aria('처음부터 다시 보기', 'Watch again')}" title="${aria('처음부터', 'Again')}">${ic('refresh', 18)}</button>` + B('list', lb('list', T('목록', 'List')), 'ghost') + B('nextgame', lb('next', T('다음 명국', 'Next')), 'mint');
     if (!C.fin) {
       C.fin = true; sfx('win'); touchStreak();
       if (rate > had) { RW.earn('classic', { id: c.id, stars: rate }); RW.notify(); }
@@ -5680,13 +5686,14 @@ Views.classic = (root, params) => {
     else if (a === 'speak') { const n = note(C.i); if (!n) return; speak(guessing() ? n.t : C.i === N ? T(`${n.t.ko} ${c.lesson.ko}`, `${n.t.en} ${c.lesson.en}`) : n.q && C.open[C.i] ? T(`${n.t.ko} ${n.q.ko} ${n.a.ko}`, `${n.t.en} ${n.q.en} ${n.a.en}`) : n.q ? T(`${n.t.ko} ${n.q.ko}`, `${n.t.en} ${n.q.en}`) : n.t); }
     else if (a === 'again') { sfx('tap'); C.res = {}; C.open = {}; C.fin = false; C.max = 0; C.warn = null; renderMoves(); goTo(0); }
     else if (a === 'nextgame') { sfx('tap'); go('classic', { id: C.nx }); }
+    else if (a === 'list') { sfx('tap'); go('learn', { tab: 'cl' }); }
   });
   renderMoves();
   show();
 };
 
 /* ---------------- Learn map ---------------- */
-Views.learn = (root) => {
+Views.learn = (root, params) => {
   setTop({ back: 'home', title: T('배우기', 'Learn') });
   const basicDone = Content.basic.every((c) => chapDone(c.id));
   const proOpen = basicDone || S.proOpen;
@@ -5696,7 +5703,7 @@ Views.learn = (root) => {
   const nB = cnt(Content.basic, (c) => chapDone(c.id)), nP = cnt(Content.pro, (c) => chapDone(c.id)), nC = cnt(Classics.G, (g) => Classics.done(g.id));
   const home = next ? (Content.basic.includes(next) ? 'basic' : 'pro') : 'cl';
   const left = { basic: Content.basic.length - nB, pro: Content.pro.length - nP, cl: Classics.G.length - nC };
-  const L = { tab: left[S.learnTab] > 0 ? S.learnTab : home }; // the last tab the child picked, unless everything there is finished
+  const L = { tab: params && left[params.tab] != null ? params.tab : left[S.learnTab] > 0 ? S.learnTab : home }; // "목록" from a classic opens the classics tab // the last tab the child picked, unless everything there is finished
   const card = (c, locked) => `<button class="chap ${chapDone(c.id) ? 'done' : ''} ${locked ? 'locked' : ''}" data-ch="${c.id}" data-locked="${locked ? 1 : 0}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${c.piece}"/></svg></span><span class="ct"><b>${tx(c.title)}</b><span>${tx(c.blurb)}</span>${locked ? ic('lock', 16) : stars((S.progress[c.id] || {}).stars || 0)}${next && next.id === c.id ? `<span class="pill warn start">${tx(T('여기부터!', 'Start here!'), true)}</span>` : ''}</span></button>`;
   const lvPill = (g) => (g.lv ? `<span class="clv l${g.lv}">${unit(Classics.LV[g.lv])}</span>` : '');
   const clCard = (g) => `<button class="chap ${Classics.done(g.id) ? 'done' : ''}" data-cl="${g.id}"><span class="badge"><svg viewBox="0 0 100 100"><use href="#${g.piece}"/></svg></span><span class="ct"><b>${tx(g.title)}</b><span>${tx(g.blurb)}</span><span class="cwho">${lvPill(g)}${unit(g.who)}</span>${Classics.done(g.id) ? stars(Classics.stars(g.id)) : ''}</span></button>`;
