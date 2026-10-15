@@ -476,8 +476,10 @@ svg.pc, svg.ic { overflow: visible; }
 .rwms { display: flex; gap: 8px; }
 .rwms > div { flex: 1; text-align: center; font-size: .82rem; padding: 8px 4px; border-radius: 14px; background: var(--surface2); border: 2px solid var(--line); line-height: 1.25; }
 .rwms > div[data-ms] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.homestats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-items: start; padding-left: 8px; padding-right: 8px; }
-.homestats > div { min-width: 0; }
+.homestats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; align-items: start; }
+.homestats > div { min-width: 0; text-align: center; }
+.homestats b { display: block; font-family: var(--font-d); font-weight: 400; font-size: 1.6rem; color: var(--brand-d); }
+.homestats small { display: block; font-size: .85rem; color: var(--ink2); }
 .pwlink { margin-top: 18px; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
 .pwlink small { display: block; color: var(--ink2); font-size: .85rem; }
 .pwrules { margin: 8px 0 0; padding-left: 20px; }
@@ -4873,7 +4875,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31 · weekly goal</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31.2 · weekly goal</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4906,7 +4908,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31 · weekly goal</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31.2 · weekly goal</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5203,10 +5205,9 @@ Views.home = (root) => {
     ${g ? `<div class="resume-bar"><span>${tx(T('하던 대국이 있어요', 'A game is waiting'), true)}</span><button class="btn mint sm" id="resume">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
     ${dueN ? `<div class="resume-bar"><span>${tx(T(`내 대국에서 나온 문제 ${dueN}개`, `${dueN} puzzle(s) from my games`), true)}</span><button class="btn sun sm" id="mypz">${ic('bulb', 18)} ${tx(T('풀기', 'Solve'), true)}</button></div>` : ''}
     <div class="card homestats" style="margin-top:16px">
-      <div class="stat-link" data-go="treasure" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">★ ${bal}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('별 상점 ›', 'Star shop ›'))}</div></div>
-      <div style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.streak.n}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('연속 연습 일', 'Day streak'))}</div></div>
-      <div class="stat-link" data-go="treasure" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${Math.min(RW.wkCur().g, RW.RULES.weekGames.n)}/${RW.RULES.weekGames.n}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('이번 주 대국 ›', 'Games this week ›'))}</div></div>
-      <div class="stat-link" data-go="history" role="button" style="text-align:center"><div style="font-family:var(--font-d);font-size:1.6rem;color:var(--brand-d)">${S.stats.games}</div><div style="font-size:.85rem;color:var(--ink2)">${tx(T('대국 기록 ›', 'Game history ›'))}</div></div>
+      <div class="stat-link" data-go="treasure" role="button"><b>★ ${bal}</b><small>${tx(T('별 상점 ›', 'Star shop ›'))}</small></div>
+      <div><b>${S.streak.n}</b><small>${tx(T('연속 연습 일', 'Day streak'))}</small></div>
+      <div class="stat-link" data-go="history" role="button"><b>${S.stats.games}</b><small>${tx(T('대국 기록 ›', 'Game history ›'))}</small></div>
     </div></div></div>`;
   if (Cloud.available) {
     const bd = () => {
@@ -7691,6 +7692,7 @@ const RW = (() => {
   const challenge = () => !!st().ch && !kidProf();
   function setChallenge(on) { const r = st(); r.ch = on ? 1 : 0; r.cht = Date.now(); save(); }
   const missions = () => (challenge() ? ['p', 'g', 'l'] : ['p', 'l']); // the game is a weekly goal now, except in challenge mode
+  const missionDone = (m) => (m.p || m.l) && (!challenge() || m.g); // v31: a puzzle or a lesson is enough (challenge mode: plus a game)
   function wkCur() { // this week's record (weekly games are counted here)
     const r = st(), wid = weekId(ymd());
     if (r.wk.id !== wid && r.wk.id < wid) r.wk = { id: wid, days: [], x: 0, g: 0, gx: 0 };
@@ -7704,7 +7706,7 @@ const RW = (() => {
   }
   function mark(slot) {
     const m = msn(), r = st(); m[slot] = 1;
-    if (missions().every((k) => m[k]) && !m.x) { m.x = 1; r.m.ms = (r.m.ms || 0) + 1; award('m' + ymd(), RULES.mission.n, '오늘의 미션 완료!', 'Daily missions complete!'); }
+    if (missionDone(m) && !m.x) { m.x = 1; r.m.ms = (r.m.ms || 0) + 1; award('m' + ymd(), RULES.mission.n, '오늘의 미션 완료!', 'Daily missions complete!'); }
     save();
   }
 
@@ -8116,7 +8118,7 @@ Object.assign(RW, (() => {
           <div class="rwbal">★ ${RW.balance()} <small>${tx(T('쓸 수 있는 별', 'to spend'))}</small></div></div></div>
         <div class="card rwtoday"><h3>${tx(T('오늘의 별 미션', 'Today\'s star missions'), true)}</h3>
           <div class="rwms">${ms.map(([k, e, tt]) => `<div class="${m[k] ? 'on' : ''}" data-ms="${k}" role="button" tabindex="0"><span>${m[k] ? '✅' : e}</span>${tx(tt)}</div>`).join('')}</div>
-          <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : ms.length === 3 ? T(`세 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do all three for 🎁 ★${RULES.mission.n}`) : T(`두 개를 모두 하면 🎁 ★${RULES.mission.n}`, `Do both for 🎁 ★${RULES.mission.n}`))}</p>
+          <p class="rwnote">${tx(m.x ? T('🎁 미션 상자를 열었어요! 내일 또 만나요.', '🎁 Chest opened! See you tomorrow.') : ms.length === 3 ? T(`대국 + 퍼즐이나 배우기 하나를 하면 🎁 ★${RULES.mission.n}`, `A game + a puzzle or a lesson gives 🎁 ★${RULES.mission.n}`) : T(`둘 중 하나만 해도 🎁 ★${RULES.mission.n}`, `Either one gives 🎁 ★${RULES.mission.n}`))}</p>
           <div class="rwwg"><div class="rwwg-h"><b>♟️ ${tx(T(`이번 주 대국 ${Math.min(wk.g, WG)}/${WG}판`, `Games this week ${Math.min(wk.g, WG)}/${WG}`))}</b><small>${tx(wk.gx ? T('목표 달성! 🎉', 'Goal reached! 🎉') : T(`이루면 ★${RULES.weekGames.stars}`, `goal gives ★${RULES.weekGames.stars}`))}</small></div>
             <div class="rwwg-dots">${Array.from({ length: WG }, (_, i) => `<i class="${i < wk.g ? 'on' : ''}"></i>`).join('')}</div>
             <small class="rwnote" style="display:block;line-height:1.35">${tx(T('폰 전쟁(짧은 대국)과 실제 판 대국도 1판이에요.', 'Pawn wars (short games) and real‑board games count too.'))}</small>
