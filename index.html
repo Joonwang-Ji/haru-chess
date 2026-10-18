@@ -2106,7 +2106,8 @@ const AIC = {
 /* ---------- date helpers & streak ---------- */
 function ymd(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 const dayIndex = (d) => { const p = String(d || ymd()).split('-').map(Number); return Math.floor(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000); };
-function addHistory(e) { S.history.unshift(e); if (S.history.length > 30) S.history.length = 30; if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory(); if (typeof AutoAn !== 'undefined') setTimeout(() => AutoAn.start(), 1500); }
+function capHist(a) { let c = 0, p = 0; return a.filter((e) => (e && e.mode === 'pawn' ? ++p <= 20 : ++c <= 30)); } // v32: pawn wars games (result only) never push chess games out
+function addHistory(e) { S.history.unshift(e); const keep = capHist(S.history); S.history.length = 0; keep.forEach((x) => S.history.push(x)); if (typeof Net !== 'undefined' && Net.pushHistory) Net.pushHistory(); if (typeof AutoAn !== 'undefined') setTimeout(() => AutoAn.start(), 1500); }
 // weekdays (Mon-Fri) strictly between two days: Saturday and Sunday are rest days and never break a streak (v31)
 function missedWeekdays(a, b) { let n = 0; for (let d = a + 1; d < b; d++) { const w = (d + 4) % 7; if (w !== 0 && w !== 6) n++; if (n > 3) break; } return n; }
 function touchStreak(kind) {
@@ -4620,7 +4621,7 @@ const Net = {
       const cloud = (d && d.items) || [];
       const map = new Map();
       for (const e of cloud.concat(S.history)) { const o = map.get(e.id); if (!o || (!o.an && e.an)) map.set(e.id, e); }
-      const all = [...map.values()].sort((a, b) => b.t - a.t).slice(0, 30);
+      const all = capHist([...map.values()].sort((a, b) => b.t - a.t));
       const changed = JSON.stringify(all) !== JSON.stringify(S.history);
       S.history.length = 0; all.forEach((e) => S.history.push(e));
       if (changed) { saveNow(); this.emit(); }
@@ -4631,13 +4632,13 @@ const Net = {
   pushHistory() {
     clearTimeout(this.ht); this.ht = setTimeout(() => {
       const me = this.me(); if (!this.user || !me || !(this.hm && this.hm[me.id]) || S.cloud.pid !== me.id) return;
-      Cloud.set('histories/' + me.id, { ownerUid: me.ownerUid, items: S.history.slice(0, 30), updatedAt: Date.now() }).catch(() => {});
+      Cloud.set('histories/' + me.id, { ownerUid: me.ownerUid, items: capHist(S.history), updatedAt: Date.now() }).catch(() => {});
     }, 2000);
   },
   pushMenu() { const u = this.user; if (!u) return Promise.reject(new Error('auth')); return withTimeout(Cloud.set('parents/' + u.uid, { menu: S.cloud.menu || [], updatedAt: Date.now() }, true)); },
   async refreshMenu() { const u = this.user; if (!u) return; const d = await Cloud.get('parents/' + u.uid); if (d && Array.isArray(d.menu)) { S.cloud.menu = d.menu.slice(0, 40).map((g) => ({ id: String(g.id || ''), ko: String(g.ko || '').slice(0, 40), cost: Math.max(1, Math.min(999, +g.cost || 1)) })); saveNow(); } },
   clearForce() { const me = this.me(); if (me && me.lockedDate) Cloud.update('profiles/' + me.id, { lockedDate: '' }).catch(() => {}); },
-  wipeLocal() { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; S.history = []; S.daily = { done: {}, n: 0, last: '' }; S.rw = clone(DEFAULTS.rw); if (typeof RW !== 'undefined') RW.apply(); },
+  wipeLocal() { S.progress = {}; S.stats = clone(DEFAULTS.stats); S.streak = clone(DEFAULTS.streak); S.proOpen = false; S.game = null; S.pwg = null; S.history = []; S.daily = { done: {}, n: 0, last: '' }; S.rw = clone(DEFAULTS.rw); if (typeof RW !== 'undefined') RW.apply(); },
   async eraseCloud(p) {
     const now = Date.now();
     try { await withTimeout(Cloud.set('histories/' + p.id, { ownerUid: p.ownerUid, items: [], updatedAt: now })); } catch (e) { /* rules not updated yet */ }
@@ -4875,7 +4876,7 @@ Views.account = (root) => {
           <div class="row center"><button class="btn mint" id="a-login">${tx(T('로그인', 'Sign in'))}</button><button class="btn lav" id="a-new">${tx(T('새로 가입', 'Create account'))}</button></div>
           <div class="row center" style="margin-top:8px"><button class="btn ghost sm" id="a-forgot">${tx(T('비밀번호를 잊었어요', 'Forgot password'))}</button></div></div>
         ${Cloud.standalone && Cloud.standalone() ? '' : `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-in" style="min-width:240px;min-height:60px">${tx(T('Google로 로그인', 'Sign in with Google'), true)}</button></div>`}</div></div>`;
-      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31.3 · weekly goal</p>');
+      root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v32 · pawn wars 2p</p>');
       const msg = (t) => { $('#a-msg', root).innerHTML = t ? tx(t) : ''; };
       const creds = () => { const em = $('#a-em', root).value.trim(), pw = $('#a-pw', root).value; if (!em || !pw) { msg(T('이메일과 비밀번호를 입력해 주세요.', 'Enter email and password.')); return null; } return { em, pw }; };
       const doEmail = async (create) => { const c = creds(); if (!c) return; msg(''); try { await Cloud.emailAuth(c.em, c.pw, create); } catch (e) { msg(errText(e)); } };
@@ -4908,7 +4909,7 @@ Views.account = (root) => {
       ${kidDev ? `<div class="row center" style="margin-top:14px"><button class="btn ghost sm" id="a-pm">${ic('lock', 18)} ${tx(T('부모님 메뉴', 'Parent menu'), true)}</button></div>` : ''}
       ${Net.profs.length ? `<div class="row center" style="margin-top:14px"><button class="btn tile-go" id="a-go">${tx(T('친구·온라인으로', 'Go to Friends & Online'), true)}</button></div>` : ''}
     </div></div>`;
-    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v31.3 · weekly goal</p>');
+    root.querySelector('.wrap').insertAdjacentHTML('beforeend', '<p style="text-align:center;color:var(--ink2);font-size:.75rem;margin:16px 0">v32 · pawn wars 2p</p>');
   };
   draw();
   const refresh = () => { if (V.name === 'account') draw(); };
@@ -5191,8 +5192,8 @@ Views.home = (root) => {
     T('어서 오세요! 오늘은 어떤 말을 배워 볼까요?', 'Welcome back! Which piece shall we learn today?'),
     T('체스는 생각하는 놀이예요. 천천히 해도 괜찮아요!', 'Chess is a thinking game. Take your time!'),
   ];
-  const g = S.game && !S.game.over ? S.game : null, dueN = MyPz.due().length;
-  root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g || dueN ? ' has-resume' : ''}">
+  const g = S.game && !S.game.over ? S.game : null, pg = S.pwg && S.pwg.cfg && Array.isArray(S.pwg.mv) && S.pwg.mv.length ? S.pwg : null, dueN = MyPz.due().length;
+  root.innerHTML = `<div class="scroll"><div class="wrap home-wrap${g || pg || dueN ? ' has-resume' : ''}">
     <div class="hero home-hero">${Art.lion('happy')}<div class="bubble"><div>${rich(greets[(new Date().getDate() + S.streak.n) % greets.length])}</div></div></div>
     <div class="menu">
       <button class="btn tile" data-go="learn"><span class="ico"><svg viewBox="0 0 100 100"><use href="#wN"/></svg></span>${tx(T('배우기', 'Learn'))}</button>
@@ -5203,6 +5204,7 @@ Views.home = (root) => {
       <button class="btn tile lav half" data-go="guide"><span class="ico">${ic('clock', 28)}</span>${tx(T('규칙·시계', 'Rules'))}</button>
     </div>
     ${g ? `<div class="resume-bar"><span>${tx(T('하던 대국이 있어요', 'A game is waiting'), true)}</span><button class="btn mint sm" id="resume">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
+    ${pg ? `<div class="resume-bar"><span>${tx(T('하던 폰 전쟁이 있어요', 'A pawn wars game is waiting'), true)}</span><button class="btn mint sm" id="resume-pw">${ic('play', 18)} ${tx(T('이어하기', 'Continue'), true)}</button></div>` : ''}
     ${dueN ? `<div class="resume-bar"><span>${tx(T(`내 대국에서 나온 문제 ${dueN}개`, `${dueN} puzzle(s) from my games`), true)}</span><button class="btn sun sm" id="mypz">${ic('bulb', 18)} ${tx(T('풀기', 'Solve'), true)}</button></div>` : ''}
     <div class="card homestats" style="margin-top:16px">
       <div class="stat-link" data-go="treasure" role="button"><b>★ ${bal}</b><small>${tx(T('별 상점 ›', 'Star shop ›'))}</small></div>
@@ -5234,6 +5236,7 @@ Views.home = (root) => {
   root.addEventListener('click', (e) => {
     const b = e.target.closest('[data-go]'); if (b) { sfx('tap'); go(b.dataset.go, { mode: b.dataset.mode }); }
     if (e.target.closest('#resume')) { sfx('tap'); go('game', { resume: true }); }
+    if (e.target.closest('#resume-pw')) { sfx('tap'); go('pawns', { play: 1, resume: 1 }); }
     if (e.target.closest('#mypz')) { sfx('tap'); const p = MyPz.due()[0]; if (p) go('lesson', { mine: p.i }); }
   });
 };
@@ -5992,59 +5995,100 @@ Views.pawns = (root, params) => {
       <div class="chips">${chip2('mode', 'cpu', T('레오와', 'vs Leo'))}${chip2('mode', '2p', T('둘이서', '2 players'))}</div>
       ${PW.mode === 'cpu' ? `<div class="field">${tx(T('레오의 실력', 'Leo\'s strength'), true)}</div><div class="chips">${chip2('lv', 1, T('1 쉬움', '1 Easy'))}${chip2('lv', 2, T('2 보통', '2 Medium'))}${chip2('lv', 3, T('3 어려움', '3 Hard'))}</div>
       <div class="field">${tx(T('내 색깔', 'My color'), true)}</div><div class="chips">${chip2('color', 'w', T('흰색 (먼저)', 'White (first)'))}${chip2('color', 'b', T('검은색', 'Black'))}</div>` : ''}
+      <div class="field">${tx(T('도우미', 'Helpers'), true)}</div><div class="card" style="padding:4px 14px">
+        ${sw('pw-undo', T('무르기 허용', 'Allow take-backs'), null, PW.undo !== false)}
+        ${PW.mode === 'cpu' ? '' : sw('pw-f2f', T('마주 보기 (상대 쪽에서도 잘 보여요)', 'Face to face (readable from both sides)'), T('아이패드를 가운데 놓고 둘이 마주 앉아요', 'Place the tablet between you'), PW.f2f !== false)}
+      </div>
       <div class="row center" style="margin-top:18px"><button class="btn tile-go" id="pw-go" style="min-width:220px;min-height:62px;font-size:1.3rem">${ic('play', 22)} ${tx(T('시작!', 'Start!'), true)}</button></div>
     </div></div>`;
     root.onclick = (e) => {
+      const tg = e.target.closest('.tg');
+      if (tg) { sfx('tap'); const k = { 'pw-undo': 'undo', 'pw-f2f': 'f2f' }[tg.id]; if (k) { PW[k] = PW[k] === false; save(); tg.setAttribute('aria-checked', PW[k]); } return; }
       const c = e.target.closest('[data-pw]');
       if (c) { sfx('tap'); const k = c.dataset.pw; PW[k] = k === 'lv' ? +c.dataset.v : c.dataset.v; save(); go('pawns', { back: params.back }); return; }
       if (e.target.closest('#pw-go')) { sfx('tap'); go('pawns', { play: 1, back: params.back }); }
     };
     return;
   }
-  const cpu = PW.mode === 'cpu', me = cpu ? (PW.color === 'b' ? 1 : 0) : -1;
+  // v32: an unfinished game is kept in S.pwg (settings + moves) and can be continued from home
+  const R = params.resume && S.pwg && S.pwg.cfg && Array.isArray(S.pwg.mv) ? S.pwg : null;
+  const cfg = R ? R.cfg : { mode: PW.mode === '2p' ? '2p' : 'cpu', lv: PW.lv, color: PW.color, undo: PW.undo !== false, f2f: PW.mode === '2p' && PW.f2f !== false };
+  if (!R) { S.pwg = null; save(); }
+  const cpu = cfg.mode === 'cpu', me = cpu ? (cfg.color === 'b' ? 1 : 0) : -1, f2f = !cpu && !!cfg.f2f;
   const P = { g: new PawnGame(), over: false, busy: false, dead: false, n: 0 };
+  if (R) for (const [f, t] of R.mv) { const m = P.g.legal().find((x) => x.f === f && x.t === t); if (!m) break; P.g.make(m); P.n++; }
   V.cleanup = () => { P.dead = true; };
-  root.innerHTML = '<div class="lesson"><div class="boardwrap" id="bw"></div><div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>';
-  const board = new Board(); $('#bw', root).appendChild(board.el);
-  board.setView(cpu && me === 1 ? 'b' : 'w'); board.setCoords(S.coords);
+  root.innerHTML = f2f
+    ? `<div class="game f2f"><div class="seat rot"><div class="msg"><div class="bubble" id="msgT"></div></div><div class="dock" id="dockT"></div></div>
+        <div class="boardwrap" id="bw"></div>
+        <div class="seat"><div class="msg"><div class="bubble" id="msgB"></div></div><div class="dock" id="dockB"></div></div></div>`
+    : '<div class="lesson"><div class="boardwrap" id="bw"></div><div class="coach"><div id="lion"></div><div class="bubble"><div id="txt"></div><div class="acts" id="acts"></div></div></div></div>';
+  const board = new Board(); board.f2f = f2f; $('#bw', root).appendChild(board.el);
+  board.setView(cpu && me === 1 ? 'b' : 'w'); board.setCoords(f2f ? false : S.coords);
   const lionEl = $('#lion', root), txt = $('#txt', root), acts = $('#acts', root);
-  const say = (o, mood) => { lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = typeof o === 'string' ? o : rich(o); };
+  const html = (o) => (typeof o === 'string' ? o : rich(o));
+  // f2f: c = 0 (white, bottom) / 1 (black, top); otherwise the single coach bubble
+  const say = (o, mood, c) => {
+    if (f2f) { const el = $(c === 1 ? '#msgT' : '#msgB', root); if (el) el.innerHTML = html(o); return; }
+    lionEl.innerHTML = Art.lion(mood || 'happy'); txt.innerHTML = html(o);
+  };
   const side = (c) => (c === 0 ? T('흰색', 'White') : T('검은색', 'Black'));
-  const B = (a, label, cls) => `<button class="btn sm ${cls || ''}" data-a="${a}">${label}</button>`;
+  const B = (a, label, cls, c, off) => `<button class="btn sm ${cls || ''}" data-a="${a}" data-c="${c == null ? '' : c}"${off ? ' disabled' : ''}>${label}</button>`;
+  const canUndo = () => {
+    if (!cfg.undo || P.over || P.busy) return false;
+    const h = P.g.hist.length; if (!h) return false;
+    return !cpu || (me === 0 ? Math.ceil(h / 2) : Math.floor(h / 2)) > 0; // vs Leo: only when I have a move to take back
+  };
+  const ctlHtml = (c) => (cfg.undo ? B('undo', ic('undo', 18) + ' ' + tx(T('무르기', 'Undo'), true), 'ghost', c, !canUndo()) : '') + B('restart', ic('play', 18) + ' ' + tx(T('처음부터', 'Restart'), true), 'ghost', c);
+  const setCtl = (h0, h1) => { if (f2f) { $('#dockB', root).innerHTML = h0; $('#dockT', root).innerHTML = h1 == null ? h0 : h1; } else acts.innerHTML = h0; };
   const mi = new MoveInput(board, {
     getGame: () => P.g,
     canMove: (turn) => !P.over && !P.busy && (!cpu || turn === me),
     onMove: (m) => play(m),
     onBlocked: () => board.shake(),
   });
+  function persist() {
+    S.pwg = P.over || !P.g.hist.length ? null : { cfg, mv: P.g.hist.map((h) => [h.m.f, h.m.t]), t: Date.now() };
+    save();
+  }
   function prompt() {
     if (P.over) return;
     const t = P.g.turn;
+    if (f2f) { say(T('내 차례예요! 폰을 끝 줄까지 보내 봐요.', 'Your turn! Race a pawn to the last row.'), null, t); say(T(`${side(t).ko} 차례를 기다려요…`, `Waiting for ${side(t).en}…`), null, t ^ 1); setCtl(ctlHtml(0), ctlHtml(1)); return; }
     if (cpu) say(t === me ? T('내 차례예요! 폰을 끝 줄까지 보내 봐요.', 'Your turn! Race a pawn to the last row.') : T('레오가 생각하고 있어요…', 'Leo is thinking…'), t === me ? 'happy' : 'think');
     else say(T(`${side(t).ko} 차례예요!`, `${side(t).en} to move!`), 'happy');
-    acts.innerHTML = B('restart', ic('undo', 18) + ' ' + tx(T('처음부터', 'Restart'), true), 'ghost');
+    setCtl(ctlHtml(''));
   }
+  function lastMark() { board.clearMarks(); const l = P.g.hist[P.g.hist.length - 1]; if (l) board.mark({ last: [l.m.f, l.m.t] }); }
   function play(m) {
     P.g.make(m); P.n++;
     board.setPosition(P.g); board.animate(m.f, m.t); board.clearMarks(); board.mark({ last: [m.f, m.t] });
     sfx(m.c ? 'cap' : 'move');
     const st = P.g.status();
     if (st.over) { finish(st); return; }
-    mi.refresh(); prompt();
+    persist(); mi.refresh(); prompt();
     if (cpu && P.g.turn !== me) leo();
   }
   function leo() {
-    P.busy = true;
+    P.busy = true; prompt();
     setTimeout(() => {
       if (P.dead || P.over) return;
-      const m = PawnAI.best(P.g, PW.lv);
+      const m = PawnAI.best(P.g, cfg.lv);
       P.busy = false;
-      if (m) play(m);
+      if (m) play(m); else prompt();
     }, 450);
   }
+  function undo() {
+    if (!canUndo()) return;
+    const k = cpu && P.g.turn === me ? 2 : 1; // vs Leo: take back Leo's reply and my move
+    for (let i = 0; i < k && P.g.hist.length; i++) { P.g.unmake(); P.n--; }
+    board.setPosition(P.g); lastMark(); sfx('move');
+    persist(); mi.refresh(); prompt();
+  }
   function finish(st) {
-    P.over = true; mi.legal = [];
+    P.over = true; mi.legal = []; persist();
     const win = cpu ? st.winner === me : st.winner !== -1;
+    if (P.n >= 2) addHistory({ id: 'h' + Date.now().toString(36), t: Date.now(), mode: 'pawn', lv: cpu ? cfg.lv : 0, me, opp: cpu ? 'Leo' : '', res: { winner: st.winner, reason: st.reason }, mv: [], n: P.n });
     RW.earn('game', { pawn: true, win: cpu && st.winner === me, plies: P.n });
     touchStreak('game'); const r = RW.take(); saveNow();
     let head, mood;
@@ -6052,17 +6096,26 @@ Views.pawns = (root, params) => {
     else if (cpu) { head = st.winner === me ? (st.reason === 'promo' ? T('이겼어요! 폰이 끝 줄에 닿았어요 🎉', 'You won! Your pawn reached the end 🎉') : T('이겼어요! 레오 폰을 모두 잡았어요 🎉', 'You won! You took all of Leo\'s pawns 🎉')) : T('레오가 이겼어요. 한 판 더 해 볼까요?', 'Leo won. One more?'); mood = st.winner === me ? 'cheer' : 'oops'; }
     else { head = T(`${side(st.winner).ko} 승리! 🎉`, `${side(st.winner).en} wins! 🎉`); mood = 'cheer'; }
     sfx(st.winner === -1 ? 'tick' : win ? 'win' : 'lose');
-    say(`<b>${tx(head, true)}</b>${r && (r.n || r.lines.length) ? RW.html(r) : ''}`, mood);
-    acts.innerHTML = B('again', ic('play', 18) + ' ' + tx(T('한 판 더', 'Again'), true), 'mint') + B('home', tx(T('그만하기', 'Done'), true), 'ghost');
+    const rw = r && (r.n || r.lines.length) ? RW.html(r) : '';
+    const end = (c) => B('again', ic('play', 18) + ' ' + tx(T('한 판 더', 'Again'), true), 'mint', c) + B('home', tx(T('그만하기', 'Done'), true), 'ghost', c);
+    if (f2f) { say(`<b>${tx(head, true)}</b>${rw}`, mood, 0); say(`<b>${tx(head, true)}</b>`, mood, 1); setCtl(end(0), end(1)); }
+    else { say(`<b>${tx(head, true)}</b>${rw}`, mood); setCtl(end('')); }
     if (r && (r.lvUp || (r.badges && r.badges.length))) setTimeout(() => RW.celebrate(r), 900);
   }
-  acts.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-a]'); if (!b) return; sfx('tap');
+  root.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-a]'); if (!b || b.disabled) return; sfx('tap');
     const a = b.dataset.a;
-    if (a === 'again' || a === 'restart') go('pawns', { play: 1, back: params.back });
-    else if (a === 'home') go(params.back || 'home');
+    if (a === 'undo') undo();
+    else if (a === 'again') go('pawns', { play: 1, back: params.back });
+    else if (a === 'restart') {
+      if (!P.over && P.n >= 2) {
+        const k = await ask({ lion: 'think', text: T('처음부터 다시 할까요? 지금 판은 기록되지 않아요.', 'Start over? This game will not be saved.'), buttons: [{ k: 'y', label: T('처음부터', 'Restart'), cls: 'mint' }, { k: 'n', label: T('계속하기', 'Keep playing'), cls: 'ghost' }], flipped: f2f && b.dataset.c === '1' });
+        if (k !== 'y' || P.dead) return;
+      }
+      S.pwg = null; save(); go('pawns', { play: 1, back: params.back });
+    } else if (a === 'home') go(params.back || 'home');
   });
-  board.setPosition(P.g); board.clearMarks(); mi.refresh(); prompt();
+  board.setPosition(P.g); lastMark(); mi.refresh(); prompt();
   if (cpu && P.g.turn !== me) leo();
 };
 
@@ -7337,7 +7390,7 @@ const MyPz = (() => {
 const RES_TXT = (e) => {
   const w = e.res.winner;
   if (w === -1) return { c: 'draw', t: T('무승부', 'Draw') };
-  if (e.mode === '2p') return { c: 'win', t: w === 0 ? T('흰색 승', 'White won') : T('검은색 승', 'Black won') };
+  if (e.mode === '2p' || e.me === -1) return { c: 'win', t: w === 0 ? T('흰색 승', 'White won') : T('검은색 승', 'Black won') };
   return w === e.me ? { c: 'win', t: T('승리', 'Win') } : { c: 'loss', t: T('패배', 'Loss') };
 };
 const DOW_KO = '일월화수목금토', DOW_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -7354,6 +7407,10 @@ Views.history = (root) => {
   const list = S.history.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
   const row = (e) => {
     const r = RES_TXT(e), d = new Date(e.t);
+    if (e.mode === 'pawn') { // v32: result only, no replay
+      const pw = e.me === -1 ? T('♟️ 폰 전쟁 · 둘이서', '♟️ Pawn wars · 2 Players') : T(`♟️ 폰 전쟁 · 레오 (${e.lv}단계)`, `♟️ Pawn wars · Leo (level ${e.lv})`);
+      return `<button class="btn ghost hrow" data-pwh="1"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(pw)}</b><small>${unit(timeLabel(d))} · ${Math.ceil((e.n || 0) / 2)}${unit(T('수', ' moves'))}</small></span><span></span></button>`;
+    }
     const who = e.mode === '2p' ? T('둘이서', '2 Players') : e.mode === 'cpu' ? T(`레오 (레벨 ${e.lv})`, `Leo (level ${e.lv})`) : T(`${e.opp} (온라인)`, `${e.opp} (online)`);
     return `<button class="btn ghost hrow" data-id="${e.id}"><span class="hres ${r.c}">${tx(r.t)}</span><span class="hmain"><b>${rich(who)}</b><small>${unit(timeLabel(d))} · ${Math.ceil(e.mv.length / 2)}${unit(T('수', ' moves'))}${e.an ? ' · ' + tx(T('분석됨', 'analyzed')) : AutoAn.cur() && AutoAn.cur().id === e.id ? ' · <span class="an-run">' + tx(T('분석 중…', 'analyzing…')) + '</span>' : ''}</small></span><span>›</span></button>`;
   };
@@ -7363,6 +7420,7 @@ Views.history = (root) => {
     : `<div class="card" style="text-align:center"><div style="width:90px;margin:0 auto">${Art.lion('happy')}</div><p>${rich(T('아직 기록이 없어요. 대국을 한 판 하고 오면 여기에 저장돼요!', 'No games yet. Play a game and it will be saved here!'))}</p></div>`}</div></div>`;
   root.addEventListener('click', (e) => {
     if (e.target.closest('#h-mypz')) { sfx('tap'); const p = MyPz.due()[0]; if (p) go('lesson', { mine: p.i }); return; }
+    if (e.target.closest('[data-pwh]')) { sfx('tap'); toast(T('폰 전쟁은 결과만 저장돼요', 'Pawn wars keeps only the result')); return; }
     const b = e.target.closest('[data-id]'); if (b) { sfx('tap'); go('replay', { id: b.dataset.id }); }
   });
   let lastRun = AutoAn.cur() ? AutoAn.cur().id : '';
@@ -7372,7 +7430,7 @@ Views.history = (root) => {
 
 Views.replay = (root, params) => {
   const E = S.history.find((x) => x.id === params.id);
-  if (!E) { go('history'); return; }
+  if (!E || E.mode === 'pawn') { go('history'); return; }
   const R = { i: 0, dead: false, tok: 0, an: E.an || null, flags: [] };
   let offAn = () => {};
   V.cleanup = () => { R.dead = true; R.tok++; offAn(); };
